@@ -22,10 +22,12 @@ jobs:
         shell: pwsh
         run: |
           $tag = $env:GITHUB_REF_NAME
-          if ($tag -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
-            throw 'Use a stable version tag in the form vMAJOR.MINOR.PATCH.'
+          if ($tag -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$') {
+            throw 'Use a valid semantic version tag (e.g. v1.1.0 or v1.1.0-beta.1).'
           }
-          "RELEASE_VERSION=$($tag.Substring(1))" >> $env:GITHUB_ENV
+          $v = $tag.Substring(1)
+          if ($v -match '^([0-9]+\.[0-9]+\.[0-9]+)') { "RELEASE_VERSION=$($Matches[1])" >> $env:GITHUB_ENV } else { "RELEASE_VERSION=$v" >> $env:GITHUB_ENV }
+          if ($tag -match '-') { "IS_PRERELEASE=true" >> $env:GITHUB_ENV }
       - name: Restore and test
         shell: pwsh
         run: |
@@ -56,5 +58,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create $env:GITHUB_REF_NAME larpiano-windows-x64.zip SHA256SUMS.txt --verify-tag --title "larpiano $env:GITHUB_REF_NAME" --notes "Windows x64: download the ZIP, extract all files and run Keynote.App.exe. A verified mapping for your specific piano is required. See README for setup and limitations."
+          $prereleaseFlag = if ($env:IS_PRERELEASE -eq "true") { "--prerelease" } else { "" }
+          gh release create $env:GITHUB_REF_NAME larpiano-windows-x64.zip SHA256SUMS.txt --verify-tag $prereleaseFlag --title "larpiano $env:GITHUB_REF_NAME" --notes "Windows x64: download the ZIP, extract all files and run Keynote.App.exe. A verified mapping for your specific piano is required. See README for setup and limitations."
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

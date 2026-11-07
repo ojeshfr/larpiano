@@ -5,11 +5,12 @@ public record PlaybackDiagnostics(int Scheduled, int Dispatched, int Failed, int
 public sealed class PlaybackEngine : IDisposable {
  readonly IKeyboardInput input; readonly object gate=new(); readonly Dictionary<string,int> active=new(StringComparer.OrdinalIgnoreCase);
  PlaybackEvent[] timelineEvents=Array.Empty<PlaybackEvent>(); int eventIndex;
+ double introSeconds;
  CancellationTokenSource? cancellation; Task? worker; PlaybackState state=PlaybackState.Idle; string? error; double speed=1,positionSeconds; long anchor; bool disposed,inputPausePending;
  int scheduled,dispatched,failed,late,cleanupFailures,focusLosses; double lateSum,maxLate; readonly int[] latenessHistogram=new int[2001];
  public PlaybackEngine(IKeyboardInput input)=>this.input=input ?? throw new ArgumentNullException(nameof(input));
  public PlaybackState State { get { lock(gate)return state; } } public string? Error { get { lock(gate)return error; } }
- public TimeSpan Position { get { lock(gate) { Advance(); return TimeSpan.FromSeconds(positionSeconds); } } }
+ public TimeSpan Position { get { lock(gate) { Advance(); return TimeSpan.FromSeconds(Math.Max(0,positionSeconds-introSeconds)); } } }
  public double Speed { get { lock(gate)return speed; } set { if(!double.IsFinite(value)||value<.5||value>2)throw new ArgumentOutOfRangeException(nameof(value)); lock(gate) { Advance(); speed=value; } } }
  public PlaybackDiagnostics Diagnostics { get { lock(gate) { int target=(int)Math.Ceiling(dispatched*.95),sum=0,p95=0; if(target>0) for(int i=0;i<latenessHistogram.Length;i++) { sum+=latenessHistogram[i]; if(sum>=target) { p95=i; break; } } return new(scheduled,dispatched,failed,late,dispatched==0?0:lateSum/dispatched,p95,maxLate,cleanupFailures,focusLosses); } } }
  void Advance() { long now=Stopwatch.GetTimestamp(); if(state==PlaybackState.Playing) positionSeconds+=(now-anchor)/(double)Stopwatch.Frequency*speed; anchor=now; }
@@ -38,16 +39,28 @@ public sealed class PlaybackEngine : IDisposable {
   lock(gate) {
    ObjectDisposedException.ThrowIf(disposed,this);
    if(state is not (PlaybackState.Playing or PlaybackState.Paused) || cancellation?.IsCancellationRequested!=false)throw new InvalidOperationException("No playback session is available to seek.");
-   if(position<TimeSpan.Zero || position>timelineEvents[^1].Time)throw new ArgumentOutOfRangeException(nameof(position));
+   if(position<TimeSpan.Zero || position.TotalSeconds+introSeconds>timelineEvents[^1].Time.TotalSeconds)throw new ArgumentOutOfRangeException(nameof(position));
    if(state==PlaybackState.Playing) { Advance(); state=PlaybackState.Paused; }
    try { Cleanup(); } catch { cancellation.Cancel(); throw; }
-   SetPosition(position); inputPausePending=false; error=null;
+   SetPosition(position+TimeSpan.FromSeconds(introSeconds)); inputPausePending=false; error=null;
   }
  }
- public void Start(MidiSong song,KeyboardMapping mapping,int octave=0,TimeSpan? startPosition=null) {
+ public void Start(MidiSong song,KeyboardMapping mapping,int octave=0,TimeSpan? startPosition=null,bool warmup=false) {
   var events=BuildEvents(song,mapping,octave); if(events.Length==0)throw new InvalidOperationException("The MIDI file contains no playable notes.");
   var start=startPosition ?? TimeSpan.Zero; if(start<TimeSpan.Zero || start>events[^1].Time)throw new ArgumentOutOfRangeException(nameof(startPosition));
-  lock(gate) { ObjectDisposedException.ThrowIf(disposed,this); if(worker is {IsCompleted:false})throw new InvalidOperationException("Playback is already running."); if(!input.IsTargetForeground)throw new InvalidOperationException("Select and focus the Roblox window first."); Cleanup(); cancellation?.Dispose(); cancellation=new(); timelineEvents=events; SetPosition(start); error=null;
+  double intro=0;
+  if(warmup && start==TimeSpan.Zero) {
+   var pitches=song.Notes.Select(n=>n.Pitch).Distinct().Order().ToArray();
+   if(pitches.Length>0) {
+    var notes=new List<MidiNote>(); double time=0;
+    for(int i=0;i<4;i++) { var pitch=pitches[Random.Shared.Next(pitches.Length)]; var length=0.12+Random.Shared.NextDouble()*0.10; notes.Add(new MidiNote(pitch,80,TimeSpan.FromSeconds(time),TimeSpan.FromSeconds(length),0)); time+=0.28+Random.Shared.NextDouble()*0.15; }
+    intro=time+0.25;
+    var preview=new MidiSong("Warm-up",new[]{new MidiTrack(0,notes)});
+    var prefix=BuildEvents(preview,mapping,octave);
+    events=prefix.Concat(events.Select(e=>e with { Time=e.Time+TimeSpan.FromSeconds(intro) })).ToArray();
+   }
+  }
+  lock(gate) { ObjectDisposedException.ThrowIf(disposed,this); if(worker is {IsCompleted:false})throw new InvalidOperationException("Playback is already running."); if(!input.IsTargetForeground)throw new InvalidOperationException("Select and focus the Roblox window first."); Cleanup(); cancellation?.Dispose(); cancellation=new(); timelineEvents=events; introSeconds=intro; SetPosition(start); error=null;
    try { foreach(var key in active.Keys) { if(!input.IsTargetForeground)throw new InvalidOperationException("Focus the selected Roblox window before starting."); input.Press(key); } }
    catch { try { Cleanup(); } finally { active.Clear(); } throw; }
    anchor=Stopwatch.GetTimestamp(); state=PlaybackState.Playing; scheduled=events.Length; dispatched=failed=late=cleanupFailures=focusLosses=0; lateSum=maxLate=0; Array.Clear(latenessHistogram); var token=cancellation.Token; worker=Task.Run(()=>Run(token)); }

@@ -13,6 +13,7 @@ namespace Keynote.App.Overlay
         public double ExpandedHeight { get; set; } = 440;
         public bool IsCompact { get; set; } = false;
         public bool IsPinned { get; set; } = true;
+        public bool WarmupEnabled { get; set; }
         public double GlassOpacity { get; set; } = 0.97;
 
         private static string SettingsFilePath

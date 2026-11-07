@@ -210,11 +210,16 @@ namespace Keynote.App.Overlay
                 if (SetField(ref _playbackSpeed, value))
                 {
                     OnPropertyChanged(nameof(SpeedText));
+                    OnPropertyChanged(nameof(SpeedControl));
                 }
             }
         }
 
         public string SpeedText => $"{_playbackSpeed:0.00}×";
+        public double SpeedControl {
+            get => PlaybackSpeed;
+            set { if (double.IsFinite(value) && value >= 0.5 && value <= 2 && Math.Abs(value - PlaybackSpeed) > 0.001) RequestSpeedChange?.Invoke(value); }
+        }
 
         // --- Target & Mapping ---
 
@@ -288,6 +293,11 @@ namespace Keynote.App.Overlay
                     _settings.Save();
                 }
             }
+        }
+
+        public bool WarmupEnabled {
+            get => _settings.WarmupEnabled;
+            set { if (_settings.WarmupEnabled != value) { _settings.WarmupEnabled = value; OnPropertyChanged(); _settings.Save(); } }
         }
 
         public double GlassOpacity

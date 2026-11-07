@@ -40,6 +40,17 @@ namespace Keynote.Overlay.Tests
     public class OverlayIntegrationTests
     {
         [Fact]
+        public void SpeedSliderDispatchesValidChanges()
+        {
+            var vm = new OverlayViewModel(new OverlaySettings());
+            double? requested = null;
+            vm.RequestSpeedChange = value => requested = value;
+            vm.SpeedControl = 1.35;
+            Assert.Equal(1.35, requested);
+            vm.SpeedControl = double.NaN;
+            Assert.Equal(1.35, requested);
+        }
+        [Fact]
         public void OverlayRoutesBrowseAndValidSectionRequests()
         {
             var vm = new OverlayViewModel(new OverlaySettings());

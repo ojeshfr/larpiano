@@ -325,6 +325,9 @@
                             <Path Fill="{StaticResource OverlayTextSecondaryBrush}" Data="M7,10L12,15L17,10H7Z" Stretch="Uniform" Width="10" Height="10" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
+                    <Slider Style="{StaticResource OverlayPlaybackSliderStyle}" Minimum="0.5" Maximum="2"
+                            Value="{Binding SpeedControl, Mode=TwoWay}" Width="100" VerticalAlignment="Center"
+                            ToolTip="Playback speed" AutomationProperties.Name="Playback speed" />
 
                 </StackPanel>
             </Grid>
@@ -519,6 +522,7 @@
                     </Button>
                 </DockPanel>
                 <TextBlock Text="Glass Surface Opacity" FontSize="11" Foreground="{StaticResource OverlayTextSecondaryBrush}" Margin="0,4,0,2" />
+                <CheckBox Content="Play a short random warm-up before songs" IsChecked="{Binding WarmupEnabled}" Foreground="{StaticResource OverlayTextPrimaryBrush}" Margin="0,0,0,8" ToolTip="Play four varied notes from the selected song before starting at the beginning." />
                 <Slider Style="{StaticResource OverlayPlaybackSliderStyle}"
                         Minimum="0.90" Maximum="1.0"
                         Value="{Binding GlassOpacity, Mode=TwoWay}"

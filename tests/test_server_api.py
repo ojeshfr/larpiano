@@ -1,0 +1,114 @@
+"""Integration tests for remapped_catalog HTTP Server with Admin & App Presence APIs."""
+
+import io
+import json
+import os
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+from urllib.parse import urlsplit
+
+import sys
+CATALOG_DIR = Path(__file__).resolve().parent.parent / "remapped_catalog"
+if str(CATALOG_DIR) not in sys.path:
+    sys.path.insert(0, str(CATALOG_DIR))
+
+import admin_api
+import server
+import storage
+
+
+class ServerApiIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        admin_api.DEV_DB_PATH = Path(self.temp_dir.name) / "test_server.db"
+        storage.LOCAL_ROOT = Path(self.temp_dir.name) / "storage"
+        admin_api.init_db_if_needed()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def make_handler(self, method, path, headers=None, body=None):
+        h = server.Handler.__new__(server.Handler)
+        h.path = path
+        h.command = method
+        h.headers = headers or {}
+        h.responses = []
+        h.wfile = io.BytesIO()
+        
+        body_bytes = b""
+        if body is not None:
+            if isinstance(body, dict):
+                body_bytes = json.dumps(body).encode("utf-8")
+                h.headers["Content-Type"] = "application/json"
+            elif isinstance(body, bytes):
+                body_bytes = body
+            h.headers["Content-Length"] = str(len(body_bytes))
+        
+        h.rfile = io.BytesIO(body_bytes)
+        h.send_response = lambda code: h.responses.append(("status", code))
+        h.send_header = lambda k, v: h.responses.append((k, v))
+        h.end_headers = lambda: None
+        return h
+
+    def test_app_heartbeat_api(self):
+        h = self.make_handler("POST", "/api/app/sessions/heartbeat", body={
+            "session_identifier": "desktop-client-integration-1",
+            "app_version": "v1.1.0-beta.1",
+            "status": "playing"
+        })
+        self.assertTrue(h.serve_api(method="POST"))
+        self.assertIn(("status", 200), h.responses)
+        res = json.loads(h.wfile.getvalue())
+        self.assertEqual(res["status"], "ok")
+        self.assertEqual(res["heartbeat_interval_sec"], 45)
+
+    def test_admin_auth_and_overview(self):
+        # 1. Without auth -> 401
+        h_unauth = self.make_handler("GET", "/api/admin/overview")
+        self.assertTrue(h_unauth.serve_api(method="GET"))
+        self.assertIn(("status", 401), h_unauth.responses)
+
+        # 2. Login with master admin token
+        h_login = self.make_handler("POST", "/api/admin/auth/login", body={
+            "token": "larpiano-admin-secret-key-ojesh-2026"
+        })
+        self.assertTrue(h_login.serve_api(method="POST"))
+        self.assertIn(("status", 200), h_login.responses)
+        login_res = json.loads(h_login.wfile.getvalue())
+        self.assertIn("token", login_res)
+        token = login_res["token"]
+
+        # 3. Overview with Bearer token -> 200
+        h_overview = self.make_handler("GET", "/api/admin/overview", headers={
+            "Authorization": f"Bearer {token}"
+        })
+        self.assertTrue(h_overview.serve_api(method="GET"))
+        self.assertIn(("status", 200), h_overview.responses)
+        overview_res = json.loads(h_overview.wfile.getvalue())
+        self.assertIn("metrics", overview_res)
+        self.assertIn("live_activity_24h", overview_res)
+
+    def test_admin_announcements_crud(self):
+        token = "larpiano-admin-secret-key-ojesh-2026"
+        # Create
+        h_create = self.make_handler("POST", "/api/admin/announcements", headers={"Authorization": f"Bearer {token}"}, body={
+            "title": "Fleet Update v1.1",
+            "message": "Testing announcement delivery",
+            "status": "published"
+        })
+        self.assertTrue(h_create.serve_api(method="POST"))
+        self.assertIn(("status", 201), h_create.responses)
+        ann = json.loads(h_create.wfile.getvalue())
+
+        # List via app API (public to client)
+        h_app = self.make_handler("GET", "/api/app/announcements")
+        self.assertTrue(h_app.serve_api(method="GET"))
+        self.assertIn(("status", 200), h_app.responses)
+        app_list = json.loads(h_app.wfile.getvalue())
+        self.assertTrue(any(a["id"] == ann["id"] for a in app_list))
+
+
+if __name__ == "__main__":
+    unittest.main()

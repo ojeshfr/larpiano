@@ -1,24 +1,31 @@
-"""Read-only public catalogue and static website for the Portways deployment."""
+"""Read-only public catalogue, admin control center API, and static website for Portways."""
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
 import logging
 import math
+import mimetypes
 import os
 from pathlib import Path
 import re
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
+
+import admin_api
+import storage
 
 ROOT = Path(__file__).resolve().parent
 WEB_ROOT = Path(os.environ.get("WEB_ROOT", ROOT.parent / "website")).resolve()
+ADMIN_ROOT = Path(os.environ.get("ADMIN_ROOT", ROOT.parent / "admin-preview")).resolve()
 SEED_ROOT = ROOT / "seed"
 MAX_MIDI_BYTES = 10 * 1024 * 1024
 MAX_MANIFEST_BYTES = 1024 * 1024
+MAX_JSON_BYTES = 1024 * 1024
 MAX_ENTRIES = 1000
 DIGEST = re.compile(r"^[0-9a-f]{64}$")
 FIELDS = ("sha256", "title", "artist", "source", "license", "profile", "octave",
@@ -182,6 +189,17 @@ class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         log.info("%s %s", self.address_string(), fmt % args)
 
+    def read_json_body(self) -> dict:
+        content_length = int(self.headers.get("Content-Length", 0))
+        if content_length <= 0:
+            return {}
+        if content_length > MAX_JSON_BYTES:
+            raise ValueError("Payload exceeds limit")
+        raw = self.rfile.read(content_length)
+        if not raw:
+            return {}
+        return json.loads(raw.decode("utf-8"))
+
     def send_json(self, status: int, payload, head: bool = False):
         content = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
         if len(content) > 4 * 1024 * 1024:
@@ -189,15 +207,33 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(content)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS, HEAD")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         if not head:
             self.wfile.write(content)
 
-    def serve_api(self, head=False):
-        path = urlsplit(self.path).path
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS, HEAD")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        self.send_header("Access-Control-Max-Age", "86400")
+        self.end_headers()
+
+    def serve_api(self, method="GET", head=False):
+        parsed = urlsplit(self.path)
+        path = parsed.path
+        qs = parse_qs(parsed.query)
+
+        # 1. Existing Private Catalogue
         if path == "/api/private/songs" or path.startswith("/api/private/songs/"):
+            if method != "GET":
+                self.send_json(405, {"error": "Method not allowed"}, head)
+                return True
             if not private_authorized(self.headers.get("Authorization", "")):
                 self.send_json(401, {"error": "Invalid access code"}, head)
                 return True
@@ -225,15 +261,19 @@ class Handler(SimpleHTTPRequestHandler):
                 log.error("Private catalogue unavailable (%s)", type(exc).__name__)
                 self.send_json(503, {"error": "Private catalogue unavailable"}, head)
             return True
-        if path == "/api/remapped/songs":
+
+        # 2. Existing Remapped Catalogue List
+        if path == "/api/remapped/songs" and method == "GET":
             try:
                 self.send_json(200, list_songs(), head)
             except Exception as exc:
                 log.error("Catalogue unavailable (%s)", type(exc).__name__)
                 self.send_json(503, {"error": "Catalogue temporarily unavailable"}, head)
             return True
+
+        # 3. Existing Remapped Song Download
         prefix = "/api/remapped/songs/"
-        if path.startswith(prefix):
+        if path.startswith(prefix) and method == "GET":
             match = re.fullmatch(r"([0-9a-f]{64})/midi", path[len(prefix):])
             if not match:
                 self.send_json(404, {"error": "Not found"}, head)
@@ -256,9 +296,219 @@ class Handler(SimpleHTTPRequestHandler):
                 log.error("MIDI unavailable (%s)", type(exc).__name__)
                 self.send_json(503, {"error": "Song temporarily unavailable"}, head)
             return True
+
+        # --- App Client Presence & Telemetry Endpoints ---
+        if path == "/api/app/sessions/heartbeat" and method == "POST":
+            try:
+                body = self.read_json_body()
+                self.send_json(200, admin_api.handle_heartbeat(body), head)
+            except Exception as e:
+                self.send_json(400, {"error": str(e)}, head)
+            return True
+
+        if path == "/api/app/sessions/end" and method == "POST":
+            try:
+                body = self.read_json_body()
+                self.send_json(200, admin_api.handle_session_end(body), head)
+            except Exception as e:
+                self.send_json(400, {"error": str(e)}, head)
+            return True
+
+        if path == "/api/app/announcements" and method == "GET":
+            self.send_json(200, admin_api.get_app_announcements(), head)
+            return True
+
+        if path == "/api/app/playground/events" and method == "GET":
+            user_id = qs.get("user_id", [None])[0]
+            self.send_json(200, admin_api.get_app_playground_events(user_id), head)
+            return True
+
+        match_dismiss = re.fullmatch(r"/api/app/playground/events/([^/]+)/dismiss", path)
+        if match_dismiss and method == "POST":
+            self.send_json(200, admin_api.dismiss_playground_event(match_dismiss.group(1)), head)
+            return True
+
+        if path == "/api/app/preferences" and method == "POST":
+            try:
+                body = self.read_json_body()
+                user_id = body.get("user_id") or "guest"
+                self.send_json(200, admin_api.update_user_preferences(user_id, body), head)
+            except Exception as e:
+                self.send_json(400, {"error": str(e)}, head)
+            return True
+
+        # --- Admin Endpoints ---
+        if path == "/api/admin/auth/login" and method == "POST":
+            try:
+                body = self.read_json_body()
+                self.send_json(200, admin_api.admin_login(body), head)
+            except PermissionError as e:
+                self.send_json(401, {"error": str(e)}, head)
+            except Exception as e:
+                self.send_json(400, {"error": str(e)}, head)
+            return True
+
+        # Storage download can be accessed with valid key
+        if path == "/api/admin/storage/download" and method == "GET":
+            key = qs.get("key", [""])[0]
+            if not key:
+                self.send_json(400, {"error": "Missing key"}, head)
+                return True
+            try:
+                data, content_type, digest = storage.get_object(key)
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("ETag", f'"{digest}"')
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "private, max-age=3600")
+                self.end_headers()
+                if not head:
+                    self.wfile.write(data)
+            except FileNotFoundError:
+                self.send_json(404, {"error": "Object not found"}, head)
+            except PermissionError:
+                self.send_json(403, {"error": "Access denied"}, head)
+            except Exception as e:
+                self.send_json(500, {"error": str(e)}, head)
+            return True
+
+        # All other /api/admin/* endpoints require administrator authentication
+        if path.startswith("/api/admin/"):
+            admin_user = admin_api.verify_admin_token(self.headers.get("Authorization"))
+            if not admin_user:
+                self.send_json(401, {"error": "Unauthorized"}, head)
+                return True
+
+            if path == "/api/admin/auth/me" and method == "GET":
+                self.send_json(200, {"user": admin_user}, head)
+                return True
+
+            if path == "/api/admin/auth/logout" and method == "POST":
+                self.send_json(200, {"status": "ok"}, head)
+                return True
+
+            if path == "/api/admin/overview" and method == "GET":
+                self.send_json(200, admin_api.get_admin_overview(), head)
+                return True
+
+            if path == "/api/admin/users" and method == "GET":
+                search = qs.get("search", [""])[0]
+                status = qs.get("status", [""])[0]
+                role = qs.get("role", [""])[0]
+                limit = int(qs.get("limit", [50])[0])
+                offset = int(qs.get("offset", [0])[0])
+                self.send_json(200, admin_api.get_admin_users(search, status, role, limit, offset), head)
+                return True
+
+            if path == "/api/admin/users" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    self.send_json(201, admin_api.create_admin_user(body, admin_user["id"]), head)
+                except Exception as e:
+                    self.send_json(400, {"error": str(e)}, head)
+                return True
+
+            match_user = re.fullmatch(r"/api/admin/users/([^/]+)", path)
+            if match_user and method == "PATCH":
+                try:
+                    body = self.read_json_body()
+                    self.send_json(200, admin_api.update_admin_user(match_user.group(1), body, admin_user["id"]), head)
+                except Exception as e:
+                    self.send_json(400, {"error": str(e)}, head)
+                return True
+
+            if path == "/api/admin/sessions" and method == "GET":
+                status = qs.get("status", ["all"])[0]
+                limit = int(qs.get("limit", [50])[0])
+                offset = int(qs.get("offset", [0])[0])
+                self.send_json(200, admin_api.get_admin_sessions(status, limit, offset), head)
+                return True
+
+            match_sess_term = re.fullmatch(r"/api/admin/sessions/([^/]+)/terminate", path)
+            if match_sess_term and method == "POST":
+                self.send_json(200, admin_api.terminate_session(match_sess_term.group(1), admin_user["id"]), head)
+                return True
+
+            if path == "/api/admin/analytics" and method == "GET":
+                self.send_json(200, admin_api.get_admin_overview()["metrics"], head)
+                return True
+
+            if path == "/api/admin/announcements" and method == "GET":
+                self.send_json(200, admin_api.get_admin_announcements(), head)
+                return True
+
+            if path == "/api/admin/announcements" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    self.send_json(201, admin_api.create_announcement(body, admin_user["id"]), head)
+                except Exception as e:
+                    self.send_json(400, {"error": str(e)}, head)
+                return True
+
+            match_ann = re.fullmatch(r"/api/admin/announcements/([^/]+)", path)
+            if match_ann:
+                if method == "PATCH":
+                    try:
+                        body = self.read_json_body()
+                        self.send_json(200, admin_api.update_announcement(match_ann.group(1), body, admin_user["id"]), head)
+                    except Exception as e:
+                        self.send_json(400, {"error": str(e)}, head)
+                    return True
+                elif method == "DELETE":
+                    self.send_json(200, admin_api.delete_announcement(match_ann.group(1), admin_user["id"]), head)
+                    return True
+
+            if path == "/api/admin/releases" and method == "GET":
+                self.send_json(200, admin_api.get_releases_cached(), head)
+                return True
+
+            if path == "/api/admin/playground/trigger" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    self.send_json(200, admin_api.trigger_playground_effect(body, admin_user["id"]), head)
+                except Exception as e:
+                    self.send_json(400, {"error": str(e)}, head)
+                return True
+
+            if path == "/api/admin/audit" and method == "GET":
+                limit = int(qs.get("limit", [50])[0])
+                offset = int(qs.get("offset", [0])[0])
+                self.send_json(200, admin_api.get_audit_logs(limit, offset), head)
+                return True
+
+            if path == "/api/admin/storage/upload" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    prefix = body.get("prefix", "admin/announcements/")
+                    filename = body.get("filename", "upload.png")
+                    content_type = body.get("content_type", "image/png")
+                    data_b64 = body.get("data_base64", "")
+                    raw_data = base64.b64decode(data_b64)
+                    res = storage.put_object(prefix, filename, raw_data, content_type)
+                    admin_api.audit_log(admin_user["id"], "STORAGE_UPLOAD", "storage", res["key"], {"size": res["size"], "sha256": res["sha256"]})
+                    self.send_json(201, res, head)
+                except Exception as e:
+                    self.send_json(400, {"error": str(e)}, head)
+                return True
+
+            if path == "/api/admin/storage/export" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    export_type = body.get("type", "users")
+                    res = admin_api.export_admin_data(export_type, admin_user["id"])
+                    self.send_json(200, res, head)
+                except Exception as e:
+                    self.send_json(400, {"error": str(e)}, head)
+                return True
+
+            self.send_json(404, {"error": "Admin endpoint not found"}, head)
+            return True
+
         if path.startswith("/api/"):
             self.send_json(404, {"error": "Not found"}, head)
             return True
+
         return False
 
     def safe_static(self):
@@ -268,23 +518,78 @@ class Handler(SimpleHTTPRequestHandler):
         parts = path.split("/")
         if any(part in ("..", ".") or part.startswith(".") for part in parts if part):
             return False
+        if path == "/admin" or path.startswith("/admin/"):
+            sub = path.removeprefix("/admin").lstrip("/")
+            target = (ADMIN_ROOT / sub).resolve() if sub else (ADMIN_ROOT / "index.html")
+            return target.is_relative_to(ADMIN_ROOT)
         return (WEB_ROOT / path.lstrip("/")).resolve().is_relative_to(WEB_ROOT)
 
+    def serve_admin_static(self, head: bool = False):
+        path = unquote(urlsplit(self.path).path)
+        sub = path.removeprefix("/admin").lstrip("/")
+        target = (ADMIN_ROOT / sub).resolve() if sub else (ADMIN_ROOT / "index.html")
+        if not target.is_file():
+            target = ADMIN_ROOT / "index.html"
+        if not target.is_file():
+            self.send_error(404)
+            return
+
+        content_type, _ = mimetypes.guess_type(str(target))
+        if not content_type:
+            content_type = "text/html" if target.suffix == ".html" else "application/octet-stream"
+        if target.suffix == ".js":
+            content_type = "application/javascript"
+        elif target.suffix == ".css":
+            content_type = "text/css"
+
+        data = target.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Cache-Control", "no-cache" if target.suffix in (".html", ".js", ".css") else "max-age=86400")
+        self.end_headers()
+        if not head:
+            self.wfile.write(data)
+
     def do_GET(self):
-        if self.serve_api():
+        if self.serve_api(method="GET"):
             return
         if not self.safe_static():
             self.send_error(404)
+            return
+        path = unquote(urlsplit(self.path).path)
+        if path == "/admin" or path.startswith("/admin/"):
+            self.serve_admin_static(head=False)
             return
         super().do_GET()
 
     def do_HEAD(self):
-        if self.serve_api(head=True):
+        if self.serve_api(method="GET", head=True):
             return
         if not self.safe_static():
             self.send_error(404)
             return
+        path = unquote(urlsplit(self.path).path)
+        if path == "/admin" or path.startswith("/admin/"):
+            self.serve_admin_static(head=True)
+            return
         super().do_HEAD()
+
+    def do_POST(self):
+        if self.serve_api(method="POST"):
+            return
+        self.send_json(404, {"error": "Not found"})
+
+    def do_PATCH(self):
+        if self.serve_api(method="PATCH"):
+            return
+        self.send_json(404, {"error": "Not found"})
+
+    def do_DELETE(self):
+        if self.serve_api(method="DELETE"):
+            return
+        self.send_json(404, {"error": "Not found"})
 
     def list_directory(self, path):
         self.send_error(404)

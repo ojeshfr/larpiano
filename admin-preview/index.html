@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Larpiano Control Center — Admin Preview</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+
+  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- CSS Design Tokens, Layout & Components -->
+  <link rel="stylesheet" href="css/tokens.css?v=4.1.0" />
+  <link rel="stylesheet" href="css/layout.css?v=4.1.0" />
+  <link rel="stylesheet" href="css/components.css?v=4.1.0" />
+  <link rel="stylesheet" href="css/pages.css?v=4.1.0" />
+</head>
+<body>
+
+  <!-- Top Demo Data Indicator Banner -->
+  <header class="demo-banner">
+    <div class="demo-banner-left">
+      <span class="demo-tag">DEMO DATA</span>
+      <span class="demo-banner-text">Admin Prototype · Simulated accounts &amp; metrics</span>
+    </div>
+    <div class="demo-banner-right">
+      <span>Offline Sandbox · Zero production telemetry</span>
+    </div>
+  </header>
+
+  <!-- Main Application Frame -->
+  <div class="app-layout">
+
+    <!-- Left Navigation Rail -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <!-- Brand Block -->
+      <a href="#/overview" class="sidebar-brand">
+        <img src="assets/logo.svg" alt="Larpiano" class="sidebar-logo-icon" />
+        <div class="sidebar-brand-text">
+          <span class="brand-name">larpiano</span>
+          <span class="brand-desc">· admin</span>
+        </div>
+      </a>
+
+      <!-- Primary Navigation -->
+      <nav class="sidebar-nav-container">
+        <!-- 1. Overview -->
+        <a href="#/overview" class="nav-item active" data-route="overview">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>
+            </svg>
+          </span>
+          <span class="nav-label">Overview</span>
+        </a>
+
+        <!-- 2. Users -->
+        <a href="#/users" class="nav-item" data-route="users">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <span class="nav-label">Users</span>
+        </a>
+
+        <!-- 3. Live Sessions -->
+        <a href="#/sessions" class="nav-item" data-route="sessions">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </span>
+          <span class="nav-label">Live Sessions</span>
+          <span class="nav-badge" style="color: var(--success); font-size: 10px;">● 8</span>
+        </a>
+
+        <!-- 4. Analytics -->
+        <a href="#/analytics" class="nav-item" data-route="analytics">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </span>
+          <span class="nav-label">Analytics</span>
+        </a>
+
+        <!-- 5. Announcements -->
+        <a href="#/announcements" class="nav-item" data-route="announcements">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </span>
+          <span class="nav-label">Announcements</span>
+        </a>
+
+        <!-- 6. Releases -->
+        <a href="#/releases" class="nav-item" data-route="releases">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+            </svg>
+          </span>
+          <span class="nav-label">Releases</span>
+        </a>
+
+        <!-- 7. Playground -->
+        <a href="#/playground" class="nav-item" data-route="playground">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Playground</span>
+        </a>
+
+        <!-- Divider -->
+        <div class="sidebar-divider"></div>
+
+        <!-- 8. Audit Log -->
+        <a href="#/audit" class="nav-item" data-route="audit">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </span>
+          <span class="nav-label">Audit Log</span>
+        </a>
+
+        <!-- 9. Settings -->
+        <a href="#/settings" class="nav-item" data-route="settings">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <span class="nav-label">Settings</span>
+        </a>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <footer class="sidebar-footer">
+        <div class="sidebar-version">
+          <span class="status-dot"></span>
+          <span>v1.1.0-beta.1</span>
+        </div>
+        <span style="font-size: 10px; color: var(--subtle); text-transform: uppercase; letter-spacing: 0.05em;">Admin</span>
+      </footer>
+    </aside>
+
+    <!-- Main Content Region -->
+    <main class="app-main">
+      <!-- Top Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button id="mobile-menu-toggle" class="mobile-nav-toggle" aria-label="Toggle Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="21"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="header-breadcrumb" id="header-breadcrumb">Overview</div>
+        </div>
+
+        <div class="header-right">
+          <!-- Search Field Trigger -->
+          <div class="header-search" id="header-search-bar" role="button" tabindex="0">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span class="search-placeholder">Search (Ctrl K)</span>
+            <span class="search-shortcut">⌘K</span>
+          </div>
+
+          <!-- Notification Bell -->
+          <div style="position: relative;">
+            <button class="header-btn" id="header-notif-btn" aria-label="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              <span class="notification-badge"></span>
+            </button>
+
+            <!-- Notification Popover -->
+            <div class="popover-menu" id="notif-popover" style="width: 300px; padding: 0;">
+              <div style="padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text); display: flex; justify-content: space-between;">
+                <span>Notifications (Demo)</span>
+                <span style="color: var(--accent-soft);">3 new</span>
+              </div>
+              <div id="notif-list"></div>
+            </div>
+          </div>
+
+          <!-- Admin Profile Pill -->
+          <div style="position: relative;">
+            <button class="header-profile-btn" id="header-profile-btn">
+              <div class="profile-avatar">O</div>
+              <span class="profile-name">ojesh</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--subtle);"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+
+            <!-- Profile Popover -->
+            <div class="popover-menu" id="profile-popover">
+              <div style="padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 4px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text);">ojesh (Owner)</div>
+                <div style="font-size: 11px; color: var(--subtle);">admin@larpiano.internal</div>
+              </div>
+              <div class="popover-item" id="profile-action-settings">
+                <span>⚙️</span> Control Center Settings
+              </div>
+              <div class="popover-item" id="profile-action-signout" style="color: var(--danger);">
+                <span>🚪</span> Sign out (Demo)
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Scrollable Page Container -->
+      <section class="app-viewport" id="page-viewport">
+        <!-- Rendered by active page module -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Mobile Backdrop -->
+  <div class="app-backdrop" id="app-backdrop"></div>
+
+  <!-- Slide-Over User Detail Drawer -->
+  <div class="drawer" id="user-drawer">
+    <div class="drawer-header">
+      <h3 style="font-size: var(--text-md); font-weight: 600; color: var(--text);">User Details</h3>
+      <button class="btn btn-ghost btn-icon" id="drawer-close-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-user-content">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+  <div class="app-backdrop" id="drawer-backdrop"></div>
+
+  <!-- Announcement Composer Modal -->
+  <div class="modal-overlay" id="announcement-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: var(--text-md); font-weight: 600; color: var(--text);">Compose Announcement</h3>
+        <button class="btn btn-ghost btn-icon" id="modal-anc-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Announcement Title</label>
+          <input type="text" id="anc-input-title" class="form-input" placeholder="e.g. v1.1.0-beta.2 is now available" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Audience Target</label>
+          <select id="anc-select-audience" class="form-select">
+            <option value="Global">Global (All clients)</option>
+            <option value="Beta testers">Beta testers</option>
+            <option value="Selected opt-in group">Selected opt-in group</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message Content (Safe plain text)</label>
+          <textarea id="anc-input-msg" class="form-textarea" placeholder="Write release notes or maintenance notice here..."></textarea>
+        </div>
+
+        <!-- Real-time Live Preview -->
+        <div class="announcement-preview-box">
+          <div class="announcement-preview-header">In-App Live Preview</div>
+          <div style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px;" id="preview-anc-title">Announcement Title</div>
+          <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;" id="preview-anc-msg">Announcement message content will appear here...</div>
+          <div style="font-size: 10px; color: var(--subtle);">Target: <span id="preview-anc-aud" style="color: var(--accent-soft);">Global</span> · Safe rendering preview</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="modal-anc-cancel-btn">Cancel</button>
+        <button class="btn btn-secondary" id="modal-anc-save-draft">Save Draft</button>
+        <button class="btn btn-primary" id="modal-anc-publish">Publish (Preview)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Release Notes & Draft Modal -->
+  <div class="modal-overlay" id="release-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-rel-title" style="font-size: var(--text-md); font-weight: 600; color: var(--text);">Release Details</h3>
+        <button class="btn btn-ghost btn-icon" id="modal-rel-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-rel-body">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-rel-done-btn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Command Palette / Global Search Modal (Ctrl + K) -->
+  <div class="modal-overlay" id="search-modal">
+    <div class="modal-card" style="max-width: 520px;">
+      <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-soft);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-modal-input" placeholder="Type a page, user, or action..." style="flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 15px; font-family: var(--font-sans);" />
+        <button class="btn btn-ghost btn-icon" id="search-modal-close" style="width: 24px; height: 24px; font-size: 12px;">✕</button>
+      </div>
+      <div id="search-modal-results" style="max-height: 340px; overflow-y: auto; padding: 8px;">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Celebration Particles Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- ES Module Application Coordinator -->
+  <script type="module" src="js/app.js?v=4.1.0"></script>
+</body>
+</html>

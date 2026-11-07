@@ -1,0 +1,93 @@
+/* ==========================================================================
+   LARPIANO CONTROL CENTER — DESIGN TOKENS
+   Modern, Precision Audio/Gaming Admin System
+   ========================================================================== */
+
+:root {
+  /* Color Palette — Deep OLED & Refined Charcoal */
+  --bg: #09090D;             /* Main page background */
+  --sidebar: #0C0C11;        /* Navigation rail */
+  --surface: #121118;        /* Main cards and table surfaces */
+  --surface-raised: #181622; /* Hovered / elevated cards */
+  --surface-soft: #1E1C29;   /* Inputs, badges, secondary blocks */
+  --surface-active: #252233; /* Active/pressed row state */
+  --border: rgba(255, 255, 255, 0.08); /* Crisp modern border */
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-focus: #8B5CF6;
+  --border-accent: rgba(167, 139, 250, 0.28);
+
+  /* Text & Content */
+  --text: #F3F1F8;           /* Primary text */
+  --muted: #A39EB2;          /* Secondary supporting text */
+  --subtle: #736E82;         /* Quiet timestamps & metadata */
+
+  /* Lavender / Violet Accents */
+  --accent: #A78BFA;         /* Primary accent */
+  --accent-soft: #C4B5FD;    /* High-contrast lavender */
+  --accent-deep: #7C3AED;    /* Deep purple */
+  --accent-glow: rgba(167, 139, 250, 0.18);
+  --accent-tint: rgba(167, 139, 250, 0.10);
+
+  /* Status Colors */
+  --success: #34D399;        /* Online / playing */
+  --success-bg: rgba(52, 211, 153, 0.12);
+  --warning: #FBBF24;        /* Idle / scheduled */
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --danger: #F87171;         /* Suspended / error */
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --offline: #6B7280;        /* Offline */
+
+  /* Typography — Clean, Bold, Modern Sans */
+  --font-display: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: "Plus Jakarta Sans", "Inter", sans-serif; /* Replaced spindly serif with modern display */
+  --font-sans: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Type Scale */
+  --text-xs: 0.75rem;       /* 12px */
+  --text-sm: 0.8125rem;     /* 13px */
+  --text-base: 0.875rem;    /* 14px */
+  --text-md: 0.9375rem;     /* 15px */
+  --text-lg: 1.125rem;      /* 18px */
+  --text-xl: 1.375rem;      /* 22px */
+  --text-2xl: 1.75rem;      /* 28px */
+  --text-3xl: 2.125rem;     /* 34px */
+  --text-hero: 2.5rem;      /* 40px */
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;       /* 4px */
+  --space-2: 0.5rem;        /* 8px */
+  --space-3: 0.75rem;       /* 12px */
+  --space-4: 1rem;          /* 16px */
+  --space-5: 1.25rem;       /* 20px */
+  --space-6: 1.5rem;        /* 24px */
+  --space-8: 2rem;          /* 32px */
+  --space-10: 2.5rem;       /* 40px */
+
+  /* Geometry & Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Dimensions */
+  --sidebar-width: 232px;
+  --header-height: 56px;
+  --content-max-width: 1440px;
+
+  /* Transitions */
+  --transition-fast: 140ms ease;
+  --transition-normal: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Compact mode */
+body.density-compact {
+  --space-4: 0.75rem;
+  --space-5: 1rem;
+  --space-6: 1.25rem;
+  --space-8: 1.5rem;
+  --text-base: 0.8125rem;
+}

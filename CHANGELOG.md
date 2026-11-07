@@ -2,6 +2,27 @@
 
 All notable changes to **larpiano** will be documented in this file.
 
+## [1.0.34] — 2026-11-08
+
+### Added
+- **Continuous Background Auto-Detection:** Periodic background scanning that automatically detects and binds to Roblox as soon as it launches or reconnects.
+- **Robust Multi-Channel Roblox Identification:** Support for process name matching, window class `WINDOWSCLIENT`, and window title checks without elevated permissions.
+- **Multi-Instance Window Cycling:** Interactive target window card in the overlay supporting 1-click re-scan and cycling between multiple Roblox instances.
+- **Compact View Target Focus Indicator:** Real-time status dot in the compact pill bar showing Roblox window foreground state.
+- **Enhanced Foreground Accuracy:** Win32 root window ancestor traversal preventing focus drops when interacting with inner game UI.
+
+## [1.0.33] — 2026-11-07
+- Fix overlay menu and song selection.
+
+## [1.0.32] — 2026-11-07
+- Add optional warm-up and overlay tempo slider.
+
+## [1.0.31] — 2026-11-07
+- Add MIDI browsing and app navigation to overlay.
+
+## [1.0.30] — 2026-11-07
+- Add library song selector to overlay.
+
 ## [1.0.29] — 2026-11-08
 
 ### Added

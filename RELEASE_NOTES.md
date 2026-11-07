@@ -1,6 +1,6 @@
-# larpiano v1.0.34 — Release Notes
+# larpiano v1.0.35 — Release Notes
 
-Welcome to **larpiano v1.0.34** — *from da people who LARP, for da people who LARP*.
+Welcome to **larpiano v1.0.35** — *from da people who LARP, for da people who LARP*.
 
 This milestone introduces a complete visual reconstruction of the desktop application, full authentic brand restoration, and a native non-activating floating overlay designed specifically for distraction-free piano playback in Roblox.
 

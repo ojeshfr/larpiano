@@ -355,8 +355,8 @@ namespace Keynote.App.Overlay
 
             if (engine != null)
             {
+                SetField(ref _playbackError, engine.Error, nameof(PlaybackStateText));
                 PlaybackState = engine.State;
-                _playbackError = engine.Error;
                 CurrentPosition = engine.Position > duration && duration > TimeSpan.Zero ? duration : engine.Position;
                 PlaybackSpeed = engine.Speed;
                 _diagnostics = engine.Diagnostics;

@@ -198,6 +198,31 @@ namespace Keynote.Overlay.Tests
         }
 
         [Fact]
+        public void ViewModel_NotifiesWhenPausedPlaybackErrorChanges()
+        {
+            var vm = new OverlayViewModel(new OverlaySettings());
+            var input = new FakeKeyboardInput();
+            using var engine = new PlaybackEngine(input);
+            var song = CreateSampleSong();
+            var mapping = CreateDefaultMapping();
+            var hotkeys = new HotkeyPreferences(HotkeyModifiers.Control | HotkeyModifiers.Alt, 8, 9);
+            engine.Start(song, mapping);
+            engine.Pause();
+            vm.SynchronizeState(song, song.Duration, engine, null!, mapping, 0, hotkeys, null);
+            Assert.Equal("Paused", vm.PlaybackStateText);
+
+            var notifications = new List<string?>();
+            vm.PropertyChanged += (_, e) => notifications.Add(e.PropertyName);
+            input.IsTargetForeground = false;
+            engine.Resume();
+            vm.SynchronizeState(song, song.Duration, engine, null!, mapping, 0, hotkeys, null);
+
+            Assert.Equal(PlaybackState.Paused, vm.PlaybackState);
+            Assert.Contains("Focus", vm.PlaybackStateText);
+            Assert.Contains(nameof(vm.PlaybackStateText), notifications);
+        }
+
+        [Fact]
         public void ViewModel_StateSynchronization_RobloxWindowTarget()
         {
             var settings = new OverlaySettings();

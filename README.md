@@ -23,7 +23,7 @@ GitHub Releases: https://github.com/ojeshfrrr/larpiano/releases
 
 Download the self-contained Windows x64 ZIP from [GitHub Releases](https://github.com/ojeshfrrr/larpiano/releases/latest):
 
-1. Download `larpiano-windows-x64.zip` from [v1.0.34 Release](https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.34).
+1. Download `larpiano-windows-x64.zip` from [v1.0.35 Release](https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35).
 2. Extract the archive to any folder.
 3. Run `Keynote.App.exe`. No separate .NET runtime installation is required.
 

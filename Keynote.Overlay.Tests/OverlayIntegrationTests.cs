@@ -9,6 +9,7 @@ using Keynote.Core;
 using Keynote.Infrastructure;
 using Keynote.Input;
 using Keynote.Playback;
+using Keynote.Online;
 using Xunit;
 
 namespace Keynote.Overlay.Tests
@@ -38,6 +39,20 @@ namespace Keynote.Overlay.Tests
     [Collection("STA")]
     public class OverlayIntegrationTests
     {
+        [Fact]
+        public void OverlaySongSelectionDispatchesOnlyUserChanges()
+        {
+            var vm = new OverlayViewModel(new OverlaySettings());
+            var first = new LibraryEntry(new string('a',64), "First", "Artist", "Local", "", "", DateTimeOffset.UtcNow);
+            var second = new LibraryEntry(new string('b',64), "Second", "Artist", "Local", "", "", DateTimeOffset.UtcNow);
+            LibraryEntry? requested = null;
+            vm.RequestSelectSong = entry => requested = entry;
+            vm.SynchronizeLibrary(new[] { first, second }, first);
+            Assert.Null(requested);
+            Assert.Equal(first, vm.SelectedLibrarySong);
+            vm.SelectedLibrarySong = second;
+            Assert.Equal(second, requested);
+        }
         private static void RunInSta(Action action)
         {
             Exception? exception = null;

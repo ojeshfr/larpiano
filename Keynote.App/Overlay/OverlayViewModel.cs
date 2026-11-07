@@ -7,6 +7,7 @@ using Keynote.Core;
 using Keynote.Infrastructure;
 using Keynote.Input;
 using Keynote.Playback;
+using Keynote.Online;
 
 namespace Keynote.App.Overlay
 {
@@ -55,6 +56,18 @@ namespace Keynote.App.Overlay
         public Action<double>? RequestSpeedChange { get; set; }
         public Action? RequestOpenMappingTab { get; set; }
         public Action? RequestOpenDiagnosticsTab { get; set; }
+        public Action<LibraryEntry>? RequestSelectSong { get; set; }
+        private IReadOnlyList<LibraryEntry> _librarySongs = Array.Empty<LibraryEntry>();
+        private LibraryEntry? _selectedLibrarySong;
+        public IReadOnlyList<LibraryEntry> LibrarySongs => _librarySongs;
+        public LibraryEntry? SelectedLibrarySong {
+            get => _selectedLibrarySong;
+            set { if (SetField(ref _selectedLibrarySong, value) && value != null) RequestSelectSong?.Invoke(value); }
+        }
+        public void SynchronizeLibrary(IReadOnlyList<LibraryEntry> songs, LibraryEntry? selected) {
+            if (!ReferenceEquals(_librarySongs, songs)) { _librarySongs = songs; OnPropertyChanged(nameof(LibrarySongs)); }
+            SetField(ref _selectedLibrarySong, selected, nameof(SelectedLibrarySong));
+        }
 
         public OverlayViewModel(OverlaySettings settings)
         {

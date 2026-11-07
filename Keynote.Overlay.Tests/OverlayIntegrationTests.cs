@@ -607,7 +607,9 @@ namespace Keynote.Overlay.Tests
                 var vm = new OverlayViewModel(new OverlaySettings());
                 view.DataContext = vm;
                 var roblox = new RobloxWindow(new IntPtr(9876), "Roblox: Meet People", 4321);
-                vm.SynchronizeState(null, TimeSpan.Zero, null, null, null, 0, new HotkeyPreferences(HotkeyModifiers.None, 0, 0), roblox);
+                var fakeInput = new FakeKeyboardInput();
+                using var engine = new PlaybackEngine(fakeInput);
+                vm.SynchronizeState(null, TimeSpan.Zero, engine, null!, CreateDefaultMapping(), 0, new HotkeyPreferences(HotkeyModifiers.Control | HotkeyModifiers.Alt, 8, 9), roblox);
                 Assert.Equal("Roblox: Meet People", vm.TargetWindowTitle);
             });
         }

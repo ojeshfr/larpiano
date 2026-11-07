@@ -14,6 +14,11 @@ public class MidiFixtureTests {
   Assert.All(song.Tracks,t=>Assert.Equal(.5,t.Notes.First().Start.TotalSeconds,5));
   Assert.Equal(new[]{60,61},song.Notes.Where(n=>n.Start==TimeSpan.FromSeconds(.5)).Select(n=>n.Pitch).Order());
  }
+ [Fact] public void ImportedMidiCanBeAutomaticallyPreparedForSharedPiano() {
+  var song=Load("test-multichannel-chords-1.mid"); var mapping=System.Text.Json.JsonSerializer.Deserialize<KeyboardMapping>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Fixtures","visual-pianos-c2-unverified.json")))!; var prepared=AutomaticSongRemapper.Prepare(song,mapping);
+  Assert.Equal(song.Notes.Count(),prepared.Song.Notes.Count()+prepared.SkippedNotes);
+  Assert.NotEmpty(PlaybackEngine.BuildEvents(prepared.Song,mapping));
+ }
  [Fact] public void IndependentChordFilePreservesSimultaneousTracks() {
   var song=Load("test-multichannel-chords-1.mid"); Assert.Equal(3,song.Tracks.Count); Assert.Equal(24,song.Notes.Count());
   Assert.Equal(new[]{60,64,67},song.Notes.Where(n=>n.Start==TimeSpan.Zero).Select(n=>n.Pitch).Order());

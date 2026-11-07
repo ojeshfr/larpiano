@@ -56,7 +56,25 @@ public partial class MainWindow : Window, IDisposable {
  void Browse(object s,RoutedEventArgs e) { var d=new OpenFileDialog{Filter="MIDI files|*.mid;*.midi"}; if(d.ShowDialog()==true)Import(d.FileName); }
  void OnDrop(object s,DragEventArgs e) { if(e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length>0)Import(files[0]); }
  async void Import(string path) { await ImportSongAsync(path,null); }
- async Task<bool> ImportSongAsync(string path,IReadOnlyCollection<int>? tracks,string? displayName=null,CancellationToken token=default) { var generation=++importGeneration; hotkeyController.SetReady(false); try { arm?.Cancel(); await engine.StopAsync(); token.ThrowIfCancellationRequested(); var loaded=await Task.Run(()=>importer.Import(path),token); token.ThrowIfCancellationRequested(); if(generation!=importGeneration)return false; if(tracks!=null) { loaded=loaded with { Tracks=loaded.Tracks.Where(t=>tracks.Contains(t.Index)).ToArray() }; if(!loaded.Notes.Any())throw new InvalidDataException("Select at least one track containing notes."); } if(!string.IsNullOrWhiteSpace(displayName))loaded=loaded with { Name=displayName }; ApplyPlayerSong(loaded,null); return true; } catch(OperationCanceledException) { if(generation==importGeneration)Status.Text="Import cancelled."; return false; } catch(Exception ex) { if(generation==importGeneration)Status.Text="Import failed: "+ex.Message; return false; } }
+ async Task<bool> ImportSongAsync(string path,IReadOnlyCollection<int>? tracks,string? displayName=null,CancellationToken token=default) {
+  var generation=++importGeneration; hotkeyController.SetReady(false);
+  try {
+   arm?.Cancel(); await engine.StopAsync(); token.ThrowIfCancellationRequested();
+   var loaded=await Task.Run(()=>importer.Import(path),token); token.ThrowIfCancellationRequested();
+   if(generation!=importGeneration)return false;
+   if(tracks!=null) { loaded=loaded with { Tracks=loaded.Tracks.Where(t=>tracks.Contains(t.Index)).ToArray() }; if(!loaded.Notes.Any())throw new InvalidDataException("Select at least one track containing notes."); }
+   if(!string.IsNullOrWhiteSpace(displayName))loaded=loaded with { Name=displayName };
+   SyncProfile(); var mapping=new KeyboardMapping {Name=profile.Name,Verified=profile.Verified,Keys=new(profile.Keys)};
+   var prepared=await Task.Run(()=>AutomaticSongRemapper.Prepare(loaded,mapping,token),token);
+   token.ThrowIfCancellationRequested(); if(generation!=importGeneration)return false;
+   Octave.SelectedIndex=2; ApplyPlayerSong(prepared.Song,null);
+   SongSource.Text=$"Local MIDI  •  Auto-mapped: {prepared.AdjustedNotes} notes shifted, {prepared.SkippedNotes} skipped";
+   SongSource.ToolTip="The original MIDI is unchanged. Notes are shifted by octaves to fit the piano; conflicting notes may be skipped.";
+   Status.Text=prepared.SkippedNotes>0?$"Auto-mapped; {prepared.SkippedNotes} conflicting or unsupported notes skipped.":"Auto-mapped for the Roblox piano.";
+   return true;
+  } catch(OperationCanceledException) { if(generation==importGeneration)Status.Text="Import cancelled."; return false; }
+    catch(Exception ex) { if(generation==importGeneration)Status.Text="Import failed: "+ex.Message; return false; }
+ }
  void ApplyPlayerSong(MidiSong loaded,LibraryEntry? entry) { song=loaded; songDuration=loaded.Duration; selectedPosition=TimeSpan.Zero; Progress.IsEnabled=songDuration>TimeSpan.Zero; lastRollPositionTicks=-1; SongTitle.Text=loaded.Name; SongInfo.Text=$"{loaded.Tracks.Count} tracks  •  {loaded.Notes.Count()} notes  •  {FormatTime(songDuration)}"; SongSource.Text=entry==null?"Local MIDI":$"{entry.Artist}  •  {entry.Provider}  •  {entry.License}"; SongSource.ToolTip=entry==null?"Local MIDI":$"Artist: {entry.Artist}\nSource: {entry.Source}\nLicense: {entry.License}\nSHA-256: {entry.Sha256}"; Roll.Song=loaded; Roll.InvalidateVisual(); EmptyState.Visibility=Visibility.Collapsed; LoadedWorkspace.Visibility=Visibility.Visible; Duration.Text=FormatTime(songDuration); UpdateMapping(); hotkeyController.SetReady(true); }
 
  void SyncProfile() { profile.Keys=rows.Where(r=>!string.IsNullOrWhiteSpace(r.Key)).ToDictionary(r=>r.Pitch,r=>r.Key.Trim().ToUpperInvariant()); }

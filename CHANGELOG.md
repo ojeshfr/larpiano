@@ -2,7 +2,7 @@
 
 All notable changes to **larpiano** will be documented in this file.
 
-## [1.1.0-beta.1] — 2026-11-07
+## [1.0.29] — 2026-11-08
 
 ### Added
 - **Complete Visual Reconstruction:**

@@ -1,12 +1,12 @@
-# larpiano v1.1.0-beta.1 — Public Beta Release Notes
+# larpiano v1.0.29 — Release Notes
 
-Welcome to the public beta of **larpiano v1.1.0-beta.1** — *from da people who LARP, for da people who LARP*.
+Welcome to **larpiano v1.0.29** — *from da people who LARP, for da people who LARP*.
 
-This major milestone introduces a complete visual reconstruction of the desktop application, full authentic brand restoration, and a native non-activating floating overlay designed specifically for distraction-free piano playback in Roblox.
+This milestone introduces a complete visual reconstruction of the desktop application, full authentic brand restoration, and a native non-activating floating overlay designed specifically for distraction-free piano playback in Roblox.
 
 ---
 
-## What's New in v1.1.0-beta.1
+## What's New in v1.0.29
 
 ### 1. Reconstructed Cinematic Desktop Interface
 - **Modern Dark Music Aesthetic:** Deep obsidian canvases (`#0D0D14` / `#12121A`) with soft lavender and purple accents (`#A78BFA` / `#C4B5FD`).
@@ -51,7 +51,7 @@ This major milestone introduces a complete visual reconstruction of the desktop 
 
 ## Installation & Quick Start
 
-1. Download `larpiano-v1.1.0-beta.1-windows-x64.zip` from GitHub Releases.
+1. Download `larpiano-windows-x64.zip` from GitHub Releases.
 2. Extract all files to a local folder of your choice (e.g. `C:\larpiano` or `D:\tools\larpiano`).
 3. Run `Keynote.App.exe`.
 4. Open Roblox and take a seat at your target piano.
@@ -74,7 +74,7 @@ Shortcuts can be customized in the **Settings** tab.
 
 ---
 
-## Known Limitations & Beta Notes
+## Known Limitations
 
 - **Piano Mapping Verification:** Because Roblox virtual piano games utilize differing key mappings (e.g. 61-key vs 88-key layouts), users must verify key assignments before playing complex arrangements.
 - **Audio Capture / Synthetic Input:** Native Windows scan codes are dispatched via `SendInput`. Anticheat systems or elevated game instances may require running larpiano as Administrator if input is not received.

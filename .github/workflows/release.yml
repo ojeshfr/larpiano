@@ -58,6 +58,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $prereleaseFlag = if ($env:IS_PRERELEASE -eq "true") { "--prerelease" } else { "" }
-          gh release create $env:GITHUB_REF_NAME larpiano-windows-x64.zip SHA256SUMS.txt --verify-tag $prereleaseFlag --title "larpiano $env:GITHUB_REF_NAME" --notes "Windows x64: download the ZIP, extract all files and run Keynote.App.exe. A verified mapping for your specific piano is required. See README for setup and limitations."
+          if ($env:IS_PRERELEASE -eq "true") {
+            gh release create $env:GITHUB_REF_NAME larpiano-windows-x64.zip SHA256SUMS.txt --verify-tag --prerelease --title "larpiano $env:GITHUB_REF_NAME" --notes "Windows x64: download the ZIP, extract all files and run Keynote.App.exe. A verified mapping for your specific piano is required. See README for setup and limitations."
+          } else {
+            gh release create $env:GITHUB_REF_NAME larpiano-windows-x64.zip SHA256SUMS.txt --verify-tag --title "larpiano $env:GITHUB_REF_NAME" --notes "Windows x64: download the ZIP, extract all files and run Keynote.App.exe. A verified mapping for your specific piano is required. See README for setup and limitations."
+          }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

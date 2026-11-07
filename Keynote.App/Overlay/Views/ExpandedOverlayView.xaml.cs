@@ -69,6 +69,7 @@ namespace Keynote.App.Overlay.Views
         }
 
         private void OnPlayPauseClick(object sender, RoutedEventArgs e) => VM?.TogglePlayPause();
+        private void OnTargetCardClick(object sender, MouseButtonEventArgs e) => VM?.RefreshTargetWindow();
         private void OnBrowseMidiClick(object sender, RoutedEventArgs e) => VM?.BrowseMidi();
         private void OnAppMenuClick(object sender, RoutedEventArgs e) { if (sender is Button button && button.ContextMenu is { } menu) { menu.PlacementTarget = button; menu.IsOpen = true; } }
         private void OnOpenSectionClick(object sender, RoutedEventArgs e) { if (sender is MenuItem item && int.TryParse(item.Tag?.ToString(), out int index)) VM?.OpenSection(index); }

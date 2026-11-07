@@ -38,7 +38,8 @@ namespace Keynote.App.Overlay
                     try { _mainWindow.BrowseFromOverlay(); }
                     finally { Show(); }
                 }),
-                RequestOpenSection = index => _mainWindow.Dispatcher.Invoke(() => { Hide(); _mainWindow.OpenSectionFromOverlay(index); })
+                RequestOpenSection = index => _mainWindow.Dispatcher.Invoke(() => { Hide(); _mainWindow.OpenSectionFromOverlay(index); }),
+                RequestRefreshWindows = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.RefreshWindowsFromOverlay())
             };
         }
 

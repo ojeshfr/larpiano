@@ -575,5 +575,28 @@ namespace Keynote.Overlay.Tests
             Assert.Equal(PlaybackState.Idle, engine.State);
             Assert.Null(engine.Error);
         }
+
+        [Fact]
+        public void TargetWindowCard_Click_TriggersRefreshWindowsRequest()
+        {
+            var settings = new OverlaySettings();
+            var vm = new OverlayViewModel(settings);
+            bool refreshCalled = false;
+            vm.RequestRefreshWindows = () => refreshCalled = true;
+
+            vm.RefreshTargetWindow();
+
+            Assert.True(refreshCalled);
+        }
+
+        [Fact]
+        public void WindowsKeyboardInput_ValidationHelpers_WorkCorrectly()
+        {
+            Assert.False(WindowsKeyboardInput.IsWindowValid(IntPtr.Zero));
+            Assert.False(WindowsKeyboardInput.IsWindowOrChildForeground(IntPtr.Zero, 0));
+            // FindWindows runs safely without exceptions
+            var windows = WindowsKeyboardInput.FindWindows();
+            Assert.NotNull(windows);
+        }
     }
 }

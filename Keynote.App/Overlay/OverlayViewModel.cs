@@ -59,6 +59,8 @@ namespace Keynote.App.Overlay
         public Action<LibraryEntry>? RequestSelectSong { get; set; }
         public Action? RequestBrowseMidi { get; set; }
         public Action<int>? RequestOpenSection { get; set; }
+        public Action? RequestRefreshWindows { get; set; }
+        public void RefreshTargetWindow() => RequestRefreshWindows?.Invoke();
         public void BrowseMidi() => RequestBrowseMidi?.Invoke();
         public void OpenSection(int index) { if (index is >= 0 and <= 8) RequestOpenSection?.Invoke(index); }
         private IReadOnlyList<LibraryEntry> _librarySongs = Array.Empty<LibraryEntry>();

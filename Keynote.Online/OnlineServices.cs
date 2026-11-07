@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -15,7 +16,27 @@ public interface ISongToMidiProvider { Task<string> SubmitAsync(string kind,stri
 public record TranscriptionStatus(string Status,string Stage,double? Progress,string? Error,string? Source);
 public sealed class MidiDownloadService(HttpClient http) : IMidiDownloadService {
  public const int MaxBytes=10*1024*1024;
- public static HttpClient CreateClient() { var client=new HttpClient(new SocketsHttpHandler { AllowAutoRedirect=false, AutomaticDecompression=DecompressionMethods.All, ConnectTimeout=TimeSpan.FromSeconds(15) }) { Timeout=TimeSpan.FromSeconds(45) }; client.DefaultRequestHeaders.UserAgent.ParseAdd("larpiano/1.0"); return client; }
+ public static HttpClient CreateClient() { var client=new HttpClient(new SocketsHttpHandler { AllowAutoRedirect=false, AutomaticDecompression=DecompressionMethods.All, ConnectTimeout=TimeSpan.FromSeconds(15), ConnectCallback=ConnectAsync }) { Timeout=TimeSpan.FromSeconds(45) }; client.DefaultRequestHeaders.UserAgent.ParseAdd("larpiano/1.0"); return client; }
+ static async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context,CancellationToken token) {
+  var endpoint=context.DnsEndPoint;
+  if(endpoint.Host.Equals("drive.usercontent.google.com",StringComparison.OrdinalIgnoreCase)) {
+   // Some Windows networks advertise IPv6 but cannot reach Google's IPv6 download host.
+   IPAddress[] addresses;
+   try { addresses=await Dns.GetHostAddressesAsync(endpoint.Host,AddressFamily.InterNetwork,token); }
+   catch(SocketException) { addresses=Array.Empty<IPAddress>(); }
+   foreach(var address in addresses) {
+    var socket=new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
+    using var attempt=CancellationTokenSource.CreateLinkedTokenSource(token); attempt.CancelAfter(TimeSpan.FromSeconds(3));
+    try { await socket.ConnectAsync(new IPEndPoint(address,endpoint.Port),attempt.Token); return new NetworkStream(socket,ownsSocket:true); }
+    catch(OperationCanceledException) when(!token.IsCancellationRequested) { socket.Dispose(); }
+    catch(SocketException) { socket.Dispose(); }
+    catch { socket.Dispose(); throw; }
+   }
+  }
+  var fallback=new Socket(SocketType.Stream,ProtocolType.Tcp);
+  try { await fallback.ConnectAsync(endpoint,token); return new NetworkStream(fallback,ownsSocket:true); }
+  catch { fallback.Dispose(); throw; }
+ }
  public static void ValidateEndpoint(Uri uri) { if(uri.Scheme!=Uri.UriSchemeHttps || !uri.IsDefaultPort || !string.IsNullOrEmpty(uri.UserInfo) || !(ModernDownloads.IsApprovedEndpoint(uri)||uri.Host.Equals("midisss.com",StringComparison.OrdinalIgnoreCase)||uri.Host.Equals("api.opennan.com",StringComparison.OrdinalIgnoreCase)||(uri.Host.Equals("larpiano.portways.app",StringComparison.OrdinalIgnoreCase) && Regex.IsMatch(uri.AbsolutePath,@"^/api/remapped/songs/[0-9a-f]{64}/midi$",RegexOptions.CultureInvariant) && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment))||((uri.Host.Equals("www.mutopiaproject.org",StringComparison.OrdinalIgnoreCase)||uri.Host.Equals("mutopiaproject.org",StringComparison.OrdinalIgnoreCase)) && uri.AbsolutePath.StartsWith("/ftp/",StringComparison.Ordinal) && uri.AbsolutePath.EndsWith(".mid",StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment)))) throw new InvalidOperationException("Only approved HTTPS provider endpoints are allowed."); }
  public async Task<byte[]> DownloadAsync(Uri uri,IProgress<double>? progress,CancellationToken token) {
   ValidateEndpoint(uri); using var initial=await http.GetAsync(uri,HttpCompletionOption.ResponseHeadersRead,token);

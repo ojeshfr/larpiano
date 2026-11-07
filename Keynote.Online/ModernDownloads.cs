@@ -114,7 +114,7 @@ public sealed class ModernDownloads(IMidiDownloadService downloads, IMidiLibrary
   var bytes = await downloads.DownloadAsync(item.DownloadUri, progress, token);
   if (!string.Equals(Convert.ToHexStringLower(SHA256.HashData(bytes)), item.Sha256, StringComparison.Ordinal)) throw new InvalidDataException("The creator's MIDI has changed; the download could not be verified.");
   token.ThrowIfCancellationRequested();
-  var provider=item.DownloadUri.Host.Equals("www.patreon.com",StringComparison.OrdinalIgnoreCase)?"NC Pianist":item.DownloadUri.Host.Equals("www.dropbox.com",StringComparison.OrdinalIgnoreCase)?"Yaron music":item.DownloadUri.Host.Equals("bitmidi.com",StringComparison.OrdinalIgnoreCase)?"BitMidi":"Free Piano Tutorials";
+  var provider=item.DownloadUri.Host.Equals("www.patreon.com",StringComparison.OrdinalIgnoreCase)?"NC Pianist":(item.DownloadUri.Host.Equals("www.dropbox.com",StringComparison.OrdinalIgnoreCase)||item.DownloadUri.Host.Equals("drive.usercontent.google.com",StringComparison.OrdinalIgnoreCase))?"Yaron music":item.DownloadUri.Host.Equals("bitmidi.com",StringComparison.OrdinalIgnoreCase)?"BitMidi":"Free Piano Tutorials";
   return await library.AddAsync(bytes, new CatalogResult(provider, item.Sha256, item.Title, item.Artist, "Creator-provided original piano arrangement; verify the mapping before playback.", "Personal copy; check creator and rights holder terms", item.Source, RecommendedOctave: item.Octave), token);
  }
 }

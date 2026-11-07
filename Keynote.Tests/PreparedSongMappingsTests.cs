@@ -28,6 +28,7 @@ public class PreparedSongMappingsTests {
  [InlineData("197e15f23786b435e150fd6e63d24e87b3ab11f7d7b1ccb88b6c3c90e7d590cc")]
  [InlineData("34bf7c563f499e4447364719d4b1ac8d97499d03ea14cd8b1be36d46fb7e97ca")]
  [InlineData("0aac6a5e499b1a5185c9438220a724b595ba312d8ff60e7fb60d4f7945ecdd77")]
+ [InlineData("e1f0aa7d4ff82b4d5ddf3da690daadf85dd51ea70d462247ad03e92e999455e8")]
  [InlineData("5eee88b0fba67613426174b4a145af119ec1a946d6f2063dc2982cc175ffcb16")]
  [InlineData("c692ce02f05bf8102b6439a4893bd203e3d51d5c7d6c46be0e1b64f495405998")]
  [InlineData("bf6dc22bb93b10939798a5b00ee4a705fa8e107b5783b642cbc595c1345b13a4")]

@@ -5,10 +5,11 @@ using Keynote.Online;
 namespace Keynote.App;
 
 public partial class MainWindow {
- sealed record ModernPick(string Artist,string Title,RemappedSong? Shared=null) { public override string ToString() => $"{Title}  •  {Artist}"+(Shared!=null?"  •  Friends":ModernDownloads.Find(Artist,Title)!=null?"  •  Creator":"  •  Search only"); }
+ sealed record ModernPick(string Artist,string Title,RemappedSong? Shared=null,Uri? Source=null) { public override string ToString() => $"{Title}  •  {Artist}"+(Shared!=null?"  •  Friends":ModernDownloads.Find(Artist,Title)!=null?"  •  Creator":Source!=null?"  •  Source website":"  •  Search only"); }
  IReadOnlyList<RemappedSong> friendsSongs=Array.Empty<RemappedSong>();
  string? friendsCode;
  static readonly ModernPick[] ModernPicks = {
+  new("Hans Zimmer","Cornfield Chase (Interstellar)",Source:new Uri("https://www.youtube.com/watch?v=57SdNVHYdNk")),
   new("Kanye West","Runaway"),new("Kanye West","I Wonder"),new("Kanye West","Heartless"),new("Kanye West","Flashing Lights"),new("Kanye West","Ghost Town"),new("Kanye West","Violent Crimes"),new("Kanye West","Hey Mama"),
   new("Kanye West","Jail"),
   new("Kanye West","Pure Souls"),
@@ -27,7 +28,7 @@ public partial class MainWindow {
   var q=ModernQuery.Text.Trim();
   var shared=friendsSongs.Select(s=>new ModernPick(s.Artist,s.Title,s));
   var direct=ModernDownloads.Available.Select(x=>new ModernPick(x.Artist,x.Title));
-  var available=shared.Concat(friendsCode!=null ? direct : Enumerable.Empty<ModernPick>());
+  var available=shared.Concat(friendsCode!=null ? direct.Concat(ModernPicks.Where(p=>p.Source!=null)) : Enumerable.Empty<ModernPick>());
   var shortlist=ModernPicks.Select(p=>p with { Shared=ModernSongMatching.FindShared(p.Artist,p.Title,friendsSongs) });
   var picks=ModernFriendsOnly?.IsChecked==true ? available : shared.Concat(direct).Concat(shortlist);
   ModernList.ItemsSource=picks
@@ -52,10 +53,11 @@ public partial class MainWindow {
   modernDownloadCancellation?.Cancel();
   if(ModernDetails==null || ModernSearchButton==null || ModernLibraryButton==null || ModernDownloadButton==null)return;
   var pick=ModernList.SelectedItem as ModernPick; ModernSearchButton.IsEnabled=pick!=null; ModernLibraryButton.IsEnabled=pick!=null;
+  ModernSearchButton.Content=pick?.Source!=null && pick.Shared==null ? "Open MIDI source" : "Search MIDI sources";
   var local=pick==null?null:FindLocalModern(pick); var direct=pick==null?null:ModernDownloads.Find(pick.Artist,pick.Title);
   ModernDownloadButton.IsEnabled=pick!=null && (local!=null || direct!=null || pick.Shared!=null && friendsCode!=null);
   ModernDownloadButton.Content=local!=null?"Select from library":"Download and select";
-  ModernDetails.Text=pick==null?"Select a song to search for a MIDI or find it in your library.":$"{pick.Title}\n{pick.Artist}\n\n"+(local!=null?"A personal copy is available in your library.":pick.Shared!=null?$"Friends arrangement: {pick.Shared.Title}. Verify your piano mapping before playback.":direct!=null?"A free original arrangement is available from its creator. Check your piano mapping and adjust any unmapped notes before playing.":"Direct download is unavailable for this title. Search MIDI sources or import your own copy.");
+  ModernDetails.Text=pick==null?"Select a song to search for a MIDI or find it in your library.":$"{pick.Title}\n{pick.Artist}\n\n"+(local!=null?"A personal copy is available in your library.":pick.Shared!=null?$"Friends arrangement: {pick.Shared.Title}. Verify your piano mapping before playback.":direct!=null?"A free original arrangement is available from its creator. Check your piano mapping and adjust any unmapped notes before playing.":pick.Source!=null?"The creator offers a free MIDI link in the video description. Download it, then use Browse MIDI. This arrangement has not been tested in Roblox.":"Direct download is unavailable for this title. Search MIDI sources or import your own copy.");
  }
  async void DownloadModern(object sender,RoutedEventArgs e) {
   if(ModernList.SelectedItem is not ModernPick pick || library==null || downloads==null)return;
@@ -80,7 +82,7 @@ public partial class MainWindow {
   finally { if(ReferenceEquals(modernDownloadCancellation,request)) { modernDownloadCancellation=null; var selected=ModernList.SelectedItem as ModernPick; ModernDownloadButton.IsEnabled=selected!=null && (FindLocalModern(selected)!=null || ModernDownloads.Find(selected.Artist,selected.Title)!=null || selected.Shared!=null && friendsCode!=null); } request.Dispose(); }
  }
  async void SearchModern(object sender,RoutedEventArgs e) => await SearchModernAsync();
- async Task SearchModernAsync() { if(ModernList.SelectedItem is not ModernPick pick)return; MainTabs.SelectedIndex=1; CatalogSelector.SelectedIndex=0; SearchQuery.Text=$"{pick.Artist} {pick.Title}"; searchDebouncer?.Cancel(); await SearchOnlineAsync(0,true,CancellationToken.None); }
+ async Task SearchModernAsync() { if(ModernList.SelectedItem is not ModernPick pick)return; if(pick.Source!=null && pick.Shared==null) { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(pick.Source.AbsoluteUri){UseShellExecute=true}); } catch(Exception ex) { ModernDetails.Text="Could not open the MIDI source: "+ex.Message; } return; } MainTabs.SelectedIndex=1; CatalogSelector.SelectedIndex=0; SearchQuery.Text=$"{pick.Artist} {pick.Title}"; searchDebouncer?.Cancel(); await SearchOnlineAsync(0,true,CancellationToken.None); }
  void FindModernInLibrary(object sender,RoutedEventArgs e) { if(ModernList.SelectedItem is not ModernPick pick)return; LibraryQuery.Text=pick.Title; MainTabs.SelectedIndex=3; }
  void ModernDoubleClick(object sender,MouseButtonEventArgs e) { if(ModernList.SelectedItem is not ModernPick)return; if(ModernDownloadButton.IsEnabled)DownloadModern(sender,e); else SearchModern(sender,e); }
 }

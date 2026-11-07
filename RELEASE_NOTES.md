@@ -1,6 +1,6 @@
-# larpiano v1.0.29 — Release Notes
+# larpiano v1.0.34 — Release Notes
 
-Welcome to **larpiano v1.0.29** — *from da people who LARP, for da people who LARP*.
+Welcome to **larpiano v1.0.34** — *from da people who LARP, for da people who LARP*.
 
 This milestone introduces a complete visual reconstruction of the desktop application, full authentic brand restoration, and a native non-activating floating overlay designed specifically for distraction-free piano playback in Roblox.
 
@@ -35,9 +35,9 @@ This milestone introduces a complete visual reconstruction of the desktop applic
 - Expanded online discovery and library caching.
 
 ### 5. Automated Quality Assurance & Verification
-- **210 Automated Tests Passing:**
-  - 179 core unit and integration tests across MIDI importing, scheduling, note mapping, and catalog providers.
-  - 31 overlay and UI automation tests, including non-activating window hit tests and STA snapshot captures across all 9 application views.
+- **222 Automated Tests Passing:**
+  - 182 core unit and integration tests across MIDI importing, scheduling, note mapping, and catalog providers.
+  - 40 overlay and UI automation tests, including non-activating window hit tests and STA snapshot captures across all 9 application views.
 
 ---
 

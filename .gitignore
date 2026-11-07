@@ -8,8 +8,11 @@ TestResults/
 
 # Published builds and local verification artifacts
 /publish*/
+**/publish/
 /verification/
 /visual-pianos-c2.json
+/release-staging/
+/artifacts/
 
 # Python cache
 __pycache__/

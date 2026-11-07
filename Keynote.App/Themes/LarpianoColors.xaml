@@ -1,0 +1,91 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Color Primitives -->
+    <Color x:Key="AppBackgroundColor">#09090D</Color>
+    <Color x:Key="HeaderBackgroundColor">#0D0D13</Color>
+    <Color x:Key="SidebarBackgroundColor">#101018</Color>
+    <Color x:Key="PanelBackgroundColor">#14131D</Color>
+    <Color x:Key="PanelElevatedColor">#1B1927</Color>
+    <Color x:Key="PanelHoverColor">#242033</Color>
+    <Color x:Key="PanelActiveColor">#2E2744</Color>
+
+    <!-- Accents -->
+    <Color x:Key="AccentPurpleColor">#A78BFA</Color>
+    <Color x:Key="AccentLavenderColor">#C4B5FD</Color>
+    <Color x:Key="AccentDeepColor">#8060D8</Color>
+    <Color x:Key="AccentGlowColor">#40A78BFA</Color>
+
+    <!-- Typography -->
+    <Color x:Key="TextPrimaryColor">#F5F3FF</Color>
+    <Color x:Key="TextSecondaryColor">#A5A1B5</Color>
+    <Color x:Key="TextMutedColor">#777286</Color>
+
+    <!-- Borders -->
+    <Color x:Key="BorderSubtleColor">#292638</Color>
+    <Color x:Key="BorderMediumColor">#3D3852</Color>
+    <Color x:Key="BorderGlowingColor">#6D52A3</Color>
+
+    <!-- Status Indicators -->
+    <Color x:Key="StatusReadyColor">#35D39A</Color>
+    <Color x:Key="StatusWarningColor">#F2B766</Color>
+    <Color x:Key="StatusErrorColor">#F16F83</Color>
+
+    <!-- Solid Brushes -->
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderBackgroundColor}" />
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}" />
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}" />
+    <SolidColorBrush x:Key="PanelElevatedBrush" Color="{StaticResource PanelElevatedColor}" />
+    <SolidColorBrush x:Key="PanelHoverBrush" Color="{StaticResource PanelHoverColor}" />
+    <SolidColorBrush x:Key="PanelActiveBrush" Color="{StaticResource PanelActiveColor}" />
+
+    <SolidColorBrush x:Key="AccentPurpleBrush" Color="{StaticResource AccentPurpleColor}" />
+    <SolidColorBrush x:Key="AccentLavenderBrush" Color="{StaticResource AccentLavenderColor}" />
+    <SolidColorBrush x:Key="AccentDeepBrush" Color="{StaticResource AccentDeepColor}" />
+    <SolidColorBrush x:Key="AccentGlowBrush" Color="{StaticResource AccentGlowColor}" />
+
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />
+    <SolidColorBrush x:Key="BorderMediumBrush" Color="{StaticResource BorderMediumColor}" />
+    <SolidColorBrush x:Key="BorderGlowingBrush" Color="{StaticResource BorderGlowingColor}" />
+
+    <SolidColorBrush x:Key="StatusReadyBrush" Color="{StaticResource StatusReadyColor}" />
+    <SolidColorBrush x:Key="StatusWarningBrush" Color="{StaticResource StatusWarningColor}" />
+    <SolidColorBrush x:Key="StatusErrorBrush" Color="{StaticResource StatusErrorColor}" />
+
+    <!-- Legacy Aliases for existing pages/controls -->
+    <SolidColorBrush x:Key="Canvas" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="Surface" Color="{StaticResource PanelBackgroundColor}" />
+    <SolidColorBrush x:Key="SurfaceRaised" Color="{StaticResource PanelElevatedColor}" />
+    <SolidColorBrush x:Key="Line" Color="{StaticResource BorderSubtleColor}" />
+    <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentPurpleColor}" />
+
+    <!-- Gradient Brushes -->
+    <LinearGradientBrush x:Key="ActiveNavGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#3B2D57" Offset="0" />
+        <GradientStop Color="#2A203F" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="PrimaryActionGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#7C5BC7" Offset="0" />
+        <GradientStop Color="#9D7CE8" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GlowingPlayButtonGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#3D2D60" Offset="0" />
+        <GradientStop Color="#24193D" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="PlayerProgressGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#8356D8" Offset="0" />
+        <GradientStop Color="#A78BFA" Offset="0.8" />
+        <GradientStop Color="#C4B5FD" Offset="1" />
+    </LinearGradientBrush>
+
+</ResourceDictionary>

@@ -24,4 +24,11 @@ public class PreparedSongMappingsTests {
   var song=new MidiSong("bad",Array.Empty<MidiTrack>());
   Assert.Throws<InvalidDataException>(()=>PreparedSongMappings.Apply("71ed6ede2116d7cc3b0239ba517966799795e7ef6262c1519999ac550d2c309f",song));
  }
+ [Theory]
+ [InlineData("197e15f23786b435e150fd6e63d24e87b3ab11f7d7b1ccb88b6c3c90e7d590cc")]
+ [InlineData("34bf7c563f499e4447364719d4b1ac8d97499d03ea14cd8b1be36d46fb7e97ca")]
+ public void NewLanaMappingsRejectUnexpectedNoteCounts(string hash) {
+  var song=new MidiSong("bad",Array.Empty<MidiTrack>());
+  Assert.Throws<InvalidDataException>(()=>PreparedSongMappings.Apply(hash,song));
+ }
 }

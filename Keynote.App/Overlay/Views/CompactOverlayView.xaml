@@ -39,6 +39,18 @@
                         </StackPanel>
                     </Border>
                     <TextBlock Text="larpiano" Style="{StaticResource OverlayHeaderBrandTextStyle}" Margin="0,0,6,0" />
+                    <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center" ToolTip="{Binding TargetWindowTitle}">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource OverlayWarningBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTargetForeground}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource OverlaySuccessBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
                 </StackPanel>
 
                 <!-- 2. Song Title & Time -->

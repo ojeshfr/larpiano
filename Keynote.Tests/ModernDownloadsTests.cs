@@ -20,7 +20,13 @@ public class ModernDownloadsTests {
    Assert.Throws<InvalidOperationException>(()=>MidiDownloadService.ValidateEndpoint(new Uri(item.DownloadUri.AbsoluteUri+"?other=1")));
   }
   Assert.Throws<InvalidOperationException>(()=>MidiDownloadService.ValidateEndpoint(new Uri("https://free-piano-tutorials-midi.s3.amazonaws.com/other.mid")));
+  Assert.Throws<InvalidOperationException>(()=>MidiDownloadService.ValidateEndpoint(new Uri("https://drive.usercontent.google.com/download?id=another-file&export=download")));
   Assert.Null(ModernDownloads.Find("Kanye West","Runaway"));
+ }
+ [Fact] public async Task GoogleDriveRedirectToUnapprovedHostIsRejected() {
+  using var http=new HttpClient(new Handler((_,_)=> { var response=new HttpResponseMessage(HttpStatusCode.Found); response.Headers.Location=new Uri("https://example.com/file.mid"); return Task.FromResult(response); }));
+  var item=ModernDownloads.Find("Lana Del Rey","Video Games")!;
+  await Assert.ThrowsAsync<HttpRequestException>(()=>new MidiDownloadService(http).DownloadAsync(item.DownloadUri,null,CancellationToken.None));
  }
  [Fact] public void PatreonRedirectMustMatchApprovedPost() {
   var item=ModernDownloads.Find("Niall Horan","You Could Start A Cult")!;

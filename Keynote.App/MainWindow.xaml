@@ -784,21 +784,9 @@
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Width="480">
                         <!-- Transport Buttons -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
-                            <Button Style="{StaticResource TransportIconButton}" ToolTip="Shuffle" Margin="0,0,10,0">
-                                <TextBlock Text="🔀" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" />
-                            </Button>
-                            <Button Style="{StaticResource TransportIconButton}" ToolTip="Previous Track" Margin="0,0,14,0">
-                                <TextBlock Text="⏮" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" />
-                            </Button>
                             <!-- Big Glowing Play/Pause Button -->
                             <Button x:Name="PlaybackButton" Style="{StaticResource GlowingPlayButtonStyle}" Click="PlayPause" ToolTip="Play / Pause">
                                 <TextBlock Text="▶" FontSize="15" Margin="2,0,0,0" />
-                            </Button>
-                            <Button Style="{StaticResource TransportIconButton}" ToolTip="Next Track" Margin="14,0,10,0">
-                                <TextBlock Text="⏭" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" />
-                            </Button>
-                            <Button Style="{StaticResource TransportIconButton}" ToolTip="Repeat">
-                                <TextBlock Text="🔁" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" />
                             </Button>
                         </StackPanel>
 
@@ -820,7 +808,6 @@
 
                     <!-- Right: Speed/Volume & Overlay -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <TextBlock Text="🔊" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
                         <Slider x:Name="Speed" Minimum="0.5" Maximum="2" Value="1" Width="82" ValueChanged="SpeedChanged"
                                 Style="{StaticResource LarpianoMiniSlider}" ToolTip="Playback speed" />
                         <TextBlock x:Name="SpeedText" Text="100%" Style="{StaticResource TimeDisplayTextStyle}" Width="40" TextAlignment="Right" Margin="8,0,14,0" />

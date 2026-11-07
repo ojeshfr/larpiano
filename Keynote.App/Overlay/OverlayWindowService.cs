@@ -30,15 +30,15 @@ namespace Keynote.App.Overlay
                 RequestEmergencyStop = () => _mainWindow.Dispatcher.Invoke(async () => await _mainWindow.EmergencyStopFromOverlay()),
                 RequestSeek = target => _mainWindow.Dispatcher.Invoke(() => _mainWindow.SeekFromOverlay(target)),
                 RequestSpeedChange = speed => _mainWindow.Dispatcher.Invoke(() => _mainWindow.SetSpeedFromOverlay(speed)),
-                RequestOpenMappingTab = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.OpenMappingFromOverlay()),
-                RequestOpenDiagnosticsTab = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.OpenDiagnosticsFromOverlay()),
+                RequestOpenMappingTab = () => _mainWindow.Dispatcher.Invoke(() => { Hide(); _mainWindow.OpenSectionFromOverlay(4); }),
+                RequestOpenDiagnosticsTab = () => _mainWindow.Dispatcher.Invoke(() => { Hide(); _mainWindow.OpenSectionFromOverlay(5); }),
                 RequestSelectSong = entry => _mainWindow.Dispatcher.Invoke(() => _mainWindow.SelectSongFromOverlay(entry)),
                 RequestBrowseMidi = () => _mainWindow.Dispatcher.Invoke(() => {
                     Hide();
                     try { _mainWindow.BrowseFromOverlay(); }
                     finally { Show(); }
                 }),
-                RequestOpenSection = index => _mainWindow.Dispatcher.Invoke(() => _mainWindow.OpenSectionFromOverlay(index))
+                RequestOpenSection = index => _mainWindow.Dispatcher.Invoke(() => { Hide(); _mainWindow.OpenSectionFromOverlay(index); })
             };
         }
 

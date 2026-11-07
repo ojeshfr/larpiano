@@ -63,14 +63,18 @@ namespace Keynote.App.Overlay
         public void OpenSection(int index) { if (index is >= 0 and <= 8) RequestOpenSection?.Invoke(index); }
         private IReadOnlyList<LibraryEntry> _librarySongs = Array.Empty<LibraryEntry>();
         private LibraryEntry? _selectedLibrarySong;
+        private bool _synchronizingLibrary;
         public IReadOnlyList<LibraryEntry> LibrarySongs => _librarySongs;
         public LibraryEntry? SelectedLibrarySong {
             get => _selectedLibrarySong;
-            set { if (SetField(ref _selectedLibrarySong, value) && value != null) RequestSelectSong?.Invoke(value); }
+            set { if (SetField(ref _selectedLibrarySong, value) && value != null && !_synchronizingLibrary) RequestSelectSong?.Invoke(value); }
         }
         public void SynchronizeLibrary(IReadOnlyList<LibraryEntry> songs, LibraryEntry? selected) {
-            if (!ReferenceEquals(_librarySongs, songs)) { _librarySongs = songs; OnPropertyChanged(nameof(LibrarySongs)); }
-            SetField(ref _selectedLibrarySong, selected, nameof(SelectedLibrarySong));
+            _synchronizingLibrary = true;
+            try {
+                if (!ReferenceEquals(_librarySongs, songs)) { _librarySongs = songs; OnPropertyChanged(nameof(LibrarySongs)); }
+                SetField(ref _selectedLibrarySong, selected, nameof(SelectedLibrarySong));
+            } finally { _synchronizingLibrary = false; }
         }
 
         public OverlayViewModel(OverlaySettings settings)

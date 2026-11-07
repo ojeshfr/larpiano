@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using Keynote.App;
 using Keynote.App.Overlay;
 using Keynote.Core;
@@ -39,6 +41,48 @@ namespace Keynote.Overlay.Tests
     [Collection("STA")]
     public class OverlayIntegrationTests
     {
+        [Fact]
+        public void AppSectionsMenuUsesReadableDarkSurfaceAndItemStyle()
+        {
+            RunInSta(() => {
+                var view = new Keynote.App.Overlay.Views.ExpandedOverlayView();
+                var button = Assert.IsType<Button>(view.FindName("AppSectionsButton"));
+                var menu = Assert.IsType<ContextMenu>(button.ContextMenu);
+                var background = Assert.IsType<SolidColorBrush>(menu.Background);
+                Assert.True(background.Color.R < 80 && background.Color.G < 80 && background.Color.B < 80);
+                Assert.Equal(9, menu.Items.Count);
+                var itemStyle = Assert.IsType<Style>(menu.Resources[typeof(MenuItem)]);
+                Assert.Contains(itemStyle.Setters.OfType<Setter>(), s => s.Property == Control.ForegroundProperty);
+                Assert.Contains(itemStyle.Setters.OfType<Setter>(), s => s.Property == Control.TemplateProperty);
+            });
+        }
+        [Fact]
+        public void OverlaySongControlsFitAtMinimumWindowWidth()
+        {
+            RunInSta(() => {
+                var view = new Keynote.App.Overlay.Views.ExpandedOverlayView();
+                view.DataContext = new OverlayViewModel(new OverlaySettings());
+                view.Measure(new Size(612, 400));
+                view.Arrange(new Rect(0, 0, 612, 400));
+                view.UpdateLayout();
+                var selector = Assert.IsType<ComboBox>(view.FindName("OverlaySongSelector"));
+                var browse = Assert.IsType<Button>(view.FindName("OverlayBrowseButton"));
+                Assert.True(selector.ActualWidth >= 90);
+                Assert.True(browse.TranslatePoint(new Point(browse.ActualWidth, 0), view).X <= 612);
+            });
+        }
+        [Fact]
+        public void LibraryRefreshDoesNotTriggerSongLoadFromBindingChanges()
+        {
+            var vm = new OverlayViewModel(new OverlaySettings());
+            var entry = new LibraryEntry(new string('a',64), "First", "Artist", "Local", "", "", DateTimeOffset.UtcNow);
+            int requests = 0;
+            vm.RequestSelectSong = _ => requests++;
+            vm.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(vm.LibrarySongs)) vm.SelectedLibrarySong = entry; };
+            vm.SynchronizeLibrary(new[] { entry }, entry);
+            Assert.Equal(0, requests);
+            Assert.Equal(entry, vm.SelectedLibrarySong);
+        }
         [Fact]
         public void SpeedSliderDispatchesValidChanges()
         {

@@ -1,0 +1,81 @@
+<Window x:Class="Keynote.App.Overlay.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:Keynote.App.Overlay.Views"
+        xmlns:overlay="clr-namespace:Keynote.App.Overlay"
+        xmlns:converters="clr-namespace:Keynote.App.Overlay.Converters"
+        Title="Larpiano Overlay"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowActivated="False"
+        Topmost="{Binding IsPinned}"
+        Focusable="False">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Keynote.App;component/Overlay/Themes/OverlayColors.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Keynote.App;component/Overlay/Themes/OverlayTypography.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Keynote.App;component/Overlay/Themes/OverlayControls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+            <converters:PinTextConverter x:Key="PinTextConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Outer Window Padding to accommodate glow shadow without clipping -->
+    <Grid Margin="14" SnapsToDevicePixels="True">
+        <!-- Layer 1: Dedicated Outer Glow Halo (prevents shadow from darkening the translucent center) -->
+        <Border x:Name="OuterGlowBorder"
+                CornerRadius="18"
+                BorderThickness="1"
+                BorderBrush="{StaticResource OverlayAccentBrush}"
+                Background="Transparent"
+                IsHitTestVisible="False">
+            <Border.Effect>
+                <DropShadowEffect Color="{StaticResource OverlayAccentColor}"
+                                  BlurRadius="22"
+                                  ShadowDepth="0"
+                                  Opacity="0.55" />
+            </Border.Effect>
+        </Border>
+
+        <!-- Layer 2: Main Translucent Dark Glass Surface -->
+        <Border x:Name="MainGlassCard"
+                Background="{StaticResource OverlaySurfaceGlassBrush}"
+                BorderBrush="{StaticResource OverlayGlassBorderGradient}"
+                BorderThickness="1"
+                CornerRadius="18"
+                ClipToBounds="False">
+            <Grid>
+                <!-- 1. Expanded Overlay Mode View -->
+                <views:ExpandedOverlayView x:Name="ExpandedView"
+                                           Visibility="{Binding IsCompact, Converter={StaticResource InverseBoolToVisibilityConverter}, FallbackValue=Visible}" />
+
+                <!-- 2. Compact Overlay Mode View -->
+                <views:CompactOverlayView x:Name="CompactView"
+                                          Visibility="{Binding IsCompact, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+
+                <!-- Resize Grip (Visible in Expanded Mode only) -->
+                <Border x:Name="ResizeGripBorder"
+                        Width="18" Height="18"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,4,4"
+                        Cursor="SizeNWSE"
+                        Background="Transparent"
+                        MouseDown="OnResizeGripMouseDown"
+                        Visibility="{Binding IsCompact, Converter={StaticResource InverseBoolToVisibilityConverter}, FallbackValue=Visible}">
+                    <Path Data="M 12,16 L 16,12 M 8,16 L 16,8 M 4,16 L 16,4"
+                          Stroke="{StaticResource OverlayBorderMediumBrush}"
+                          StrokeThickness="1.5"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" />
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

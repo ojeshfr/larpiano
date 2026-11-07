@@ -20,4 +20,8 @@ public class PreparedSongMappingsTests {
   var song=new MidiSong("bad",Array.Empty<MidiTrack>());
   Assert.Throws<InvalidDataException>(()=>PreparedSongMappings.Apply("587dbf3aecfb7f15bb90bc4006049ebb386f5f7deea8d02dd359b79bdea2e574",song));
  }
+ [Fact] public void YourGirlMappingRejectsUnexpectedNoteCount() {
+  var song=new MidiSong("bad",Array.Empty<MidiTrack>());
+  Assert.Throws<InvalidDataException>(()=>PreparedSongMappings.Apply("71ed6ede2116d7cc3b0239ba517966799795e7ef6262c1519999ac550d2c309f",song));
+ }
 }

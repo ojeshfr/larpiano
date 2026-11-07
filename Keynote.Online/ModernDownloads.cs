@@ -88,6 +88,7 @@ public sealed class ModernDownloads(IMidiDownloadService downloads, IMidiLibrary
   ,new ModernDownload("Morgan Wallen", "Thinkin' Bout Me", new Uri("https://www.patreon.com/file?h=79634811&m=191867762"), "29b56eba8438f6cadd1aca8976c0a9d5452791a0ac806c27a62c8dba84eff87f", "https://www.patreon.com/ncpianist/posts/morgan-wallen-me-79634811", 0)
   ,new ModernDownload("Morgan Wallen", "Devil Don't Know", new Uri("https://www.patreon.com/file?h=79635321&m=191868959"), "68d25f94339773a7f892a20e7a0119846e3c490e8af588c4c0769b56ebfbba52", "https://www.patreon.com/ncpianist/posts/morgan-wallen-79635321", 0)
   ,new ModernDownload("Marshmello & Manuel Turizo", "El Merengue", new Uri("https://www.patreon.com/file?h=79635716&m=191870167"), "177fa25084aedac2e1e5e399d3cb91019a162e6954f618ae47af082c9523e7f1", "https://www.patreon.com/ncpianist/posts/marshmello-el-79635716", 0)
+  ,new ModernDownload("Lana Del Rey", "Your Girl", new Uri("https://www.dropbox.com/scl/fi/vepco5qp7f8ikvvt0mxkl/Your_Girl.mid?rlkey=wn9r3tbsthtrbycx8no9jj77h&dl=1"), "71ed6ede2116d7cc3b0239ba517966799795e7ef6262c1519999ac550d2c309f", "https://sites.google.com/view/yaronmusic/l/lana-del-rey/your-girl", 0)
  });
  public static ModernDownload? Find(string artist, string title) => Available.FirstOrDefault(x => x.Artist.Equals(artist, StringComparison.OrdinalIgnoreCase) && x.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
  public static bool IsApprovedEndpoint(Uri uri) => Available.Any(x => string.Equals(x.DownloadUri.AbsoluteUri, uri.AbsoluteUri, StringComparison.Ordinal));

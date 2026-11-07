@@ -51,6 +51,7 @@ namespace Keynote.Overlay.Tests
                 var background = Assert.IsType<SolidColorBrush>(menu.Background);
                 Assert.True(background.Color.R < 80 && background.Color.G < 80 && background.Color.B < 80);
                 Assert.Equal(9, menu.Items.Count);
+                Assert.NotNull(menu.Template);
                 var itemStyle = Assert.IsType<Style>(menu.Resources[typeof(MenuItem)]);
                 Assert.Contains(itemStyle.Setters.OfType<Setter>(), s => s.Property == Control.ForegroundProperty);
                 Assert.Contains(itemStyle.Setters.OfType<Setter>(), s => s.Property == Control.TemplateProperty);

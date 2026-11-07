@@ -598,5 +598,18 @@ namespace Keynote.Overlay.Tests
             var windows = WindowsKeyboardInput.FindWindows();
             Assert.NotNull(windows);
         }
+
+        [Fact]
+        public void CompactOverlayView_IncludesTargetStatusIndicator()
+        {
+            RunInSta(() => {
+                var view = new Keynote.App.Overlay.Views.CompactOverlayView();
+                var vm = new OverlayViewModel(new OverlaySettings());
+                view.DataContext = vm;
+                var roblox = new RobloxWindow(new IntPtr(9876), "Roblox: Meet People", 4321);
+                vm.SynchronizeState(null, TimeSpan.Zero, null, null, null, 0, new HotkeyPreferences(HotkeyModifiers.None, 0, 0), roblox);
+                Assert.Equal("Roblox: Meet People", vm.TargetWindowTitle);
+            });
+        }
     }
 }

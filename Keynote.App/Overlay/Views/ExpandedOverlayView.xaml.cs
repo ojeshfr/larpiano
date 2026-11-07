@@ -69,6 +69,9 @@ namespace Keynote.App.Overlay.Views
         }
 
         private void OnPlayPauseClick(object sender, RoutedEventArgs e) => VM?.TogglePlayPause();
+        private void OnBrowseMidiClick(object sender, RoutedEventArgs e) => VM?.BrowseMidi();
+        private void OnAppMenuClick(object sender, RoutedEventArgs e) { if (sender is Button button && button.ContextMenu is { } menu) { menu.PlacementTarget = button; menu.IsOpen = true; } }
+        private void OnOpenSectionClick(object sender, RoutedEventArgs e) { if (sender is MenuItem item && int.TryParse(item.Tag?.ToString(), out int index)) VM?.OpenSection(index); }
         private void OnStopClick(object sender, RoutedEventArgs e) => VM?.EmergencyStop();
         private void OnPreviousClick(object sender, RoutedEventArgs e) => VM?.Seek(TimeSpan.Zero);
         private void OnNextClick(object sender, RoutedEventArgs e) => VM?.SeekForward(TimeSpan.FromSeconds(10));

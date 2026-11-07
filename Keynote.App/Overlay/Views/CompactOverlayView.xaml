@@ -94,6 +94,7 @@
                         <TextBlock Text="{Binding SpeedText}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource OverlayTextPrimaryBrush}" />
                     </Button>
 
+                    <Button Content="MIDI" Click="OnBrowseMidiClick" ToolTip="Browse MIDI files" Style="{StaticResource OverlayButtonStyle}" Padding="6,4" Margin="0,0,4,0" />
                     <!-- Pin Toggle Button -->
                     <ToggleButton Style="{StaticResource OverlayHeaderToggleButtonStyle}"
                                   IsChecked="{Binding IsPinned}"

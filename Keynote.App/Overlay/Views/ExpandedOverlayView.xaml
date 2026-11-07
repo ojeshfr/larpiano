@@ -60,6 +60,21 @@
 
                 <!-- Right: Header Controls (Pin, Settings, Compact, Close) -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource OverlayButtonStyle}" Content="App sections" Click="OnAppMenuClick" ToolTip="Open a section in larpiano" Margin="0,0,6,0" Padding="8,4">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Player" Tag="0" Click="OnOpenSectionClick" />
+                                <MenuItem Header="Discover" Tag="1" Click="OnOpenSectionClick" />
+                                <MenuItem Header="Extract" Tag="2" Click="OnOpenSectionClick" />
+                                <MenuItem Header="My Library" Tag="3" Click="OnOpenSectionClick" />
+                                <MenuItem Header="Mapping" Tag="4" Click="OnOpenSectionClick" />
+                                <MenuItem Header="Settings and diagnostics" Tag="5" Click="OnOpenSectionClick" />
+                                <MenuItem Header="Updates" Tag="6" Click="OnOpenSectionClick" />
+                                <MenuItem Header="Remapped music" Tag="7" Click="OnOpenSectionClick" />
+                                <MenuItem Header="Modern picks" Tag="8" Click="OnOpenSectionClick" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <!-- Pin Toggle Button -->
                     <ToggleButton Style="{StaticResource OverlayHeaderToggleButtonStyle}"
                                   IsChecked="{Binding IsPinned}"
@@ -158,9 +173,12 @@
                                    TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding SongSubtitle}"
                                    Margin="0,0,0,8" />
-                        <ComboBox ItemsSource="{Binding LibrarySongs}" SelectedItem="{Binding SelectedLibrarySong, Mode=TwoWay}"
-                                  DisplayMemberPath="Title" ToolTip="Choose a downloaded song"
-                                  AutomationProperties.Name="Choose a song" MaxWidth="280" HorizontalAlignment="Left" MinWidth="160" Margin="0,0,0,5" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <ComboBox ItemsSource="{Binding LibrarySongs}" SelectedItem="{Binding SelectedLibrarySong, Mode=TwoWay}"
+                                      DisplayMemberPath="Title" ToolTip="Choose a downloaded song"
+                                      AutomationProperties.Name="Choose a song" Width="180" />
+                            <Button Content="Browse MIDI" Click="OnBrowseMidiClick" Style="{StaticResource OverlayButtonStyle}" Padding="8,4" Margin="6,0,0,0" ToolTip="Import a MIDI file" />
+                        </StackPanel>
 
                         <!-- Status Pill (Playing / Paused / Ready / Stopped) -->
                         <Border Background="#25173F" BorderBrush="{StaticResource OverlayAccentDeepBrush}" BorderThickness="1" CornerRadius="12" HorizontalAlignment="Left" Padding="10,3">

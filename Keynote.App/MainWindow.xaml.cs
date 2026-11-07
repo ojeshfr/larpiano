@@ -149,6 +149,8 @@ public partial class MainWindow : Window, IDisposable {
  }
  public void SetSpeedFromOverlay(double speed) { if(Speed!=null)Speed.Value=speed; if(engine!=null)engine.Speed=speed; }
  public void SelectTab(int index) { if(MainTabs!=null) MainTabs.SelectedIndex=index; }
+ public void OpenSectionFromOverlay(int index) { if(index<0 || index>=MainTabs.Items.Count)return; MainTabs.SelectedIndex=index; if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal; Show(); Activate(); }
+ public void BrowseFromOverlay() { OpenSectionFromOverlay(0); Browse(this,new RoutedEventArgs()); }
  public void OpenMappingFromOverlay() { MainTabs.SelectedIndex=4; Activate(); }
  public void OpenDiagnosticsFromOverlay() { MainTabs.SelectedIndex=5; Activate(); }
  public void ToggleOverlay() => overlayService.Toggle();

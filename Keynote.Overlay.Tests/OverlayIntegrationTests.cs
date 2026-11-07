@@ -40,6 +40,21 @@ namespace Keynote.Overlay.Tests
     public class OverlayIntegrationTests
     {
         [Fact]
+        public void OverlayRoutesBrowseAndValidSectionRequests()
+        {
+            var vm = new OverlayViewModel(new OverlaySettings());
+            int browses = 0;
+            var sections = new List<int>();
+            vm.RequestBrowseMidi = () => browses++;
+            vm.RequestOpenSection = sections.Add;
+            vm.BrowseMidi();
+            vm.OpenSection(3);
+            vm.OpenSection(-1);
+            vm.OpenSection(9);
+            Assert.Equal(1, browses);
+            Assert.Equal(new[] { 3 }, sections);
+        }
+        [Fact]
         public void OverlaySongSelectionDispatchesOnlyUserChanges()
         {
             var vm = new OverlayViewModel(new OverlaySettings());

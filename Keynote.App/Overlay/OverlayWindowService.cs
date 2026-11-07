@@ -32,7 +32,13 @@ namespace Keynote.App.Overlay
                 RequestSpeedChange = speed => _mainWindow.Dispatcher.Invoke(() => _mainWindow.SetSpeedFromOverlay(speed)),
                 RequestOpenMappingTab = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.OpenMappingFromOverlay()),
                 RequestOpenDiagnosticsTab = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.OpenDiagnosticsFromOverlay()),
-                RequestSelectSong = entry => _mainWindow.Dispatcher.Invoke(() => _mainWindow.SelectSongFromOverlay(entry))
+                RequestSelectSong = entry => _mainWindow.Dispatcher.Invoke(() => _mainWindow.SelectSongFromOverlay(entry)),
+                RequestBrowseMidi = () => _mainWindow.Dispatcher.Invoke(() => {
+                    Hide();
+                    try { _mainWindow.BrowseFromOverlay(); }
+                    finally { Show(); }
+                }),
+                RequestOpenSection = index => _mainWindow.Dispatcher.Invoke(() => _mainWindow.OpenSectionFromOverlay(index))
             };
         }
 

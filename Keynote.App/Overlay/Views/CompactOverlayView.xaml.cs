@@ -23,6 +23,7 @@ namespace Keynote.App.Overlay.Views
         }
 
         private void OnPlayPauseClick(object sender, RoutedEventArgs e) => VM?.TogglePlayPause();
+        private void OnBrowseMidiClick(object sender, RoutedEventArgs e) => VM?.BrowseMidi();
         private void OnStopClick(object sender, RoutedEventArgs e) => VM?.EmergencyStop();
         private void OnSpeedClick(object sender, RoutedEventArgs e) => VM?.CycleSpeed();
         private void OnExpandClick(object sender, RoutedEventArgs e) => VM?.ToggleCompact();

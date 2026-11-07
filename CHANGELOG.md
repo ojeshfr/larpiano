@@ -2,6 +2,11 @@
 
 All notable changes to **larpiano** will be documented in this file.
 
+## [1.0.35] — 2026-11-08
+
+### Fixed
+- **Overlay App Sections Menu Styling:** Replaced default Windows Aero2 ContextMenu template with custom dark elevated surface and drop shadow, completely removing the light icon column gutter stripe that clipped menu item text.
+
 ## [1.0.34] — 2026-11-08
 
 ### Added

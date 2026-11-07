@@ -83,7 +83,6 @@ namespace Keynote.App.Overlay.Views
         }
 
         private void OnCompactClick(object sender, RoutedEventArgs e) => VM?.ToggleCompact();
-        private void OnPinClick(object sender, RoutedEventArgs e) => VM?.TogglePin();
         private void OnSettingsClick(object sender, RoutedEventArgs e) => VM?.ToggleSettingsPopover();
         private void OnMappingClick(object sender, RoutedEventArgs e) => VM?.ToggleMappingPopover();
         private void OnDiagnosticsClick(object sender, RoutedEventArgs e) => VM?.ToggleDiagnosticsPopover();

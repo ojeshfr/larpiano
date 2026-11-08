@@ -72,9 +72,9 @@ def get_s3_config() -> Optional[dict]:
     """Retrieve S3 / MinIO configuration from environment if present."""
     endpoint = os.environ.get("STORAGE_ENDPOINT") or os.environ.get("S3_ENDPOINT") or os.environ.get("AWS_ENDPOINT_URL")
     bucket = os.environ.get("STORAGE_BUCKET") or os.environ.get("S3_BUCKET") or os.environ.get("AWS_S3_BUCKET")
-    access_key = os.environ.get("STORAGE_ACCESS_KEY") or os.environ.get("S3_ACCESS_KEY") or os.environ.get("AWS_ACCESS_KEY_ID")
-    secret_key = os.environ.get("STORAGE_SECRET_KEY") or os.environ.get("S3_SECRET_KEY") or os.environ.get("AWS_SECRET_ACCESS_KEY")
-    region = os.environ.get("STORAGE_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+    access_key = os.environ.get("STORAGE_ACCESS_KEY") or os.environ.get("S3_ACCESS_KEY") or os.environ.get("S3_ACCESS_KEY_ID") or os.environ.get("AWS_ACCESS_KEY_ID")
+    secret_key = os.environ.get("STORAGE_SECRET_KEY") or os.environ.get("S3_SECRET_KEY") or os.environ.get("S3_SECRET_ACCESS_KEY") or os.environ.get("AWS_SECRET_ACCESS_KEY")
+    region = os.environ.get("STORAGE_REGION") or os.environ.get("S3_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
     
     if endpoint and bucket and access_key and secret_key:
         return {

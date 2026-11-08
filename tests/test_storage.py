@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 # Add remapped_catalog to sys.path
@@ -22,6 +23,16 @@ class StorageTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+
+    def test_portways_s3_environment_variables(self):
+        env = {"S3_ENDPOINT": "https://storage.example.test", "S3_BUCKET": "test-bucket",
+               "S3_ACCESS_KEY_ID": "test-access", "S3_SECRET_ACCESS_KEY": "test-secret", "S3_REGION": "test-region"}
+        with patch.dict(os.environ, env, clear=True):
+            config = storage.get_s3_config()
+        self.assertEqual(config["access_key"], "test-access")
+        self.assertEqual(config["secret_key"], "test-secret")
+        self.assertEqual(config["bucket"], "test-bucket")
+        self.assertEqual(config["region"], "test-region")
 
     def test_sanitize_filename(self):
         self.assertEqual(storage.sanitize_filename("banner.png"), "banner.png")

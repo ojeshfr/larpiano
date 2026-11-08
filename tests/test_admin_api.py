@@ -1,6 +1,8 @@
 """Unit tests for admin_api.py endpoints, presence heartbeats, and audit trails."""
 
 import os
+import sqlite3
+from contextlib import contextmanager
 import shutil
 import tempfile
 import unittest
@@ -119,6 +121,27 @@ class AdminApiTests(unittest.TestCase):
         # Now app client should not receive retracted announcement
         app_ann_after = admin_api.get_app_announcements()
         self.assertFalse(any(a["id"] == created["id"] for a in app_ann_after))
+
+    def test_announcements_work_without_updated_at_column(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        conn.execute("""CREATE TABLE announcements (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL, message TEXT NOT NULL,
+            audience TEXT, status TEXT, published_at TEXT, expires_at TEXT,
+            created_by TEXT, created_at TEXT)""")
+
+        @contextmanager
+        def in_memory_db():
+            yield conn
+
+        try:
+            with unittest.mock.patch.object(admin_api, "get_db", in_memory_db), \
+                 unittest.mock.patch.object(admin_api, "audit_log"):
+                item = admin_api.create_announcement({"title": "Hi", "message": "Hello"}, None)
+                admin_api.update_announcement(item["id"], {"status": "retracted"}, None)
+                self.assertEqual(conn.execute("SELECT status FROM announcements").fetchone()[0], "retracted")
+        finally:
+            conn.close()
 
     def test_playground_trigger_and_dismiss(self):
         triggered = admin_api.trigger_playground_effect({

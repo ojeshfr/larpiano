@@ -917,15 +917,15 @@ def create_announcement(data: dict, admin_id: str) -> dict:
         cur = conn.cursor()
         if _is_pg():
             cur.execute(
-                """INSERT INTO announcements (id, title, message, audience, status, published_at, expires_at, created_by, created_at, updated_at)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())""",
+                """INSERT INTO announcements (id, title, message, audience, status, published_at, expires_at, created_by, created_at)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
                 (ann_id, title, message, audience, status, published_at, expires_at, admin_id)
             )
         else:
             cur.execute(
-                """INSERT INTO announcements (id, title, message, audience, status, published_at, expires_at, created_by, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (ann_id, title, message, audience, status, published_at, expires_at, admin_id, now_iso, now_iso)
+                """INSERT INTO announcements (id, title, message, audience, status, published_at, expires_at, created_by, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (ann_id, title, message, audience, status, published_at, expires_at, admin_id, now_iso)
             )
         conn.commit()
 
@@ -960,10 +960,9 @@ def update_announcement(ann_id: str, data: dict, admin_id: str) -> dict:
         cur = conn.cursor()
         if _is_pg():
             pg_set = set_clause.replace("?", "%s")
-            cur.execute(f"UPDATE announcements SET {pg_set}, updated_at = NOW() WHERE id = %s", tuple(params + [ann_id]))
+            cur.execute(f"UPDATE announcements SET {pg_set} WHERE id = %s", tuple(params + [ann_id]))
         else:
-            now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
-            cur.execute(f"UPDATE announcements SET {set_clause}, updated_at = ? WHERE id = ?", tuple(params + [now_iso, ann_id]))
+            cur.execute(f"UPDATE announcements SET {set_clause} WHERE id = ?", tuple(params + [ann_id]))
         conn.commit()
 
     audit_log(admin_id, "ANNOUNCEMENT_UPDATED", "announcement", ann_id, data)

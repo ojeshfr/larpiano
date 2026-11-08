@@ -489,20 +489,28 @@ class Handler(SimpleHTTPRequestHandler):
 
             self.send_json(404, {"error": "Auth endpoint not found"}, head)
             return True
-        if path == "/api/app/sessions/heartbeat" and method == "POST":
+        if path in ("/api/app/sessions/heartbeat", "/api/app/sessions/end") and method == "POST":
+            user = self.get_auth_user()
+            if not user:
+                self.send_json(401, {"error": "Unauthorized"}, head)
+                return True
+            if not auth_service.rate_limiter.is_allowed(f"presence:{user['sub']}", 30, 60):
+                self.send_json(429, {"error": "Too many presence requests"}, head)
+                return True
             try:
+                profile = auth_service.get_current_user_profile(user["sub"])
+                if path.endswith("heartbeat") and (not profile or not profile.get("presence_consent")):
+                    self.send_json(403, {"error": "Presence consent required"}, head)
+                    return True
                 body = self.read_json_body()
-                self.send_json(200, admin_api.handle_heartbeat(body), head)
-            except Exception as e:
-                self.send_json(400, {"error": str(e)}, head)
-            return True
-
-        if path == "/api/app/sessions/end" and method == "POST":
-            try:
-                body = self.read_json_body()
-                self.send_json(200, admin_api.handle_session_end(body), head)
-            except Exception as e:
-                self.send_json(400, {"error": str(e)}, head)
+                body["user_id"] = user["sub"]
+                result = (admin_api.handle_heartbeat(body) if path.endswith("heartbeat")
+                          else admin_api.handle_session_end(body))
+                self.send_json(200, result, head)
+            except PermissionError:
+                self.send_json(403, {"error": "Session belongs to another user"}, head)
+            except (TypeError, ValueError):
+                self.send_json(400, {"error": "Invalid presence request"}, head)
             return True
 
         if path == "/api/app/announcements" and method == "GET":
@@ -662,7 +670,10 @@ class Handler(SimpleHTTPRequestHandler):
                     return True
 
             if path == "/api/admin/releases" and method == "GET":
-                self.send_json(200, admin_api.get_releases_cached(), head)
+                try:
+                    self.send_json(200, admin_api.get_releases_cached(), head)
+                except RuntimeError:
+                    self.send_json(503, {"error": "Release metadata is unavailable"}, head)
                 return True
 
             if path == "/api/admin/playground/trigger" and method == "POST":
@@ -748,7 +759,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         self.send_header("Cache-Control", "no-cache" if target.suffix in (".html", ".js", ".css") else "max-age=86400")
         self.end_headers()
         if not head:

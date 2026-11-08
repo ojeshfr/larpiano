@@ -163,7 +163,12 @@ class SmtpEmailDeliveryService(EmailDeliveryService):
 
 
 def _render_email_html(title: str, greeting: str, lead: str, code: str, expires: str, footer_note: str) -> str:
-    """Renders a sleek, responsive dark-themed HTML email template matching Larpiano."""
+    """Render email data as text, including untrusted account names."""
+    from html import escape
+    title, greeting, lead, code, expires, footer_note = (
+        escape(str(value), quote=True)
+        for value in (title, greeting, lead, code, expires, footer_note)
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>

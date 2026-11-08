@@ -95,7 +95,7 @@ class AdminApiTests(unittest.TestCase):
         overview = admin_api.get_admin_overview()
         self.assertIn("metrics", overview)
         self.assertGreaterEqual(overview["metrics"]["onlineNow"], 1)
-        self.assertEqual(len(overview["live_activity_24h"]), 24)
+        self.assertEqual(overview["live_activity_24h"], [])
         self.assertGreaterEqual(len(overview["active_players"]), 1)
 
     def test_announcements_lifecycle(self):

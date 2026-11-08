@@ -288,6 +288,12 @@ def handle_heartbeat(data: dict) -> dict:
 
     with get_db() as conn:
         cur = conn.cursor()
+        if user_id:
+            marker = "%s" if _is_pg() else "?"
+            cur.execute(f"SELECT user_id FROM app_sessions WHERE session_identifier = {marker}", (session_id,))
+            existing = cur.fetchone()
+            if existing and str(existing["user_id"]) != str(user_id):
+                raise PermissionError("Session belongs to another user")
         if _is_pg():
             cur.execute(
                 """INSERT INTO app_sessions (id, user_id, session_identifier, app_version, started_at, last_seen_at, current_status, ended_at)
@@ -296,9 +302,12 @@ def handle_heartbeat(data: dict) -> dict:
                    SET last_seen_at = NOW(),
                        current_status = EXCLUDED.current_status,
                        app_version = COALESCE(EXCLUDED.app_version, app_sessions.app_version),
-                       ended_at = NULL""",
+                       ended_at = NULL
+                   WHERE app_sessions.user_id IS NOT DISTINCT FROM EXCLUDED.user_id""",
                 (user_id, session_id, app_version, status)
             )
+            if cur.rowcount == 0:
+                raise PermissionError("Session belongs to another user")
         else:
             cur.execute("SELECT id FROM app_sessions WHERE session_identifier = ?", (session_id,))
             row = cur.fetchone()
@@ -330,9 +339,16 @@ def handle_session_end(data: dict) -> dict:
     if not session_id:
         raise ValueError("Missing session_identifier")
 
+    user_id = data.get("user_id")
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     with get_db() as conn:
         cur = conn.cursor()
+        if user_id:
+            marker = "%s" if _is_pg() else "?"
+            cur.execute(f"SELECT user_id FROM app_sessions WHERE session_identifier = {marker}", (session_id,))
+            existing = cur.fetchone()
+            if existing and str(existing["user_id"]) != str(user_id):
+                raise PermissionError("Session belongs to another user")
         if _is_pg():
             cur.execute(
                 """UPDATE app_sessions SET ended_at = NOW(), current_status = 'offline'
@@ -534,7 +550,7 @@ def get_admin_overview() -> dict:
             cur.execute("SELECT COUNT(*) as count FROM users")
             total_accounts = cur.fetchone()["count"]
 
-            cur.execute("SELECT COUNT(*) as count FROM app_sessions WHERE ended_at IS NULL")
+            cur.execute("SELECT COUNT(*) as count FROM app_sessions WHERE ended_at IS NULL AND current_status != 'offline' AND last_seen_at >= NOW() - INTERVAL '120 seconds'")
             active_sessions = cur.fetchone()["count"]
 
             # App version distribution
@@ -582,7 +598,7 @@ def get_admin_overview() -> dict:
             cur.execute("SELECT COUNT(*) as count FROM users")
             total_accounts = cur.fetchone()["count"]
 
-            cur.execute("SELECT COUNT(*) as count FROM app_sessions WHERE ended_at IS NULL")
+            cur.execute("SELECT COUNT(*) as count FROM app_sessions WHERE ended_at IS NULL AND current_status != 'offline' AND last_seen_at >= ?", (cutoff,))
             active_sessions = cur.fetchone()["count"]
 
             cur.execute(
@@ -615,22 +631,12 @@ def get_admin_overview() -> dict:
 
     # Calculate version stats
     total_versions = sum(r["count"] for r in version_rows) if version_rows else 1
-    dominant_version = version_rows[0]["app_version"] if version_rows else "v1.1.0-beta.1"
-    dominant_share = f"{(version_rows[0]['count'] / total_versions * 100):.1f}% of users" if version_rows else "100% of users"
-    donut_pct = round(version_rows[0]["count"] / total_versions * 100) if version_rows else 100
+    dominant_version = version_rows[0]["app_version"] if version_rows else None
+    dominant_share = f"{(version_rows[0]['count'] / total_versions * 100):.1f}% of active sessions" if version_rows else None
+    donut_pct = round(version_rows[0]["count"] / total_versions * 100) if version_rows else None
 
-    # Hourly live activity curve (24 points)
-    # Generate realistic distribution based on current online_now
-    base_activity = max(online_now, 4)
-    activity_curve = [
-        max(1, int(base_activity * factor)) for factor in [
-            0.4, 0.35, 0.3, 0.35, 0.45, 0.6, 0.75, 0.8, 0.85, 0.9, 0.95,
-            1.0, 1.1, 1.25, 1.3, 1.2, 1.4, 1.55, 1.6, 1.45, 1.2, 1.0, 0.8, 0.6
-        ]
-    ]
-    # Set the most recent point to match current online_now
-    if online_now > 0:
-        activity_curve[-1] = online_now
+    # Historical activity is unavailable until real aggregates are collected.
+    activity_curve = []
 
     recent_events = []
     for r in event_rows:
@@ -660,9 +666,9 @@ def get_admin_overview() -> dict:
     return {
         "metrics": {
             "onlineNow": online_now,
-            "onlineDelta": "+14 playing · 10 idle" if online_now > 0 else "0 active clients",
+            "onlineDelta": None,
             "totalAccounts": total_accounts,
-            "accountsDelta": "+100% verified · 0 flags",
+            "accountsDelta": None,
             "activeSessions": active_sessions,
             "sessionsDelta": f"{active_sessions} total registered sessions",
             "appVersion": dominant_version,
@@ -1016,34 +1022,7 @@ def get_releases_cached() -> list[dict]:
         log.warning("Could not fetch GitHub releases (%s), using local fallback", exc)
         if _RELEASES_CACHE["data"]:
             return _RELEASES_CACHE["data"]
-        # Fallback to local known releases
-        fallback = [
-            {
-                "id": "1",
-                "tag_name": "v1.1.0-beta.1",
-                "name": "Larpiano v1.1.0-beta.1 (Fleet Telemetry & Roblox Overlay)",
-                "body": "First public beta release with real-time Win32 auto-player and telemetry.",
-                "prerelease": True,
-                "created_at": "2026-11-08T00:00:00Z",
-                "published_at": "2026-11-08T00:00:00Z",
-                "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
-                "assets": [
-                    {"name": "Larpiano-v1.1.0-beta.1-win-x64.zip", "size": 65432100, "download_url": "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.1/Larpiano-v1.1.0-beta.1-win-x64.zip"}
-                ]
-            },
-            {
-                "id": "2",
-                "tag_name": "v1.0.35",
-                "name": "Larpiano v1.0.35 (Overlay Context Menu)",
-                "body": "Overlay context menu styling fix and stability improvements.",
-                "prerelease": False,
-                "created_at": "2026-11-07T12:00:00Z",
-                "published_at": "2026-11-07T12:00:00Z",
-                "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
-                "assets": []
-            }
-        ]
-        return fallback
+        raise RuntimeError("Release metadata is unavailable") from exc
 
 
 def trigger_playground_effect(data: dict, admin_id: str) -> dict:

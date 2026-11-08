@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -63,10 +64,21 @@ class ServerApiIntegrationTests(unittest.TestCase):
             "status": "playing"
         })
         self.assertTrue(h.serve_api(method="POST"))
-        self.assertIn(("status", 200), h.responses)
-        res = json.loads(h.wfile.getvalue())
-        self.assertEqual(res["status"], "ok")
-        self.assertEqual(res["heartbeat_interval_sec"], 45)
+        self.assertIn(("status", 401), h.responses)
+
+    def test_presence_requires_consent_and_ignores_claimed_identity(self):
+        with patch.object(server.Handler, "get_auth_user", return_value={"sub": "verified-user"}), \
+             patch.object(server.auth_service, "get_current_user_profile", return_value={"presence_consent": False}):
+            h = self.make_handler("POST", "/api/app/sessions/heartbeat", body={"session_identifier": "one", "user_id": "someone-else"})
+            h.serve_api(method="POST")
+            self.assertIn(("status", 403), h.responses)
+        with patch.object(server.Handler, "get_auth_user", return_value={"sub": "verified-user"}), \
+             patch.object(server.auth_service, "get_current_user_profile", return_value={"presence_consent": True}), \
+             patch.object(admin_api, "handle_heartbeat", return_value={"status": "ok"}) as heartbeat:
+            h = self.make_handler("POST", "/api/app/sessions/heartbeat", body={"session_identifier": "one", "user_id": "someone-else"})
+            h.serve_api(method="POST")
+            self.assertIn(("status", 200), h.responses)
+            self.assertEqual(heartbeat.call_args.args[0]["user_id"], "verified-user")
 
     def test_admin_auth_and_overview(self):
         # 1. Without auth -> 401

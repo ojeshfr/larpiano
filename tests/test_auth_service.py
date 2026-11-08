@@ -40,6 +40,12 @@ class AuthServiceTests(unittest.TestCase):
             except Exception:
                 pass
 
+    def test_email_template_escapes_account_name(self):
+        from email_service import _render_email_html
+        html = _render_email_html("title", '<img src=x onerror=alert(1)>', "lead", "123456", "expiry", "footer")
+        self.assertNotIn('<img src=x', html)
+        self.assertIn('&lt;img', html)
+
     def test_password_hashing_and_strength(self):
         """Verify Argon2id hashing and password validation rules."""
         valid, msg = auth_service.validate_password_strength("short")

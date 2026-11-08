@@ -17,6 +17,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
 import admin_api
+import auth_service
 import storage
 
 ROOT = Path(__file__).resolve().parent
@@ -224,6 +225,21 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Max-Age", "86400")
         self.end_headers()
 
+    def get_auth_user(self) -> Optional[dict]:
+        auth = self.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            token = auth[7:].strip()
+            return auth_service.decode_access_token(token)
+        return None
+
+    def get_client_ip(self) -> str:
+        forwarded = self.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        if self.client_address:
+            return str(self.client_address[0])
+        return "127.0.0.1"
+
     def serve_api(self, method="GET", head=False):
         parsed = urlsplit(self.path)
         path = parsed.path
@@ -298,6 +314,184 @@ class Handler(SimpleHTTPRequestHandler):
             return True
 
         # --- App Client Presence & Telemetry Endpoints ---
+        if path.startswith("/api/auth/"):
+            ip = self.get_client_ip()
+            ua = self.headers.get("User-Agent", "")
+
+            if path == "/api/auth/register" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    ok, msg, data = auth_service.register_user(
+                        email=body.get("email", ""),
+                        password=body.get("password", ""),
+                        display_name=body.get("display_name", ""),
+                        ip_address=ip,
+                        user_agent=ua,
+                    )
+                    if ok:
+                        self.send_json(200, {"success": True, "message": msg, "data": data}, head)
+                    else:
+                        self.send_json(400, {"success": False, "error": msg}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/verify-email" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    ok, msg, data = auth_service.verify_email_code(
+                        email=body.get("email", ""),
+                        code=body.get("code", ""),
+                        ip_address=ip,
+                        user_agent=ua,
+                    )
+                    if ok:
+                        self.send_json(200, {"success": True, "message": msg, "data": data}, head)
+                    else:
+                        self.send_json(400, {"success": False, "error": msg}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/resend-code" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    ok, msg, wait = auth_service.resend_verification_code(
+                        email=body.get("email", ""),
+                        ip_address=ip,
+                        user_agent=ua,
+                    )
+                    status_code = 200 if ok else (429 if (wait or 0) > 0 else 400)
+                    self.send_json(status_code, {"success": ok, "message": msg, "cooldown": wait}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/login" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    ok, msg, data = auth_service.login_user(
+                        email=body.get("email", ""),
+                        password=body.get("password", ""),
+                        ip_address=ip,
+                        user_agent=ua,
+                    )
+                    if ok:
+                        self.send_json(200, {"success": True, "message": msg, "data": data}, head)
+                    else:
+                        self.send_json(401, {"success": False, "error": msg}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/refresh" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    ok, msg, data = auth_service.rotate_refresh_token(
+                        raw_refresh_token=body.get("refresh_token", ""),
+                        ip_address=ip,
+                        user_agent=ua,
+                    )
+                    if ok:
+                        self.send_json(200, {"success": True, "message": msg, "data": data}, head)
+                    else:
+                        self.send_json(401, {"success": False, "error": msg}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/logout" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    auth_service.logout_session(body.get("refresh_token", ""), ip_address=ip, user_agent=ua)
+                    self.send_json(200, {"success": True, "message": "Signed out successfully."}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/logout-all" and method == "POST":
+                user = self.get_auth_user()
+                if not user:
+                    self.send_json(401, {"error": "Unauthorized"}, head)
+                    return True
+                auth_service.logout_all_sessions(user["sub"], ip_address=ip, user_agent=ua)
+                self.send_json(200, {"success": True, "message": "All sessions revoked."}, head)
+                return True
+
+            if path == "/api/auth/forgot-password" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    ok, msg = auth_service.request_password_reset(body.get("email", ""), ip_address=ip, user_agent=ua)
+                    self.send_json(200, {"success": True, "message": msg}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/reset-password" and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    ok, msg = auth_service.reset_password_with_code(
+                        email=body.get("email", ""),
+                        code=body.get("code", ""),
+                        new_password=body.get("new_password", ""),
+                        ip_address=ip,
+                        user_agent=ua,
+                    )
+                    if ok:
+                        self.send_json(200, {"success": True, "message": msg}, head)
+                    else:
+                        self.send_json(400, {"success": False, "error": msg}, head)
+                except Exception as exc:
+                    self.send_json(400, {"success": False, "error": str(exc)}, head)
+                return True
+
+            if path == "/api/auth/me" and method == "GET":
+                user = self.get_auth_user()
+                if not user:
+                    self.send_json(401, {"error": "Unauthorized"}, head)
+                    return True
+                profile = auth_service.get_current_user_profile(user["sub"])
+                if not profile:
+                    self.send_json(404, {"error": "User profile not found"}, head)
+                    return True
+                self.send_json(200, {"success": True, "user": profile}, head)
+                return True
+
+            if path == "/api/auth/preferences" and method == "POST":
+                user = self.get_auth_user()
+                if not user:
+                    self.send_json(401, {"error": "Unauthorized"}, head)
+                    return True
+                body = self.read_json_body()
+                auth_service.update_user_preferences(
+                    user_id=user["sub"],
+                    presence_consent=bool(body.get("presence_consent", False)),
+                    telemetry_consent=bool(body.get("telemetry_consent", False)),
+                )
+                self.send_json(200, {"success": True}, head)
+                return True
+
+            if path == "/api/auth/sessions" and method == "GET":
+                user = self.get_auth_user()
+                if not user:
+                    self.send_json(401, {"error": "Unauthorized"}, head)
+                    return True
+                sessions = auth_service.list_user_sessions(user["sub"])
+                self.send_json(200, {"success": True, "sessions": sessions}, head)
+                return True
+
+            match_sess = re.fullmatch(r"/api/auth/sessions/([^/]+)", path)
+            if match_sess and method == "DELETE":
+                user = self.get_auth_user()
+                if not user:
+                    self.send_json(401, {"error": "Unauthorized"}, head)
+                    return True
+                auth_service.revoke_user_session_by_id(user["sub"], match_sess.group(1))
+                self.send_json(200, {"success": True}, head)
+                return True
+
+            self.send_json(404, {"error": "Auth endpoint not found"}, head)
+            return True
         if path == "/api/app/sessions/heartbeat" and method == "POST":
             try:
                 body = self.read_json_body()

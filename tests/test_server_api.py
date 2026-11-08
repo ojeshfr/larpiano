@@ -1,6 +1,8 @@
 """Integration tests for remapped_catalog HTTP Server with Admin & App Presence APIs."""
 
 import io
+import email
+import re
 import json
 import os
 import shutil
@@ -79,6 +81,28 @@ class ServerApiIntegrationTests(unittest.TestCase):
             h.serve_api(method="POST")
             self.assertIn(("status", 200), h.responses)
             self.assertEqual(heartbeat.call_args.args[0]["user_id"], "verified-user")
+
+    def test_registration_verification_through_mocked_smtp(self):
+        import email_service
+        sender = email_service.SmtpEmailDeliveryService(
+            "smtp-relay.brevo.com", port=587, username="test-user", password="test-secret",
+            from_email="sender@example.test", use_tls=True)
+        with patch.object(server.auth_service, "get_email_service", return_value=sender), \
+             patch.object(email_service.smtplib, "SMTP") as smtp:
+            register = self.make_handler("POST", "/api/auth/register", body={
+                "email": "new@example.test", "password": "StrongPass123!", "display_name": "Pianist"})
+            register.serve_api(method="POST")
+            self.assertIn(("status", 200), register.responses)
+            session = smtp.return_value.__enter__.return_value
+            session.starttls.assert_called_once()
+            message = email.message_from_string(session.sendmail.call_args.args[2])
+            code_match = re.search(r"\b[0-9]{6}\b", str(message["Subject"]))
+            self.assertIsNotNone(code_match)
+            verify = self.make_handler("POST", "/api/auth/verify-email", body={
+                "email": "new@example.test", "code": code_match.group()})
+            verify.serve_api(method="POST")
+            self.assertIn(("status", 200), verify.responses)
+            self.assertTrue(json.loads(verify.wfile.getvalue())["data"]["user"]["email_verified"])
 
     def test_admin_auth_and_overview(self):
         # 1. Without auth -> 401

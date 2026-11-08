@@ -6,12 +6,8 @@
  */
 
 const DEFAULT_LOCAL_BACKEND = "http://127.0.0.1:8088";
-const DEFAULT_ADMIN_TOKEN = "larpiano-admin-secret-key-ojesh-2026";
 
 export function getApiBaseUrl() {
-  const configured = localStorage.getItem("larpiano_api_base");
-  if (configured) return configured.replace(/\/+$/, "");
-
   // If viewing via local preview server (port 8089), route requests to local Python API server
   if (window.location.port === "8089") {
     return DEFAULT_LOCAL_BACKEND;
@@ -22,14 +18,14 @@ export function getApiBaseUrl() {
 }
 
 export function getAdminToken() {
-  return localStorage.getItem("larpiano_admin_token") || DEFAULT_ADMIN_TOKEN;
+  return sessionStorage.getItem("larpiano_admin_token") || "";
 }
 
 export function setAdminToken(token) {
   if (token) {
-    localStorage.setItem("larpiano_admin_token", token);
+    sessionStorage.setItem("larpiano_admin_token", token);
   } else {
-    localStorage.removeItem("larpiano_admin_token");
+    sessionStorage.removeItem("larpiano_admin_token");
   }
 }
 

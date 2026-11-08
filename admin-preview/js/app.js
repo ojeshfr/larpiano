@@ -18,6 +18,7 @@ import { initReleaseModal, openDraftReleaseModal } from "./components/releaseMod
 import { initSearchModal, openSearchModal } from "./components/searchModal.js";
 import { MOCK_NOTIFICATIONS } from "./data/mockData.js";
 import { showToast } from "./components/toast.js";
+import { login, logout, getCurrentUser } from "./api/auth.js";
 
 let currentRoute = "overview";
 
@@ -190,9 +191,10 @@ function initHeaderPopovers() {
     navigateTo("settings");
   });
 
-  document.getElementById("profile-action-signout")?.addEventListener("click", () => {
+  document.getElementById("profile-action-signout")?.addEventListener("click", async () => {
     profilePopover?.classList.remove("open");
-    showToast("Signed out from administrative demo session", "info");
+    await logout();
+    location.reload();
   });
 
   // Close popovers on outer click
@@ -203,7 +205,31 @@ function initHeaderPopovers() {
 }
 
 // Bootstrap
-function bootstrap() {
+async function bootstrap() {
+  try {
+    await getCurrentUser();
+  } catch (_) {
+    const gate = document.createElement("div");
+    gate.className = "admin-login-gate";
+    gate.innerHTML = `<form class="admin-login-form"><h1>Admin sign in</h1><p>Sign in with an administrator account or enter your configured access token.</p><label>Email or username<input name="username" autocomplete="username"></label><label>Password<input name="password" type="password" autocomplete="current-password"></label><label>Access token (optional)<input name="token" type="password" autocomplete="off"></label><p class="admin-login-error" role="alert"></p><button type="submit">Sign in</button></form>`;
+    document.body.appendChild(gate);
+    const form = gate.querySelector("form");
+    const error = gate.querySelector(".admin-login-error");
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const submit = form.querySelector("button");
+      submit.disabled = true;
+      error.textContent = "";
+      try {
+        await login({username: String(data.get("username") || ""), password: String(data.get("password") || ""), token: String(data.get("token") || "")});
+        gate.remove();
+        await bootstrap();
+      } catch (_) { error.textContent = "Sign in failed. Check your credentials and try again."; }
+      finally { submit.disabled = false; }
+    });
+    return;
+  }
   initSidebar();
   initHeaderPopovers();
   initUserDrawer();

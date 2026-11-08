@@ -7,7 +7,7 @@ import { MOCK_AUDIT_LOGS } from "../data/mockData.js";
 import { showToast } from "../components/toast.js";
 import { fetchAuditLogs } from "../api/audit.js";
 import { exportData } from "../api/storage.js";
-import { getApiBaseUrl } from "../api/client.js";
+import { getApiBaseUrl, getAdminToken } from "../api/client.js";
 
 let filterType = "all";
 let auditList = [...MOCK_AUDIT_LOGS];
@@ -111,8 +111,14 @@ export function renderAuditLog(container) {
       showToast("Generating verified audit export from storage...", "info");
       const res = await exportData("audit");
       if (res && res.download_url) {
-        const fullUrl = `${getApiBaseUrl()}${res.download_url}`;
-        window.open(fullUrl, "_blank");
+        const downloadUrl = new URL(res.download_url, window.location.origin);
+        if (downloadUrl.origin !== window.location.origin || downloadUrl.pathname !== "/api/admin/storage/download") throw new Error("Invalid export URL");
+        const response = await fetch(`${getApiBaseUrl()}${downloadUrl.pathname}${downloadUrl.search}`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+        if (!response.ok) throw new Error(`Download failed (${response.status})`);
+        const url = URL.createObjectURL(await response.blob());
+        const link = document.createElement("a");
+        link.href = url; link.download = "audit-export.csv"; link.click();
+        URL.revokeObjectURL(url);
         showToast(`Audit log exported (SHA-256: ${res.sha256.slice(0, 8)}...)`, "success");
       }
     } catch (err) {

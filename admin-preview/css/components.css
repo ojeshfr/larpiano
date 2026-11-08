@@ -734,3 +734,13 @@
   pointer-events: none;
   z-index: 999;
 }
+/* Authentication gate shown before loading administrative data. */
+.admin-login-gate { position: fixed; inset: 0; z-index: 10000; background: var(--bg); display: grid; place-items: center; padding: 24px; }
+.admin-login-form { width: min(100%, 400px); padding: 28px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); }
+.admin-login-form h1 { margin: 0 0 8px; font-size: 24px; }
+.admin-login-form p { color: var(--muted); margin: 0 0 20px; }
+.admin-login-form label { display: block; margin: 14px 0; font-size: 13px; }
+.admin-login-form input { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; padding: 10px; color: var(--text); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 6px; }
+.admin-login-form input:focus-visible, .admin-login-form button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.admin-login-form button { padding: 10px 16px; border: 0; border-radius: 6px; background: var(--accent); color: #151120; cursor: pointer; }
+.admin-login-form .admin-login-error { color: #ff9c9c; min-height: 1em; }

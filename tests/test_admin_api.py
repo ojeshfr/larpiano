@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 # Add remapped_catalog to sys.path
@@ -18,6 +19,8 @@ import storage
 
 class AdminApiTests(unittest.TestCase):
     def setUp(self):
+        self.env_patcher = unittest.mock.patch.dict(os.environ, {"INITIAL_ADMIN_EMAIL": "admin@example.test", "INITIAL_ADMIN_PASSWORD": "test-password-long-enough"})
+        self.env_patcher.start()
         self.temp_dir = tempfile.TemporaryDirectory()
         admin_api.DEV_DB_PATH = Path(self.temp_dir.name) / "test_admin.db"
         storage.LOCAL_ROOT = Path(self.temp_dir.name) / "storage"
@@ -25,12 +28,13 @@ class AdminApiTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+        self.env_patcher.stop()
 
     def test_database_initialization_and_admin_seed(self):
         # Admin user should be seeded
         users = admin_api.get_admin_users()
         self.assertGreaterEqual(users["total"], 1)
-        admin = next(u for u in users["users"] if u["display_name"] == "ojesh")
+        admin = next(u for u in users["users"] if u["display_name"] == "Admin")
         self.assertEqual(admin["role"], "admin")
 
     def test_heartbeat_upsert_and_no_append_spam(self):

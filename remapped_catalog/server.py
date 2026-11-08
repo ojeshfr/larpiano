@@ -233,9 +233,6 @@ class Handler(SimpleHTTPRequestHandler):
         return None
 
     def get_client_ip(self) -> str:
-        forwarded = self.headers.get("X-Forwarded-For")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
         if self.client_address:
             return str(self.client_address[0])
         return "127.0.0.1"
@@ -524,8 +521,12 @@ class Handler(SimpleHTTPRequestHandler):
 
         if path == "/api/app/preferences" and method == "POST":
             try:
+                user = self.get_auth_user()
+                if not user:
+                    self.send_json(401, {"error": "Unauthorized"}, head)
+                    return True
                 body = self.read_json_body()
-                user_id = body.get("user_id") or "guest"
+                user_id = user["sub"]
                 self.send_json(200, admin_api.update_user_preferences(user_id, body), head)
             except Exception as e:
                 self.send_json(400, {"error": str(e)}, head)
@@ -534,6 +535,9 @@ class Handler(SimpleHTTPRequestHandler):
         # --- Admin Endpoints ---
         if path == "/api/admin/auth/login" and method == "POST":
             try:
+                if not auth_service.rate_limiter.is_allowed(f"admin-login:{self.get_client_ip()}", 10, 300):
+                    self.send_json(429, {"error": "Too many login attempts"}, head)
+                    return True
                 body = self.read_json_body()
                 self.send_json(200, admin_api.admin_login(body), head)
             except PermissionError as e:
@@ -542,8 +546,11 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(400, {"error": str(e)}, head)
             return True
 
-        # Storage download can be accessed with valid key
+        # Object names are not credentials; downloads require administrator access.
         if path == "/api/admin/storage/download" and method == "GET":
+            if not admin_api.verify_admin_token(self.headers.get("Authorization")):
+                self.send_json(401, {"error": "Unauthorized"}, head)
+                return True
             key = qs.get("key", [""])[0]
             if not key:
                 self.send_json(400, {"error": "Missing key"}, head)
@@ -554,7 +561,6 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(data)))
                 self.send_header("ETag", f'"{digest}"')
-                self.send_header("Access-Control-Allow-Origin", "*")
                 self.send_header("Cache-Control", "private, max-age=3600")
                 self.end_headers()
                 if not head:
@@ -579,6 +585,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return True
 
             if path == "/api/admin/auth/logout" and method == "POST":
+                supplied = self.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+                admin_api.ACTIVE_TOKENS.pop(supplied, None)
                 self.send_json(200, {"status": "ok"}, head)
                 return True
 

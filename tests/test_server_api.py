@@ -21,6 +21,8 @@ import storage
 
 class ServerApiIntegrationTests(unittest.TestCase):
     def setUp(self):
+        self.old_admin_token = admin_api.ADMIN_TOKEN
+        admin_api.ADMIN_TOKEN = "test-only-operator-token"
         self.temp_dir = tempfile.TemporaryDirectory()
         admin_api.DEV_DB_PATH = Path(self.temp_dir.name) / "test_server.db"
         storage.LOCAL_ROOT = Path(self.temp_dir.name) / "storage"
@@ -28,9 +30,11 @@ class ServerApiIntegrationTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+        admin_api.ADMIN_TOKEN = self.old_admin_token
 
     def make_handler(self, method, path, headers=None, body=None):
         h = server.Handler.__new__(server.Handler)
+        h.client_address = ("127.0.0.1", 12345)
         h.path = path
         h.command = method
         h.headers = headers or {}
@@ -72,7 +76,7 @@ class ServerApiIntegrationTests(unittest.TestCase):
 
         # 2. Login with master admin token
         h_login = self.make_handler("POST", "/api/admin/auth/login", body={
-            "token": "larpiano-admin-secret-key-ojesh-2026"
+            "token": "test-only-operator-token"
         })
         self.assertTrue(h_login.serve_api(method="POST"))
         self.assertIn(("status", 200), h_login.responses)
@@ -90,8 +94,24 @@ class ServerApiIntegrationTests(unittest.TestCase):
         self.assertIn("metrics", overview_res)
         self.assertIn("live_activity_24h", overview_res)
 
+    def test_admin_storage_download_requires_authorization(self):
+        handler = self.make_handler("GET", "/api/admin/storage/download?key=exports/test.csv")
+        self.assertTrue(handler.serve_api(method="GET"))
+        self.assertIn(("status", 401), handler.responses)
+
+    def test_preferences_require_account_authentication(self):
+        handler = self.make_handler("POST", "/api/app/preferences", body={"user_id": "other-user", "presence_consent": True})
+        self.assertTrue(handler.serve_api(method="POST"))
+        self.assertIn(("status", 401), handler.responses)
+
+    def test_unconfigured_operator_token_does_not_authenticate(self):
+        admin_api.ADMIN_TOKEN = ""
+        self.assertIsNone(admin_api.verify_admin_token("Bearer test-only-operator-token"))
+        with self.assertRaises(PermissionError):
+            admin_api.admin_login({"token": "test-only-operator-token"})
+
     def test_admin_announcements_crud(self):
-        token = "larpiano-admin-secret-key-ojesh-2026"
+        token = "test-only-operator-token"
         # Create
         h_create = self.make_handler("POST", "/api/admin/announcements", headers={"Authorization": f"Bearer {token}"}, body={
             "title": "Fleet Update v1.1",

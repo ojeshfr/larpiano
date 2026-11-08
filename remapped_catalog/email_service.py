@@ -319,6 +319,8 @@ def get_email_service() -> EmailDeliveryService:
                 use_tls=use_tls,
             )
         else:
+            if os.environ.get("DATABASE_URL", "").startswith(("postgres://", "postgresql://")):
+                raise RuntimeError("SMTP email delivery is not configured.")
             log.info("Using mock email delivery service (set EMAIL_PROVIDER=smtp and EMAIL_HOST for production delivery)")
             _DEFAULT_SERVICE = MockEmailDeliveryService()
 

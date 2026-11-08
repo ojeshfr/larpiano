@@ -32,7 +32,13 @@ from email_service import get_email_service
 log = logging.getLogger("larpiano_auth")
 
 # JWT Configuration
-JWT_SECRET = os.environ.get("JWT_SECRET", "larpiano-jwt-insecure-dev-secret-do-not-use-in-prod-12345")
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
+if not JWT_SECRET:
+    if os.environ.get("DATABASE_URL", "").startswith(("postgres://", "postgresql://")):
+        raise RuntimeError("JWT_SECRET must be configured before starting the production service.")
+    JWT_SECRET = secrets.token_urlsafe(48)
+elif len(JWT_SECRET.encode("utf-8")) < 32:
+    raise RuntimeError("JWT_SECRET must contain at least 32 bytes.")
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_LIFETIME_SECONDS = 900  # 15 minutes
 REFRESH_TOKEN_LIFETIME_SECONDS = 30 * 86400  # 30 days
@@ -237,7 +243,7 @@ def log_auth_audit(
         log.error("Failed to write auth audit log: %s", exc)
 
 
-def create_access_token(user: dict) -> str:
+def create_access_token(user: dict, session_id: str) -> str:
     """Create short-lived JWT access token."""
     now = int(time.time())
     payload = {
@@ -247,6 +253,7 @@ def create_access_token(user: dict) -> str:
         "role": user["role"],
         "email_verified": bool(user["email_verified"]),
         "jti": secrets.token_hex(16),
+        "sid": session_id,
         "iat": now,
         "exp": now + ACCESS_TOKEN_LIFETIME_SECONDS,
         "type": "access",
@@ -260,6 +267,23 @@ def decode_access_token(token: str) -> Optional[dict]:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
             return None
+        session_id = payload.get("sid")
+        if not session_id or not payload.get("sub"):
+            return None
+        with admin_api.get_db() as conn:
+            cur = conn.cursor()
+            marker = "%s" if admin_api._is_pg() else "?"
+            cur.execute(f"SELECT s.revoked_at, s.expires_at, u.account_status FROM user_sessions s JOIN users u ON u.id = s.user_id WHERE s.id = {marker} AND s.user_id = {marker}", (session_id, payload["sub"]))
+            row = cur.fetchone()
+            if not row or row["revoked_at"] is not None or row["account_status"] != "active":
+                return None
+            expires = row["expires_at"]
+            if isinstance(expires, str):
+                expires = datetime.datetime.fromisoformat(expires.replace("Z", "+00:00"))
+            if expires.tzinfo is None:
+                expires = expires.replace(tzinfo=datetime.timezone.utc)
+            if expires <= datetime.datetime.now(datetime.timezone.utc):
+                return None
         return payload
     except Exception:
         return None
@@ -358,7 +382,8 @@ def register_user(
 
     # Send verification email via provider
     email_service = get_email_service()
-    email_service.send_verification_email(clean_email, clean_name, raw_code)
+    if not email_service.send_verification_email(clean_email, clean_name, raw_code):
+        return False, "Could not send the verification email. Please request another code later.", None
 
     log_auth_audit("USER_REGISTERED", user_id=user_id, email=clean_email, ip_address=ip_address, user_agent=user_agent)
 
@@ -581,7 +606,8 @@ def resend_verification_code(
         conn.commit()
 
     email_service = get_email_service()
-    email_service.send_verification_email(clean_email, user["display_name"], raw_code)
+    if not email_service.send_verification_email(clean_email, user["display_name"], raw_code):
+        return False, "Could not send the verification email. Please try again later.", 60
 
     log_auth_audit("VERIFICATION_CODE_RESENT", user_id=user_id, email=clean_email, ip_address=ip_address, user_agent=user_agent)
 
@@ -643,6 +669,8 @@ def login_user(
         if not is_valid:
             log_auth_audit("LOGIN_FAILED", email=clean_email, ip_address=ip_address, user_agent=user_agent)
             return False, "Invalid email or password.", None
+        if not user["email_verified"]:
+            return False, "Verify your email before signing in.", None
 
         user_id = str(user["id"])
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -700,13 +728,12 @@ def create_user_session(
     if not user:
         raise ValueError("User not found.")
 
-    access_token = create_access_token(user)
-
     # 48-byte URL-safe refresh token
     raw_refresh_token = secrets.token_urlsafe(48)
     refresh_hash = hashlib.sha256(raw_refresh_token.encode("utf-8")).hexdigest()
 
     session_id = str(secrets.token_hex(16))
+    access_token = create_access_token(user, session_id)
     now = datetime.datetime.now(datetime.timezone.utc)
     expires_at = now + datetime.timedelta(seconds=REFRESH_TOKEN_LIFETIME_SECONDS)
 
@@ -761,7 +788,7 @@ def rotate_refresh_token(
                 SELECT s.id, s.user_id, s.expires_at, s.revoked_at, u.account_status, u.role, u.email, u.display_name, u.email_verified
                 FROM user_sessions s
                 JOIN users u ON s.user_id = u.id
-                WHERE s.refresh_token_hash = %s
+                WHERE s.refresh_token_hash = %s FOR UPDATE OF s
                 """,
                 (token_hash,),
             )
@@ -856,7 +883,7 @@ def rotate_refresh_token(
         "role": session["role"],
         "email_verified": bool(session["email_verified"]),
     }
-    new_access_token = create_access_token(user_dict)
+    new_access_token = create_access_token(user_dict, new_session_id)
 
     log_auth_audit("TOKEN_ROTATED", user_id=user_id, email=session["email"], ip_address=ip_address, user_agent=user_agent)
 
@@ -981,6 +1008,9 @@ def reset_password_with_code(
 
     clean_email = email.strip().lower()
     clean_code = code.strip()
+
+    if not rate_limiter.is_allowed(f"reset:{clean_email}", max_requests=8, window_seconds=900):
+        return False, "Too many recovery attempts. Please try again later."
 
     valid_pw, pw_err = validate_password_strength(new_password)
     if not valid_pw:

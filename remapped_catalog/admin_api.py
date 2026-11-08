@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parent
 DEV_DB_PATH = ROOT / "larpiano_admin_dev.db"
 
 # Admin Authentication Secret
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "larpiano-admin-secret-key-ojesh-2026")
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 ACTIVE_TOKENS: dict[str, dict] = {}
 
 # GitHub releases cache
@@ -156,12 +156,18 @@ def init_db_if_needed():
 
 
 def _hash_password(password: str) -> str:
-    salt = secrets.token_hex(16)
-    hashed = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
-    return f"{salt}:{hashed}"
+    from argon2 import PasswordHasher
+    return PasswordHasher().hash(password)
 
 
 def _verify_password(password: str, stored_hash: Optional[str]) -> bool:
+    if stored_hash and stored_hash.startswith("$argon2"):
+        from argon2 import PasswordHasher
+        from argon2.exceptions import InvalidHashError, VerificationError
+        try:
+            return PasswordHasher().verify(stored_hash, password)
+        except (InvalidHashError, VerificationError):
+            return False
     if not stored_hash or ":" not in stored_hash:
         return False
     salt, hashed = stored_hash.split(":", 1)
@@ -174,12 +180,14 @@ def _seed_initial_data_if_empty(conn):
     cur.execute("SELECT COUNT(*) as count FROM users")
     row = cur.fetchone()
     count = row["count"] if isinstance(row, dict) or isinstance(row, sqlite3.Row) else row[0]
-    if count == 0:
+    initial_email = os.environ.get("INITIAL_ADMIN_EMAIL", "").strip()
+    initial_password = os.environ.get("INITIAL_ADMIN_PASSWORD", "")
+    if count == 0 and initial_email and len(initial_password) >= 16:
         admin_id = str(uuid.uuid4())
         cur.execute(
             """INSERT INTO users (id, email, display_name, password_hash, email_verified, role, account_status)
                VALUES (?, ?, ?, ?, 1, 'admin', 'active')""",
-            (admin_id, "ojesh@larpiano.local", "ojesh", _hash_password("larpiano2026"))
+            (admin_id, initial_email, "Admin", _hash_password(initial_password))
         )
         cur.execute(
             """INSERT INTO user_preferences (user_id, telemetry_consent, presence_consent, playground_effects_enabled)
@@ -216,11 +224,11 @@ def verify_admin_token(token: Optional[str]) -> Optional[dict]:
     token = token.removeprefix("Bearer ").strip()
     
     # Direct master admin token match
-    if hmac.compare_digest(token, ADMIN_TOKEN):
+    if ADMIN_TOKEN and hmac.compare_digest(token, ADMIN_TOKEN):
         return {
-            "id": "master-admin-000",
-            "email": "ojesh@larpiano.local",
-            "display_name": "ojesh",
+            "id": None,
+            "email": "",
+            "display_name": "Operator",
             "role": "admin"
         }
     
@@ -457,14 +465,14 @@ def admin_login(data: dict) -> dict:
     token_input = data.get("token", "")
 
     # Operator token login
-    if token_input and hmac.compare_digest(token_input, ADMIN_TOKEN):
-        user_info = {"id": "master-admin-000", "email": "ojesh@larpiano.local", "display_name": "ojesh", "role": "admin"}
+    if ADMIN_TOKEN and token_input and hmac.compare_digest(token_input, ADMIN_TOKEN):
+        user_info = {"id": None, "email": "", "display_name": "Operator", "role": "admin"}
         auth_token = secrets.token_hex(24)
         ACTIVE_TOKENS[auth_token] = {
             "user": user_info,
             "expires_at": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=7)
         }
-        audit_log(user_info["id"], "ADMIN_LOGIN_TOKEN", "user", user_info["id"])
+        audit_log(None, "ADMIN_LOGIN_TOKEN", "operator", "master-token")
         return {"token": auth_token, "user": user_info}
 
     # Username / Password login
@@ -490,9 +498,7 @@ def admin_login(data: dict) -> dict:
         if user["role"] != "admin":
             raise PermissionError("Access denied: Administrator privileges required")
         if not _verify_password(password, user.get("password_hash")):
-            # Allow fallback to default master password for local setup if password not set
-            if password != "larpiano2026":
-                raise PermissionError("Invalid username or password")
+            raise PermissionError("Invalid username or password")
 
         # Create session token
         auth_token = secrets.token_hex(24)

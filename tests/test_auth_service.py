@@ -127,6 +127,9 @@ class AuthServiceTests(unittest.TestCase):
         email = "loginuser@example.com"
         pwd = "ComplexPassw0rd!"
         auth_service.register_user(email, pwd, "LoginUser")
+        self.assertFalse(auth_service.login_user(email, pwd)[0])
+        verified, message, _ = auth_service.verify_email_code(email, self.mock_email.sent_emails[-1]["code"])
+        self.assertTrue(verified, message)
 
         # Login
         ok, msg, data = auth_service.login_user(email, pwd)
@@ -145,6 +148,7 @@ class AuthServiceTests(unittest.TestCase):
         self.assertIn("Compromised session detected", replay_msg)
 
         # All sessions for the user should now be invalidated
+        self.assertIsNone(auth_service.decode_access_token(data["tokens"]["access_token"]))
         old_replay_ok, _, _ = auth_service.rotate_refresh_token(new_refresh)
         self.assertFalse(old_replay_ok)
 
@@ -154,6 +158,8 @@ class AuthServiceTests(unittest.TestCase):
         old_pwd = "OldPassword123!"
         new_pwd = "NewPassword456!"
         auth_service.register_user(email, old_pwd, "RecoveryUser")
+        verified, message, _ = auth_service.verify_email_code(email, self.mock_email.sent_emails[-1]["code"])
+        self.assertTrue(verified, message)
 
         # Login to create an active session
         l_ok, _, l_data = auth_service.login_user(email, old_pwd)

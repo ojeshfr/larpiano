@@ -191,7 +191,7 @@ def _seed_initial_data_if_empty(conn):
         )
         cur.execute(
             """INSERT INTO user_preferences (user_id, telemetry_consent, presence_consent, playground_effects_enabled)
-               VALUES (?, 1, 1, 1)""",
+               VALUES (?, 0, 0, 0)""",
             (admin_id,)
         )
         # Seed initial announcement
@@ -767,7 +767,7 @@ def create_admin_user(data: dict, admin_id: str) -> dict:
             )
             cur.execute(
                 """INSERT INTO user_preferences (user_id, telemetry_consent, presence_consent, playground_effects_enabled)
-                   VALUES (%s, true, true, true)""",
+                   VALUES (%s, false, false, false)""",
                 (user_id,)
             )
         else:
@@ -778,7 +778,7 @@ def create_admin_user(data: dict, admin_id: str) -> dict:
             )
             cur.execute(
                 """INSERT INTO user_preferences (user_id, telemetry_consent, presence_consent, playground_effects_enabled)
-                   VALUES (?, 1, 1, 1)""",
+                   VALUES (?, 0, 0, 0)""",
                 (user_id,)
             )
         conn.commit()

@@ -3,7 +3,6 @@
  * Connected to PostgreSQL announcements table and real client broadcast.
  */
 
-import { MOCK_ANNOUNCEMENTS } from "../data/mockData.js";
 import { showToast } from "./toast.js";
 import { createAnnouncement } from "../api/announcements.js";
 
@@ -73,16 +72,6 @@ async function handleSaveAnnouncement(status) {
     return;
   }
 
-  const newAnc = {
-    id: `anc_${Date.now()}`,
-    title,
-    message: message || "No message content provided.",
-    audience,
-    status,
-    created: "Just now",
-    expires: "No expiry"
-  };
-
   // Persist to database via API
   try {
     const dbStatus = status === "Active" ? "published" : "draft";
@@ -94,12 +83,10 @@ async function handleSaveAnnouncement(status) {
     });
     showToast(`Announcement published and broadcast to desktop clients!`, "success");
   } catch (err) {
-    console.log("[Announcement Modal] Fallback to local cache:", err.message);
-    showToast(`Announcement saved as ${status}`, "success");
+    showToast(`Could not save announcement: ${err.message}`, "error");
+    return;
   }
 
-  // Also add to local cache for instant UI feedback
-  MOCK_ANNOUNCEMENTS.unshift(newAnc);
   closeAnnouncementModal();
 
   // Reset fields

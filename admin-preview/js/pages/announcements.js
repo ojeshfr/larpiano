@@ -1,15 +1,15 @@
+import { escapeText } from "../components/safeText.js";
 /**
  * Page: Announcements Management & Composer
  * Connected to live backend announcements API.
  */
 
-import { MOCK_ANNOUNCEMENTS } from "../data/mockData.js";
 import { openAnnouncementModal } from "../components/announcementModal.js";
 import { showToast } from "../components/toast.js";
 import { fetchAnnouncements, deleteAnnouncement, updateAnnouncement } from "../api/announcements.js";
 
 export function renderAnnouncements(container) {
-  let announcementsList = [...MOCK_ANNOUNCEMENTS];
+  let announcementsList = [];
 
   function renderCards() {
     if (announcementsList.length === 0) {
@@ -29,7 +29,7 @@ export function renderAnnouncements(container) {
       const audience = anc.audience || "all";
       const audienceBadge = audience === "all" || audience === "Global"
         ? `<span class="badge badge-channel-stable">Global</span>`
-        : `<span class="badge badge-channel-beta">${audience}</span>`;
+        : `<span class="badge badge-channel-beta">${escapeText(audience)}</span>`;
 
       const id = anc.id;
       const title = anc.title;
@@ -38,25 +38,25 @@ export function renderAnnouncements(container) {
       const expires = anc.expires_at ? new Date(anc.expires_at).toLocaleString() : (anc.expires || "No expiry");
 
       return `
-        <div class="announcement-card" data-id="${id}">
+        <div class="announcement-card" data-id="${escapeText(id)}">
           <div class="announcement-icon-badge">📢</div>
           <div class="announcement-main">
             <div class="announcement-top">
-              <h3 class="announcement-title">${title}</h3>
+              <h3 class="announcement-title">${escapeText(title)}</h3>
               ${audienceBadge}
               ${statusBadge}
             </div>
-            <p class="announcement-message">${message}</p>
+            <p class="announcement-message">${escapeText(message)}</p>
             <div class="announcement-meta">
-              <span>Created: ${created}</span>
-              <span>Expires: ${expires}</span>
+              <span>Created: ${escapeText(created)}</span>
+              <span>Expires: ${escapeText(expires)}</span>
             </div>
           </div>
           <div style="display: flex; gap: 6px;">
-            <button class="btn btn-ghost btn-sm btn-anc-retract" data-id="${id}" title="${rawStatus === 'published' ? 'Retract Announcement' : 'Publish Announcement'}">
+            <button class="btn btn-ghost btn-sm btn-anc-retract" data-id="${escapeText(id)}" title="${rawStatus === 'published' ? 'Retract Announcement' : 'Publish Announcement'}">
               ${rawStatus === 'published' || rawStatus === 'active' ? '⏸️' : '▶️'}
             </button>
-            <button class="btn btn-ghost btn-sm btn-anc-delete" data-id="${id}" title="Delete Announcement" style="color: var(--danger);">
+            <button class="btn btn-ghost btn-sm btn-anc-delete" data-id="${escapeText(id)}" title="Delete Announcement" style="color: var(--danger);">
               🗑️
             </button>
           </div>
@@ -132,12 +132,12 @@ export function renderAnnouncements(container) {
   async function loadAnnouncements() {
     try {
       const data = await fetchAnnouncements();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         announcementsList = data;
         updateDOM();
       }
     } catch (err) {
-      console.log("[Announcements] Using baseline data:", err.message);
+      showToast(`Could not load announcements: ${err.message}`, "error");
     }
   }
 

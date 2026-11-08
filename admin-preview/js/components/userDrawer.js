@@ -1,3 +1,4 @@
+import { escapeText } from "./safeText.js";
 /**
  * User Detail Slide-Over Drawer
  */
@@ -28,18 +29,19 @@ export function openUserDrawer(user) {
   const contentEl = document.getElementById("drawer-user-content");
   if (!contentEl) return;
 
+  const name = typeof user.name === "string" ? user.name : (typeof user.display_name === "string" ? user.display_name : "User");
   const statusBadgeClass = user.status === "Online" ? "badge-online" : (user.status === "Idle" ? "badge-idle" : "badge-offline");
 
   const sessionsHtml = user.activeSessions && user.activeSessions.length > 0
     ? user.activeSessions.map(s => `
         <div style="background: var(--surface-soft); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 6px;">
           <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
-            <span style="font-family: var(--font-mono); color: var(--accent-soft);">${s.id}</span>
-            <span class="badge ${s.status === 'Playing' ? 'badge-playing' : 'badge-online'}">${s.status}</span>
+            <span style="font-family: var(--font-mono); color: var(--accent-soft);">${escapeText(s.id)}</span>
+            <span class="badge ${s.status === 'Playing' ? 'badge-playing' : 'badge-online'}">${escapeText(s.status)}</span>
           </div>
           <div style="font-size: 11px; color: var(--subtle); display: flex; justify-content: space-between;">
-            <span>${s.client}</span>
-            <span>Uptime: ${s.duration}</span>
+            <span>${escapeText(s.client)}</span>
+            <span>Uptime: ${escapeText(s.duration)}</span>
           </div>
         </div>
       `).join("")
@@ -49,14 +51,14 @@ export function openUserDrawer(user) {
     <!-- User Identity -->
     <div style="display: flex; align-items: center; gap: 14px; margin-bottom: var(--space-4);">
       <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #7C3AED, #A78BFA); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; color: #fff;">
-        ${user.name.charAt(0).toUpperCase()}
+        ${escapeText(name.charAt(0).toUpperCase())}
       </div>
       <div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <h3 style="font-size: 18px; font-weight: 600; color: var(--text);">${user.name}</h3>
-          <span class="badge ${statusBadgeClass}">${user.status}</span>
+          <h3 style="font-size: 18px; font-weight: 600; color: var(--text);">${escapeText(name)}</h3>
+          <span class="badge ${statusBadgeClass}">${escapeText(user.status)}</span>
         </div>
-        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--subtle); margin-top: 2px;">ID: ${user.id}</div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--subtle); margin-top: 2px;">ID: ${escapeText(user.id)}</div>
       </div>
     </div>
 
@@ -65,19 +67,19 @@ export function openUserDrawer(user) {
       <div class="drawer-section-title">Account Information</div>
       <div class="drawer-prop-row">
         <span class="drawer-prop-label">Role</span>
-        <span class="drawer-prop-val">${user.role}</span>
+        <span class="drawer-prop-val">${escapeText(user.role)}</span>
       </div>
       <div class="drawer-prop-row">
         <span class="drawer-prop-label">App Version</span>
-        <span class="drawer-prop-val font-mono">${user.version}</span>
+        <span class="drawer-prop-val font-mono">${escapeText(user.version)}</span>
       </div>
       <div class="drawer-prop-row">
         <span class="drawer-prop-label">First Seen</span>
-        <span class="drawer-prop-val">${user.firstSeen}</span>
+        <span class="drawer-prop-val">${escapeText(user.firstSeen)}</span>
       </div>
       <div class="drawer-prop-row">
         <span class="drawer-prop-label">Last Active</span>
-        <span class="drawer-prop-val">${user.lastSeen}</span>
+        <span class="drawer-prop-val">${escapeText(user.lastSeen)}</span>
       </div>
     </div>
 

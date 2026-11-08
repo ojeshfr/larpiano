@@ -16,7 +16,6 @@ import { initUserDrawer, openUserDrawer } from "./components/userDrawer.js";
 import { initAnnouncementModal, openAnnouncementModal } from "./components/announcementModal.js";
 import { initReleaseModal, openDraftReleaseModal } from "./components/releaseModal.js";
 import { initSearchModal, openSearchModal } from "./components/searchModal.js";
-import { MOCK_NOTIFICATIONS } from "./data/mockData.js";
 import { showToast } from "./components/toast.js";
 import { login, logout, getCurrentUser } from "./api/auth.js";
 
@@ -154,15 +153,7 @@ function initHeaderPopovers() {
   const notifList = document.getElementById("notif-list");
 
   if (notifList) {
-    notifList.innerHTML = MOCK_NOTIFICATIONS.map(n => `
-      <div style="padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 2px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 13px; font-weight: 500; color: var(--text);">${n.title}</span>
-          <span style="font-size: 10px; color: var(--subtle);">${n.time}</span>
-        </div>
-        <div style="font-size: 12px; color: var(--muted);">${n.desc}</div>
-      </div>
-    `).join("");
+    notifList.textContent = "Notifications are not available yet.";
   }
 
   if (notifBtn && notifPopover) {

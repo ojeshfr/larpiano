@@ -1,16 +1,16 @@
+import { escapeText } from "../components/safeText.js";
 /**
  * Page: Users Management
  * Connected to live backend users API and user_preferences table.
  */
 
-import { MOCK_USERS } from "../data/mockData.js";
 import { openUserDrawer } from "../components/userDrawer.js";
 import { showToast } from "../components/toast.js";
 import { fetchUsers, createUser, updateUser } from "../api/users.js";
 
 let currentFilter = "all";
 let searchQuery = "";
-let loadedUsers = [...MOCK_USERS];
+let loadedUsers = [];
 
 export function renderUsers(container) {
   function getFilteredUsers() {
@@ -52,8 +52,8 @@ export function renderUsers(container) {
       const id = u.id || "0";
       const role = u.role ? (u.role.charAt(0).toUpperCase() + u.role.slice(1)) : "User";
       const rawStatus = u.status || u.account_status || "active";
-      const version = u.version || u.app_version || "v1.1.0-beta.1";
-      const lastSeen = u.lastSeen || (u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : "Active");
+      const version = u.version || u.app_version || "Unavailable";
+      const lastSeen = u.lastSeen || (u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : "Unavailable");
       const sessionsCount = u.sessionsCount !== undefined ? u.sessionsCount : (u.telemetry_consent ? "Consent: Yes" : "Consent: Off");
 
       const statusBadge = (rawStatus === "Online" || rawStatus === "active")
@@ -71,25 +71,25 @@ export function renderUsers(container) {
           : `<span class="badge badge-role-user">User</span>`);
 
       return `
-        <tr class="clickable" data-user-id="${id}">
+        <tr class="clickable" data-user-id="${escapeText(id)}">
           <td style="font-weight: 500;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 26px; height: 26px; border-radius: 50%; background: var(--surface-soft); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--accent-soft); font-weight: 600;">
-                ${name.charAt(0).toUpperCase()}
+                ${escapeText(name.charAt(0).toUpperCase())}
               </div>
               <div>
-                <div style="color: var(--text);">${name}</div>
-                <div class="cell-meta font-mono" style="font-size: 10px;">${u.email || id}</div>
+                <div style="color: var(--text);">${escapeText(name)}</div>
+                <div class="cell-meta font-mono" style="font-size: 10px;">${escapeText(u.email || id)}</div>
               </div>
             </div>
           </td>
           <td>${roleBadge}</td>
           <td>${statusBadge}</td>
-          <td><span class="cell-mono">${version}</span></td>
-          <td><span class="cell-meta">${lastSeen}</span></td>
-          <td style="color: var(--muted); font-family: var(--font-mono); font-size: 12px;">${sessionsCount}</td>
+          <td><span class="cell-mono">${escapeText(version)}</span></td>
+          <td><span class="cell-meta">${escapeText(lastSeen)}</span></td>
+          <td style="color: var(--muted); font-family: var(--font-mono); font-size: 12px;">${escapeText(sessionsCount)}</td>
           <td>
-            <button class="btn btn-ghost btn-icon btn-user-action" data-user-id="${id}" title="Inspect Account" style="color: var(--subtle);">
+            <button class="btn btn-ghost btn-icon btn-user-action" data-user-id="${escapeText(id)}" title="Inspect Account" style="color: var(--subtle);">
               •••
             </button>
           </td>
@@ -114,7 +114,7 @@ export function renderUsers(container) {
     <div class="toolbar" style="margin-bottom: var(--space-4);">
       <div class="input-search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--subtle);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="users-search-input" placeholder="Search by name, email, role, version..." value="${searchQuery}" />
+        <input type="text" id="users-search-input" placeholder="Search by name, email, role, version..." value="${escapeText(searchQuery)}" />
       </div>
 
       <div class="filter-pills">
@@ -200,7 +200,7 @@ export function renderUsers(container) {
       tr.addEventListener("click", (e) => {
         if (e.target.closest(".btn-user-action")) return;
         const uid = tr.getAttribute("data-user-id");
-        const user = loadedUsers.find(u => (u.id === uid || u.email === uid)) || MOCK_USERS[0];
+        const user = loadedUsers.find(u => (u.id === uid || u.email === uid));
         if (user) openUserDrawer(user);
       });
     });
@@ -236,14 +236,14 @@ export function renderUsers(container) {
   async function loadUsers() {
     try {
       const data = await fetchUsers({ search: searchQuery, status: currentFilter });
-      if (data && data.users && data.users.length > 0) {
+      if (data && Array.isArray(data.users)) {
         loadedUsers = data.users;
         updateTable();
         const countSpan = document.getElementById("users-count-label");
         if (countSpan) countSpan.textContent = `${data.total} total accounts`;
       }
     } catch (err) {
-      console.log("[Users] Using baseline data:", err.message);
+      showToast(`Could not load users: ${err.message}`, "error");
     }
   }
 

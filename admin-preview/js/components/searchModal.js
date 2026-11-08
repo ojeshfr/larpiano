@@ -1,8 +1,10 @@
+import { escapeText } from "./safeText.js";
 /**
  * Command Palette & Global Search (Ctrl + K)
  */
 
-import { MOCK_USERS, MOCK_ANNOUNCEMENTS } from "../data/mockData.js";
+const MOCK_USERS = [];
+const MOCK_ANNOUNCEMENTS = [];
 
 let searchModalEl = null;
 let onNavigateCallback = null;
@@ -109,7 +111,7 @@ function renderResults(query) {
   }
 
   if (!html) {
-    html = `<div style="padding: 24px; text-align: center; color: var(--subtle); font-size: 13px;">No results found for "${query}"</div>`;
+    html = `<div style="padding: 24px; text-align: center; color: var(--subtle); font-size: 13px;">No results found for "${escapeText(query)}"</div>`;
   }
 
   container.innerHTML = html;

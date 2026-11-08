@@ -20,10 +20,14 @@ export function showToast(message, type = "info", duration = 4000) {
 
   const icon = type === "success" ? "✓" : (type === "warning" ? "⚠" : (type === "danger" ? "✕" : "⚡"));
 
-  toast.innerHTML = `
-    <span style="color: var(--accent); font-weight: bold;">${icon}</span>
-    <span style="flex: 1;">${message}</span>
-  `;
+  const iconNode = document.createElement("span");
+  iconNode.style.color = "var(--accent)";
+  iconNode.style.fontWeight = "bold";
+  iconNode.textContent = icon;
+  const messageNode = document.createElement("span");
+  messageNode.style.flex = "1";
+  messageNode.textContent = String(message ?? "");
+  toast.append(iconNode, messageNode);
 
   c.appendChild(toast);
 

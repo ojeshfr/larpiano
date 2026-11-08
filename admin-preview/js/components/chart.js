@@ -1,3 +1,4 @@
+import { escapeText } from "./safeText.js";
 /**
  * Reactive SVG Chart Components
  * High-performance, zero dependency, responsive SVG rendering
@@ -64,7 +65,7 @@ export function renderActivityChart(data, containerId) {
     if (idx === -1) return "";
     const xPos = padding.left + (idx / (data.length - 1)) * chartW;
     return `
-      <text x="${xPos}" y="${height - 8}" text-anchor="middle" class="chart-axis-text">${label}</text>
+      <text x="${xPos}" y="${height - 8}" text-anchor="middle" class="chart-axis-text">${escapeText(label)}</text>
     `;
   }).join("");
 
@@ -100,7 +101,7 @@ export function renderActivityChart(data, containerId) {
         <g id="chart-tooltip-bubble" transform="translate(0, ${initialOffset})">
           <rect x="-46" y="-12" width="92" height="22" rx="4" fill="#1C1A27" stroke="#7653C6" stroke-width="1"/>
           <text id="chart-tooltip-text" x="0" y="3" text-anchor="middle" fill="#F2F0F7" font-size="11" font-weight="600" font-family="'Inter', sans-serif">
-            ${samplePoint.count} online · ${samplePoint.time}
+            ${escapeText(samplePoint.count)} online · ${escapeText(samplePoint.time)}
           </text>
         </g>
       </g>
@@ -167,12 +168,12 @@ export function renderBarChart(data, containerId) {
     const y = padding.top + chartH - barH;
 
     return `
-      <g class="chart-bar-group" data-label="${d.label}: ${d.count} users">
+      <g class="chart-bar-group" data-label="${escapeText(d.label)}: ${escapeText(d.count)} users">
         <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="3" fill="#8B5CF6" opacity="0.85"
           style="transition: all 150ms ease; cursor: pointer;">
-          <title>${d.label}: ${d.count} users</title>
+          <title>${escapeText(d.label)}: ${escapeText(d.count)} users</title>
         </rect>
-        <text x="${x + barWidth / 2}" y="${height - 6}" text-anchor="middle" class="chart-axis-text">${d.label}</text>
+        <text x="${x + barWidth / 2}" y="${height - 6}" text-anchor="middle" class="chart-axis-text">${escapeText(d.label)}</text>
       </g>
     `;
   }).join("");
@@ -214,7 +215,7 @@ export function renderDonutChart(data, containerId) {
 
     return `
       <circle cx="${size / 2}" cy="${size / 2}" r="${radius}" fill="none"
-        stroke="${item.color}" stroke-width="${strokeWidth}"
+        stroke="${escapeText(item.color)}" stroke-width="${strokeWidth}"
         stroke-dasharray="${arcLength} ${circumference - arcLength}"
         stroke-dashoffset="${dashOffset}"
         transform="rotate(-90 ${size / 2} ${size / 2})"
@@ -225,10 +226,10 @@ export function renderDonutChart(data, containerId) {
   const legendHtml = data.map(item => `
     <div class="legend-item">
       <div>
-        <span class="legend-color-dot" style="background-color: ${item.color};"></span>
-        <span style="color: var(--text); font-weight: 500;">${item.version}</span>
+        <span class="legend-color-dot" style="background-color: ${escapeText(item.color)};"></span>
+        <span style="color: var(--text); font-weight: 500;">${escapeText(item.version)}</span>
       </div>
-      <span style="color: var(--muted); font-family: var(--font-mono);">${item.share}%</span>
+      <span style="color: var(--muted); font-family: var(--font-mono);">${escapeText(item.share)}%</span>
     </div>
   `).join("");
 

@@ -1,3 +1,4 @@
+import { escapeText, safeHttpsUrl } from "./safeText.js";
 /**
  * Release Notes & Draft Modal Component
  */
@@ -27,20 +28,20 @@ export function openReleaseNotes(release) {
   if (bodyEl) {
     bodyEl.innerHTML = `
       <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-        <span class="badge ${release.channel === 'Beta' ? 'badge-channel-beta' : 'badge-channel-stable'}">${release.channel} Channel</span>
-        <span class="badge badge-role-user">${release.platform}</span>
-        <span style="font-size: 12px; color: var(--subtle); margin-left: auto;">Published: ${release.date}</span>
+        <span class="badge ${release.channel === 'Beta' ? 'badge-channel-beta' : 'badge-channel-stable'}">${escapeText(release.channel)} Channel</span>
+        <span class="badge badge-role-user">${escapeText(release.platform)}</span>
+        <span style="font-size: 12px; color: var(--subtle); margin-left: auto;">Published: ${escapeText(release.date)}</span>
       </div>
       
       <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px;">
         <h4 style="font-size: 13px; color: var(--accent-soft); margin-bottom: 8px;">Highlights</h4>
-        <p style="font-size: 13px; color: var(--text); line-height: 1.5;">${release.notes}</p>
+        <p style="font-size: 13px; color: var(--text); line-height: 1.5;">${escapeText(release.notes)}</p>
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <label class="form-label">GitHub Release URL</label>
         <div style="display: flex; gap: 8px;">
-          <input type="text" class="form-input" readonly value="${release.githubUrl}" style="flex: 1; font-family: var(--font-mono); font-size: 12px;">
+          <input type="text" class="form-input" readonly value="${escapeText(safeHttpsUrl(release.githubUrl))}" style="flex: 1; font-family: var(--font-mono); font-size: 12px;">
           <button id="modal-copy-url-btn" class="btn btn-secondary">Copy</button>
         </div>
       </div>
@@ -49,7 +50,7 @@ export function openReleaseNotes(release) {
     const copyBtn = document.getElementById("modal-copy-url-btn");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText(release.githubUrl).then(() => {
+        navigator.clipboard.writeText(safeHttpsUrl(release.githubUrl)).then(() => {
           showToast("GitHub URL copied to clipboard", "success");
         }).catch(() => {
           showToast("URL copied: " + release.githubUrl, "info");

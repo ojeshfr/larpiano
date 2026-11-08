@@ -1,21 +1,22 @@
+import { escapeText, safeHttpsUrl } from "../components/safeText.js";
 /**
  * Page: Releases & Deployment History
  * Connected to GitHub Releases API with live assets and release notes.
  */
 
-import { MOCK_RELEASES } from "../data/mockData.js";
 import { openReleaseNotes, openDraftReleaseModal } from "../components/releaseModal.js";
 import { showToast } from "../components/toast.js";
 import { fetchReleases } from "../api/releases.js";
 
 export function renderReleases(container) {
-  let releaseList = [...MOCK_RELEASES];
+  let releaseList = [];
 
   function renderView() {
-    const latest = releaseList[0] || MOCK_RELEASES[0];
-    const latestVer = latest.version || latest.tag_name || "v1.1.0-beta.1";
-    const latestDate = latest.date || (latest.published_at ? new Date(latest.published_at).toLocaleDateString() : "2026-11-08");
-    const latestUrl = latest.githubUrl || latest.html_url || "https://github.com/ojeshfrrr/larpiano/releases";
+    if (!releaseList.length) { container.textContent = "No releases available."; return; }
+    const latest = releaseList[0];
+    const latestVer = latest.version || latest.tag_name || "Unknown version";
+    const latestDate = latest.date || (latest.published_at ? new Date(latest.published_at).toLocaleDateString() : "Date unavailable");
+    const latestUrl = safeHttpsUrl(latest.githubUrl || latest.html_url) || "https://github.com/ojeshfrrr/larpiano/releases";
 
     container.innerHTML = `
       <!-- Header -->
@@ -38,12 +39,12 @@ export function renderReleases(container) {
             </div>
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <h2 style="font-size: 20px; font-weight: 600; color: var(--text); font-family: var(--font-mono);">${latestVer}</h2>
+                <h2 style="font-size: 20px; font-weight: 600; color: var(--text); font-family: var(--font-mono);">${escapeText(latestVer)}</h2>
                 <span class="badge badge-channel-beta">${latest.prerelease ? 'Pre-release' : 'Production Build'}</span>
                 <span class="badge badge-role-user">Windows x64</span>
               </div>
               <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">
-                Published on ${latestDate} · Synced with GitHub API
+                Published on ${escapeText(latestDate)} · Synced with GitHub API
               </p>
             </div>
           </div>
@@ -52,7 +53,7 @@ export function renderReleases(container) {
             <button id="btn-view-latest-notes" class="btn btn-secondary btn-sm">
               Release highlights
             </button>
-            <button id="btn-copy-latest-url" class="btn btn-primary btn-sm" data-url="${latestUrl}">
+            <button id="btn-copy-latest-url" class="btn btn-primary btn-sm" data-url="${escapeText(latestUrl)}">
               Copy GitHub URL
             </button>
           </div>
@@ -78,29 +79,29 @@ export function renderReleases(container) {
               const isPrerelease = rel.prerelease || (rel.channel === "Beta");
               const pubDate = rel.date || (rel.published_at ? new Date(rel.published_at).toLocaleDateString() : "Recent");
               const statusStr = index === 0 ? "Latest Public" : "Archived";
-              const url = rel.githubUrl || rel.html_url || `https://github.com/ojeshfrrr/larpiano/releases/tag/${ver}`;
+              const url = safeHttpsUrl(rel.githubUrl || rel.html_url) || "https://github.com/ojeshfrrr/larpiano/releases";
 
               return `
                 <tr>
-                  <td><span class="cell-mono font-mono" style="font-weight: 600;">${ver}</span></td>
+                  <td><span class="cell-mono font-mono" style="font-weight: 600;">${escapeText(ver)}</span></td>
                   <td>
                     <span class="badge ${isPrerelease ? 'badge-channel-beta' : 'badge-channel-stable'}">
                       ${isPrerelease ? 'Beta' : 'Stable'}
                     </span>
                   </td>
-                  <td><span class="cell-meta">${pubDate}</span></td>
+                  <td><span class="cell-meta">${escapeText(pubDate)}</span></td>
                   <td>
                     <span class="badge ${index === 0 ? 'badge-online' : 'badge-role-user'}">
                       ${statusStr}
                     </span>
                   </td>
-                  <td><span class="cell-meta">${rel.platform || "Windows x64 Portable"}</span></td>
+                  <td><span class="cell-meta">${escapeText(rel.platform || "Windows x64 Portable")}</span></td>
                   <td>
                     <div style="display: flex; gap: 6px;">
-                      <button class="btn btn-ghost btn-sm btn-table-view-notes" data-ver="${ver}">
+                      <button class="btn btn-ghost btn-sm btn-table-view-notes" data-ver="${escapeText(ver)}">
                         View notes
                       </button>
-                      <button class="btn btn-ghost btn-sm btn-table-copy-url" data-url="${url}" title="Copy URL">
+                      <button class="btn btn-ghost btn-sm btn-table-copy-url" data-url="${escapeText(url)}" title="Copy URL">
                         📋
                       </button>
                     </div>
@@ -146,17 +147,17 @@ export function renderReleases(container) {
     });
   }
 
-  renderView();
+  container.textContent = "Loading releases…";
 
   async function loadReleases() {
     try {
       const data = await fetchReleases();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         releaseList = data;
         renderView();
       }
     } catch (err) {
-      console.log("[Releases] Using baseline data:", err.message);
+      container.textContent = `Could not load releases: ${err.message}. Try again.`;
     }
   }
 

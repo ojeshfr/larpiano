@@ -1,9 +1,9 @@
+import { escapeText } from "../components/safeText.js";
 /**
  * Page: Live Sessions
  * Connected to real PostgreSQL app_sessions table and presence API.
  */
 
-import { MOCK_SESSIONS } from "../data/mockData.js";
 import { showToast } from "../components/toast.js";
 import { fetchLiveSessions, terminateSession } from "../api/sessions.js";
 
@@ -16,7 +16,7 @@ export function renderLiveSessions(container) {
   }
 
   let filter = "all";
-  let activeSessions = [...MOCK_SESSIONS];
+  let activeSessions = [];
 
   function getFilteredSessions() {
     if (filter === "playing") return activeSessions.filter(s => s.statusType === "playing" || s.current_status === "playing");
@@ -42,22 +42,22 @@ export function renderLiveSessions(container) {
 
       const sessId = s.session_identifier || s.id;
       const userName = s.display_name || s.user || "Guest";
-      const version = s.app_version || s.version || "v1.1.0-beta.1";
-      const started = s.started_at ? new Date(s.started_at).toLocaleTimeString() : (s.started || "Recently");
-      const lastHb = s.last_seen_at ? new Date(s.last_seen_at).toLocaleTimeString() : (s.lastHeartbeat || "Just now");
-      const duration = s.duration || "42m";
+      const version = s.app_version || s.version || "Unavailable";
+      const started = s.started_at ? new Date(s.started_at).toLocaleTimeString() : (s.started || "Unavailable");
+      const lastHb = s.last_seen_at ? new Date(s.last_seen_at).toLocaleTimeString() : (s.lastHeartbeat || "Unavailable");
+      const duration = s.duration || "Unavailable";
 
       return `
         <tr>
-          <td><span class="cell-mono font-mono" title="${sessId}">${sessId.slice(0, 16)}...</span></td>
-          <td style="font-weight: 500; color: var(--text);">${userName}</td>
-          <td><span class="cell-mono">${version}</span></td>
-          <td><span class="cell-meta">${started}</span></td>
-          <td><span class="cell-meta" style="color: var(--accent-soft);">${lastHb}</span></td>
-          <td style="font-family: var(--font-mono); color: var(--text);">${duration}</td>
+          <td><span class="cell-mono font-mono" title="${escapeText(sessId)}">${escapeText(sessId.slice(0, 16))}...</span></td>
+          <td style="font-weight: 500; color: var(--text);">${escapeText(userName)}</td>
+          <td><span class="cell-mono">${escapeText(version)}</span></td>
+          <td><span class="cell-meta">${escapeText(started)}</span></td>
+          <td><span class="cell-meta" style="color: var(--accent-soft);">${escapeText(lastHb)}</span></td>
+          <td style="font-family: var(--font-mono); color: var(--text);">${escapeText(duration)}</td>
           <td>${badge}</td>
           <td>
-            <button class="btn btn-ghost btn-sm btn-terminate-session" data-session-id="${sessId}" style="font-size: 11px; color: var(--danger);" title="Terminate Session">
+            <button class="btn btn-ghost btn-sm btn-terminate-session" data-session-id="${escapeText(sessId)}" style="font-size: 11px; color: var(--danger);" title="Terminate Session">
               ✕
             </button>
           </td>
@@ -175,12 +175,12 @@ export function renderLiveSessions(container) {
   async function loadSessions() {
     try {
       const data = await fetchLiveSessions({ status: filter });
-      if (data && data.sessions && data.sessions.length > 0) {
+      if (data && Array.isArray(data.sessions)) {
         activeSessions = data.sessions;
         updateView();
       }
     } catch (err) {
-      console.log("[Live Sessions] Using baseline session data:", err.message);
+      showToast(`Could not load sessions: ${err.message}`, "error");
     }
   }
 

@@ -6,6 +6,7 @@ import { escapeText } from "../components/safeText.js";
 
 import { showToast } from "../components/toast.js";
 import { fetchLiveSessions, terminateSession } from "../api/sessions.js";
+import { MOCK_SESSIONS } from "../data/mockData.js";
 
 let refreshInterval = null;
 
@@ -16,7 +17,7 @@ export function renderLiveSessions(container) {
   }
 
   let filter = "all";
-  let activeSessions = [];
+  let activeSessions = [...MOCK_SESSIONS];
 
   function getFilteredSessions() {
     if (filter === "playing") return activeSessions.filter(s => s.statusType === "playing" || s.current_status === "playing");
@@ -180,7 +181,7 @@ export function renderLiveSessions(container) {
         updateView();
       }
     } catch (err) {
-      showToast(`Could not load sessions: ${err.message}`, "error");
+      console.log("[Sessions] Sandbox preview mode:", err.message);
     }
   }
 

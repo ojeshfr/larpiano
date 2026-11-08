@@ -176,6 +176,24 @@ html, body {
   white-space: nowrap;
 }
 
+
+.nav-badge.live-badge {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+.fleet-channel-tag {
+  color: var(--accent-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .nav-badge {
   font-size: 11px;
   font-weight: 600;

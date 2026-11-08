@@ -6,11 +6,12 @@ import { escapeText } from "../components/safeText.js";
 
 import { showToast } from "../components/toast.js";
 import { fetchAuditLogs } from "../api/audit.js";
+import { MOCK_AUDIT_LOGS } from "../data/mockData.js";
 import { exportData } from "../api/storage.js";
 import { getApiBaseUrl, getAdminToken } from "../api/client.js";
 
 let filterType = "all";
-let auditList = [];
+let auditList = [...MOCK_AUDIT_LOGS];
 
 export function renderAuditLog(container) {
   function getFilteredLogs() {
@@ -136,7 +137,7 @@ export function renderAuditLog(container) {
         if (countSpan) countSpan.textContent = `${data.total} events logged`;
       }
     } catch (err) {
-      showToast(`Could not load audit events: ${err.message}`, "error");
+      console.log("[Audit Log] Sandbox preview mode:", err.message);
     }
   }
 

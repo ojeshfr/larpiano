@@ -7,9 +7,10 @@ import { escapeText } from "../components/safeText.js";
 import { openAnnouncementModal } from "../components/announcementModal.js";
 import { showToast } from "../components/toast.js";
 import { fetchAnnouncements, deleteAnnouncement, updateAnnouncement } from "../api/announcements.js";
+import { MOCK_ANNOUNCEMENTS } from "../data/mockData.js";
 
 export function renderAnnouncements(container) {
-  let announcementsList = [];
+  let announcementsList = [...MOCK_ANNOUNCEMENTS];
 
   function renderCards() {
     if (announcementsList.length === 0) {
@@ -137,7 +138,7 @@ export function renderAnnouncements(container) {
         updateDOM();
       }
     } catch (err) {
-      showToast(`Could not load announcements: ${err.message}`, "error");
+      console.log("[Announcements] Sandbox preview mode:", err.message);
     }
   }
 

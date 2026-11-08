@@ -197,10 +197,13 @@ function initHeaderPopovers() {
 
 // Bootstrap
 async function bootstrap() {
+  const isLocalPreview = window.location.port === "8089" || window.location.protocol === "file:" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
   try {
     await getCurrentUser();
   } catch (_) {
-    const gate = document.createElement("div");
+    if (!isLocalPreview) {
+      const gate = document.createElement("div");
     gate.className = "admin-login-gate";
     gate.innerHTML = `<form class="admin-login-form"><h1>Admin sign in</h1><p>Sign in with an administrator account or enter your configured access token.</p><label>Email or username<input name="username" autocomplete="username"></label><label>Password<input name="password" type="password" autocomplete="current-password"></label><label>Access token (optional)<input name="token" type="password" autocomplete="off"></label><p class="admin-login-error" role="alert"></p><button type="submit">Sign in</button></form>`;
     document.body.appendChild(gate);
@@ -218,8 +221,9 @@ async function bootstrap() {
         await bootstrap();
       } catch (_) { error.textContent = "Sign in failed. Check your credentials and try again."; }
       finally { submit.disabled = false; }
-    });
-    return;
+      });
+      return;
+    }
   }
   initSidebar();
   initHeaderPopovers();

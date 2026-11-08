@@ -13,7 +13,7 @@ export function renderActivityChart(data, containerId) {
 
   const width = 640;
   const height = 200;
-  const padding = { top: 36, right: 20, bottom: 28, left: 35 };
+  const padding = { top: 44, right: 22, bottom: 28, left: 35 };
 
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
@@ -72,7 +72,14 @@ export function renderActivityChart(data, containerId) {
   // Default active sample cursor (e.g. at 19:40 with 24 online)
   const sampleIdx = data.findIndex(d => d.time === "19:40");
   const samplePoint = points[sampleIdx >= 0 ? sampleIdx : points.length - 3];
-  const initialOffset = samplePoint.y < 42 ? 22 : -28;
+  function calcBubbleTransform(p) {
+    const yOff = p.y < 56 ? 26 : -26;
+    let xOff = 0;
+    if (p.x < 56) xOff = 56 - p.x;
+    else if (p.x > width - 56) xOff = (width - 56) - p.x;
+    return `translate(${xOff}, ${yOff})`;
+  }
+  const initialTransform = calcBubbleTransform(samplePoint);
 
   container.innerHTML = `
     <svg class="svg-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
@@ -98,8 +105,8 @@ export function renderActivityChart(data, containerId) {
       <g id="chart-cursor" class="chart-tooltip-group" transform="translate(${samplePoint.x}, ${samplePoint.y})">
         <line x1="0" y1="${-(samplePoint.y - padding.top)}" x2="0" y2="${padding.top + chartH - samplePoint.y}" stroke="#A78BFA" stroke-dasharray="3, 3" stroke-width="1" opacity="0.6"/>
         <circle cx="0" cy="0" r="4.5" fill="#FFFFFF" stroke="#A78BFA" stroke-width="2.5"/>
-        <g id="chart-tooltip-bubble" transform="translate(0, ${initialOffset})">
-          <rect x="-46" y="-12" width="92" height="22" rx="4" fill="#1C1A27" stroke="#7653C6" stroke-width="1"/>
+        <g id="chart-tooltip-bubble" transform="${initialTransform}">
+          <rect x="-48" y="-13" width="96" height="26" rx="6" fill="#161422" stroke="rgba(167, 139, 250, 0.45)" stroke-width="1.2"/>
           <text id="chart-tooltip-text" x="0" y="3" text-anchor="middle" fill="#F2F0F7" font-size="11" font-weight="600" font-family="'Inter', sans-serif">
             ${escapeText(samplePoint.count)} online · ${escapeText(samplePoint.time)}
           </text>
@@ -136,8 +143,7 @@ export function renderActivityChart(data, containerId) {
       cursor.querySelector("line").setAttribute("y2", `${padding.top + chartH - closest.y}`);
       tooltipText.textContent = `${closest.count} online · ${closest.time}`;
       if (tooltipBubble) {
-        const offset = closest.y < 42 ? 22 : -28;
-        tooltipBubble.setAttribute("transform", `translate(0, ${offset})`);
+        tooltipBubble.setAttribute("transform", calcBubbleTransform(closest));
       }
     }
   });

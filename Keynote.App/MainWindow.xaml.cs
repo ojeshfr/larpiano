@@ -33,7 +33,7 @@ public partial class MainWindow : Window, IDisposable {
  bool loadingPreferences=true; bool timelineUpdating,timelineDragging; TimeSpan? selectedPosition=TimeSpan.Zero;
  int Shift=>Octave?.SelectedItem is ComboBoxItem item && int.TryParse(item.Content.ToString(),out int n)?n:0;
  public MainWindow() {
-  InitializeComponent(); InitializeModernPicks(); Progress.AddHandler(Thumb.DragStartedEvent,new DragStartedEventHandler((_,_)=>timelineDragging=true)); Progress.AddHandler(Thumb.DragCompletedEvent,new DragCompletedEventHandler((_,_)=>{ timelineDragging=false; ApplyTimeline(); })); InstalledUpdate.Text="Installed version: "+InstalledVersion; engine=new(input); InitializeOnline(); hotkeyController=new(()=>engine.State,()=>input.IsTargetForeground,StartImmediate,engine.Pause,engine.Resume,EmergencyStop,engine.AcknowledgeInputPause);
+  InitializeComponent(); InitializeModernPicks(); Progress.AddHandler(Thumb.DragStartedEvent,new DragStartedEventHandler((_,_)=>timelineDragging=true)); Progress.AddHandler(Thumb.DragCompletedEvent,new DragCompletedEventHandler((_,_)=>{ timelineDragging=false; ApplyTimeline(); })); InstalledUpdate.Text="Installed version: "+InstalledVersion; engine=new(input); InitializeOnline(); InitializeAuth(); hotkeyController=new(()=>engine.State,()=>input.IsTargetForeground,StartImmediate,engine.Pause,engine.Resume,EmergencyStop,engine.AcknowledgeInputPause);
   overlayService=new Overlay.OverlayWindowService(this);
   for(int i=0;i<128;i++)rows.Add(new(){Pitch=i}); MappingGrid.ItemsSource=rows;
   ToggleKey.ItemsSource=Enumerable.Range(1,12).Select(i=>$"F{i}").ToArray(); StopKey.ItemsSource=Enumerable.Range(1,12).Select(i=>$"F{i}").ToArray();
@@ -185,6 +185,6 @@ public partial class MainWindow : Window, IDisposable {
  void MinimizeWindow(object s,RoutedEventArgs e) => WindowState=WindowState.Minimized;
  void MaximizeWindow(object s,RoutedEventArgs e) => WindowState=WindowState==WindowState.Maximized?WindowState.Normal:WindowState.Maximized;
  void CloseWindow(object s,RoutedEventArgs e) => Close();
- public void Dispose() { if(disposed)return; overlayService?.Dispose(); updateCancellation?.Cancel(); DisposeOnline(); pendingHotkey?.Cancel(); arm?.Cancel(); engine.Dispose(); hotkeys?.Dispose(); if(source!=null)source.RemoveHook(WindowMessage); timer.Stop(); arm?.Dispose(); pendingHotkey?.Dispose(); disposed=true; GC.SuppressFinalize(this); }
+ public void Dispose() { if(disposed)return; overlayService?.Dispose(); updateCancellation?.Cancel(); DisposeOnline(); _ = DisposeAuthAsync(); pendingHotkey?.Cancel(); arm?.Cancel(); engine.Dispose(); hotkeys?.Dispose(); if(source!=null)source.RemoveHook(WindowMessage); timer.Stop(); arm?.Dispose(); pendingHotkey?.Dispose(); disposed=true; GC.SuppressFinalize(this); }
  void OnClosing(object? s,CancelEventArgs e) { try { Dispose(); } catch(Exception ex) { e.Cancel=true; Status.Text="Cleanup failed; retry closing: "+ex.Message; MessageBox.Show(Status.Text,"KEYNOTE",MessageBoxButton.OK,MessageBoxImage.Error); } }
 }

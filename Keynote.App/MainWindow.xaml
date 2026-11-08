@@ -58,6 +58,23 @@
 
                     <!-- Right: Status & Window Controls -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
+                        <!-- Account / User Button -->
+                        <Button x:Name="HeaderAccountButton" Click="HeaderAccountButton_Click" Height="30" Padding="8,0" Background="#1c192b" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" Margin="0,0,16,0" Cursor="Hand" ToolTip="Account &amp; Security">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="15" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" Background="#332a54" Margin="0,0,6,0">
+                                    <TextBlock x:Name="HeaderUserInitial" Text="G" Foreground="{StaticResource AccentLavenderBrush}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock x:Name="HeaderUserName" Text="Guest" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
                         <!-- Status Indicator -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,24,0">
                             <Ellipse Width="7" Height="7" Fill="{StaticResource StatusReadyBrush}" VerticalAlignment="Center" Margin="0,0,7,0">

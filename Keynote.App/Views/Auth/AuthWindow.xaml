@@ -1,0 +1,241 @@
+<Window x:Class="Keynote.App.Views.Auth.AuthWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Larpiano Account"
+        Width="460" Height="620"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        FontFamily="{StaticResource ModernSansFontFamily}"
+        FontSize="13">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="44" CornerRadius="14" GlassFrameThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Border Background="{StaticResource PanelBackgroundColor}"
+            BorderBrush="{StaticResource BorderSubtleBrush}"
+            BorderThickness="1"
+            CornerRadius="14"
+            ClipToBounds="True">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="8" Color="#000000" Opacity="0.7" />
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Titlebar Drag Area -->
+            <Border Grid.Row="0" Background="{StaticResource HeaderBackgroundColor}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="16,0,12,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Image Source="/Assets/logo.png" Width="20" Height="20" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <TextBlock Text="larpiano" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                        <TextBlock Text="  /  account" Foreground="{StaticResource TextMutedBrush}" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button Content="✕" Click="CloseButton_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource WindowCaptionButtonStyle}" Width="30" Height="28" WindowChrome.IsHitTestVisibleInChrome="True" />
+                </Grid>
+            </Border>
+
+            <!-- Main Content Container -->
+            <Grid Grid.Row="1" Margin="28,20,28,24">
+
+                <!-- 1. WELCOME / CHOICE PANEL -->
+                <Grid x:Name="WelcomePanel" Visibility="Visible">
+                    <StackPanel VerticalAlignment="Center">
+                        <Border Width="64" Height="64" CornerRadius="32" Background="#1c192d" BorderBrush="{StaticResource AccentPurpleBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,16">
+                            <TextBlock Text="🎹" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="Welcome to Larpiano" Foreground="{StaticResource TextPrimaryBrush}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                        <TextBlock Text="Synchronize your repertoire, customize your presence, and connect across your devices." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,28" LineHeight="18" />
+
+                        <Button Content="Sign In to Your Account" Click="ShowSignIn_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="40" Margin="0,0,0,12" />
+                        <Button Content="Create an Account" Click="ShowRegister_Click" Style="{StaticResource ModernSecondaryButtonStyle}" Height="40" Margin="0,0,0,16" />
+
+                        <Border Height="1" Background="{StaticResource BorderSubtleBrush}" Margin="0,4,0,16" />
+
+                        <Button Content="Continue as Guest" Click="ContinueAsGuest_Click" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Cursor="Hand" Height="32">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" TextDecorations="Underline" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <TextBlock Text="Guest mode retains 100% offline playback functionality." Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextAlignment="Center" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- 2. SIGN IN PANEL -->
+                <Grid x:Name="SignInPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Sign In" Foreground="{StaticResource TextPrimaryBrush}" FontSize="20" FontWeight="Bold" Margin="0,0,0,4" />
+                        <TextBlock Text="Enter your credentials to access your account." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,20" />
+
+                        <TextBlock Text="Email Address" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <TextBox x:Name="SignInEmailText" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,14" />
+
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="Password" Style="{StaticResource ModernFieldLabelStyle}" />
+                            <TextBlock Text="Forgot?" HorizontalAlignment="Right" Foreground="{StaticResource AccentPurpleBrush}" FontSize="11" Cursor="Hand" MouseDown="ShowForgotPassword_Click" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <PasswordBox x:Name="SignInPasswordBox" Style="{StaticResource ModernPasswordBoxStyle}" />
+                            <TextBox x:Name="SignInPasswordVisible" Style="{StaticResource ModernTextBoxStyle}" Visibility="Collapsed" />
+                            <Button Content="👁" Click="ToggleSignInPassword_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0" Cursor="Hand" Width="24" Height="24" />
+                        </Grid>
+
+                        <CheckBox x:Name="SignInRememberMe" Content="Remember this device" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" IsChecked="True" Margin="0,0,0,16" />
+
+                        <TextBlock x:Name="SignInErrorText" Foreground="{StaticResource StatusErrorBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12" Visibility="Collapsed" />
+
+                        <Button x:Name="SignInSubmitButton" Content="Sign In" Click="SignInSubmit_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="40" Margin="0,0,0,14" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="Don't have an account? " Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
+                            <TextBlock Text="Create one" Foreground="{StaticResource AccentPurpleBrush}" FontWeight="SemiBold" FontSize="12" Cursor="Hand" MouseDown="ShowRegister_Click" />
+                        </StackPanel>
+                        <Button Content="← Back" Click="ShowWelcome_Click" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,12,0,0" Cursor="Hand" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- 3. REGISTER PANEL -->
+                <Grid x:Name="RegisterPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Create Account" Foreground="{StaticResource TextPrimaryBrush}" FontSize="20" FontWeight="Bold" Margin="0,0,0,4" />
+                        <TextBlock Text="Get started with your verified Larpiano account." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,16" />
+
+                        <TextBlock Text="Display Name" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <TextBox x:Name="RegisterDisplayNameText" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,10" />
+
+                        <TextBlock Text="Email Address" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <TextBox x:Name="RegisterEmailText" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,10" />
+
+                        <TextBlock Text="Password (min. 8 characters, letters &amp; digits)" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <PasswordBox x:Name="RegisterPasswordBox" Style="{StaticResource ModernPasswordBoxStyle}" Margin="0,0,0,10" />
+
+                        <TextBlock Text="Confirm Password" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <PasswordBox x:Name="RegisterConfirmPasswordBox" Style="{StaticResource ModernPasswordBoxStyle}" Margin="0,0,0,14" />
+
+                        <TextBlock x:Name="RegisterErrorText" Foreground="{StaticResource StatusErrorBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10" Visibility="Collapsed" />
+
+                        <Button x:Name="RegisterSubmitButton" Content="Create Account" Click="RegisterSubmit_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="40" Margin="0,0,0,12" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="Already have an account? " Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
+                            <TextBlock Text="Sign In" Foreground="{StaticResource AccentPurpleBrush}" FontWeight="SemiBold" FontSize="12" Cursor="Hand" MouseDown="ShowSignIn_Click" />
+                        </StackPanel>
+                        <Button Content="← Back" Click="ShowWelcome_Click" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,10,0,0" Cursor="Hand" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- 4. EMAIL VERIFICATION PANEL -->
+                <Grid x:Name="VerifyEmailPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center">
+                        <Border Width="50" Height="50" CornerRadius="25" Background="#1c192d" BorderBrush="{StaticResource AccentPurpleBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,12">
+                            <TextBlock Text="✉" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource AccentLavenderBrush}" />
+                        </Border>
+                        <TextBlock Text="Verify Your Email" Foreground="{StaticResource TextPrimaryBrush}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                        <TextBlock x:Name="VerifyEmailSubtitle" Text="Enter the 6-digit code sent to your email address." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" TextAlignment="Center" Margin="0,0,0,20" TextWrapping="Wrap" />
+
+                        <TextBlock Text="6-Digit Verification Code" Style="{StaticResource ModernFieldLabelStyle}" HorizontalAlignment="Center" />
+                        <TextBox x:Name="VerifyCodeText" Style="{StaticResource ModernTextBoxStyle}" Width="180" Height="44" FontSize="22" FontWeight="Bold" TextAlignment="Center" MaxLength="6" Margin="0,0,0,16" />
+
+                        <TextBlock x:Name="VerifyErrorText" Foreground="{StaticResource StatusErrorBrush}" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,12" Visibility="Collapsed" />
+                        <TextBlock x:Name="VerifySuccessText" Foreground="{StaticResource StatusReadyBrush}" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,12" Visibility="Collapsed" />
+
+                        <Button x:Name="VerifySubmitButton" Content="Verify Code" Click="VerifySubmit_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="40" Margin="0,0,0,14" />
+
+                        <Button x:Name="ResendCodeButton" Content="Resend Code (60s)" Click="ResendCode_Click" Style="{StaticResource ModernSecondaryButtonStyle}" Height="34" Margin="0,0,0,12" />
+                        <Button Content="← Back to Sign In" Click="ShowSignIn_Click" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Cursor="Hand" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- 5. PASSWORD RESET PANEL -->
+                <Grid x:Name="ResetPasswordPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Password Recovery" Foreground="{StaticResource TextPrimaryBrush}" FontSize="20" FontWeight="Bold" Margin="0,0,0,4" />
+                        <TextBlock Text="Request a code to securely update your password." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,16" />
+
+                        <TextBlock Text="Email Address" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="ResetEmailText" Style="{StaticResource ModernTextBoxStyle}" />
+                            <Button Grid.Column="1" Content="Send Code" Click="SendResetCode_Click" Style="{StaticResource ModernSecondaryButtonStyle}" Height="36" Margin="8,0,0,0" Padding="12,0" />
+                        </Grid>
+
+                        <TextBlock Text="6-Digit Recovery Code" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <TextBox x:Name="ResetCodeText" Style="{StaticResource ModernTextBoxStyle}" MaxLength="6" Margin="0,0,0,10" />
+
+                        <TextBlock Text="New Password" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <PasswordBox x:Name="ResetNewPasswordBox" Style="{StaticResource ModernPasswordBoxStyle}" Margin="0,0,0,10" />
+
+                        <TextBlock Text="Confirm New Password" Style="{StaticResource ModernFieldLabelStyle}" />
+                        <PasswordBox x:Name="ResetConfirmPasswordBox" Style="{StaticResource ModernPasswordBoxStyle}" Margin="0,0,0,14" />
+
+                        <TextBlock x:Name="ResetErrorText" Foreground="{StaticResource StatusErrorBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10" Visibility="Collapsed" />
+
+                        <Button Content="Update Password" Click="ResetPasswordSubmit_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="40" Margin="0,0,0,12" />
+                        <Button Content="← Back to Sign In" Click="ShowSignIn_Click" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Cursor="Hand" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- 6. ACCOUNT PROFILE PANEL -->
+                <Grid x:Name="ProfilePanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center">
+                        <!-- Profile Card -->
+                        <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,16">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="44" Height="44" CornerRadius="22" Background="#2e254e" BorderBrush="{StaticResource AccentPurpleBrush}" BorderThickness="1" Margin="0,0,12,0">
+                                        <TextBlock x:Name="ProfileInitial" Text="P" Foreground="{StaticResource AccentLavenderBrush}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock x:Name="ProfileDisplayName" Text="Pianist" Foreground="{StaticResource TextPrimaryBrush}" FontSize="15" FontWeight="Bold" />
+                                        <TextBlock x:Name="ProfileEmail" Text="pianist@example.com" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Height="1" Background="{StaticResource BorderSubtleBrush}" Margin="0,0,0,12" />
+
+                                <Grid Margin="0,0,0,6">
+                                    <TextBlock Text="Account Status" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                                    <TextBlock x:Name="ProfileVerifiedBadge" Text="Verified ✓" Foreground="{StaticResource StatusReadyBrush}" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                                </Grid>
+                                <Grid>
+                                    <TextBlock Text="Account Role" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                                    <TextBlock x:Name="ProfileRole" Text="Member" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Right" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Opt-in Preferences -->
+                        <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Privacy &amp; Telemetry" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8" />
+                                <CheckBox x:Name="ProfilePresenceConsent" Content="Opt-in to live presence indicator" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,6" />
+                                <CheckBox x:Name="ProfileTelemetryConsent" Content="Share anonymous note statistics" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Actions -->
+                        <Button Content="Sign Out" Click="SignOut_Click" Style="{StaticResource ModernSecondaryButtonStyle}" Height="36" Margin="0,0,0,10" />
+                        <Button Content="Sign Out All Devices" Click="SignOutAll_Click" Background="Transparent" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" Foreground="{StaticResource StatusErrorBrush}" Height="34" Margin="0,0,0,12" Cursor="Hand" />
+                        <Button Content="Done" Click="CloseButton_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="38" />
+                    </StackPanel>
+                </Grid>
+
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -1,6 +1,8 @@
 """Integration tests for remapped_catalog HTTP Server with Admin & App Presence APIs."""
 
 import io
+import datetime
+import uuid
 import email
 import re
 import json
@@ -58,6 +60,13 @@ class ServerApiIntegrationTests(unittest.TestCase):
         h.send_header = lambda k, v: h.responses.append((k, v))
         h.end_headers = lambda: None
         return h
+
+    def test_postgres_values_are_json_serializable(self):
+        handler = self.make_handler("GET", "/api/admin/users")
+        identifier = uuid.uuid4()
+        now = datetime.datetime(2026, 1, 2, tzinfo=datetime.timezone.utc)
+        handler.send_json(200, {"id": identifier, "created_at": now})
+        self.assertEqual(json.loads(handler.wfile.getvalue()), {"id": str(identifier), "created_at": now.isoformat()})
 
     def test_app_heartbeat_api(self):
         h = self.make_handler("POST", "/api/app/sessions/heartbeat", body={

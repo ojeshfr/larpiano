@@ -5,8 +5,9 @@
 
 BEGIN;
 
--- 1. Add updated_at to users if it doesn't exist
+-- 1. Add updated_at timestamps if missing
 ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE announcements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
 
 -- 2. User authentication sessions (rotating refresh tokens)
 --    Raw tokens are NEVER stored. Only SHA-256 hashes are persisted.

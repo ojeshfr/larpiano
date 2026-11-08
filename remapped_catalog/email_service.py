@@ -71,7 +71,7 @@ class MockEmailDeliveryService(EmailDeliveryService):
 
 
 class SmtpEmailDeliveryService(EmailDeliveryService):
-    """Production SMTP transactional email delivery provider."""
+    """Production SMTP transactional email delivery provider (supporting Brevo and standard SMTP)."""
 
     def __init__(
         self,
@@ -115,8 +115,14 @@ class SmtpEmailDeliveryService(EmailDeliveryService):
                 server.sendmail(self.from_email, [to_email], msg.as_string())
             log.info("Transactional email successfully sent to %s", to_email)
             return True
+        except smtplib.SMTPAuthenticationError as auth_err:
+            log.error("SMTP Authentication rejected for %s (code %s). Check Brevo/SMTP credentials.", to_email, auth_err.smtp_code)
+            return False
+        except smtplib.SMTPResponseException as resp_err:
+            log.error("SMTP Server responded with error for %s (code %s): %s", to_email, resp_err.smtp_code, type(resp_err).__name__)
+            return False
         except Exception as exc:
-            log.error("Failed to send transactional email to %s: %s", to_email, exc)
+            log.error("Failed to send transactional email to %s: %s", to_email, type(exc).__name__)
             return False
 
     def send_verification_email(self, to_email: str, display_name: str, code: str) -> bool:
@@ -163,7 +169,7 @@ class SmtpEmailDeliveryService(EmailDeliveryService):
 
 
 def _render_email_html(title: str, greeting: str, lead: str, code: str, expires: str, footer_note: str) -> str:
-    """Render email data as text, including untrusted account names."""
+    """Render email data as text, escaping all untrusted user content."""
     from html import escape
     title, greeting, lead, code, expires, footer_note = (
         escape(str(value), quote=True)
@@ -291,6 +297,117 @@ def _render_email_html(title: str, greeting: str, lead: str, code: str, expires:
 """
 
 
+def get_smtp_config_from_env() -> dict[str, Any]:
+    """Resolves SMTP settings supporting Brevo, Portways, and standard conventions."""
+    host = (
+        os.environ.get("EMAIL_HOST")
+        or os.environ.get("SMTP_HOST")
+        or ("smtp-relay.brevo.com" if os.environ.get("EMAIL_PROVIDER", "").lower() == "brevo" else "")
+    ).strip()
+
+    port_str = os.environ.get("EMAIL_PORT") or os.environ.get("SMTP_PORT") or "587"
+    try:
+        port = int(port_str.strip())
+    except ValueError:
+        port = 587
+
+    user = (
+        os.environ.get("EMAIL_USER")
+        or os.environ.get("SMTP_USER")
+        or os.environ.get("BREVO_SMTP_USER")
+        or os.environ.get("EMAIL_API_KEY")
+        or ""
+    ).strip()
+
+    password = (
+        os.environ.get("EMAIL_PASS")
+        or os.environ.get("SMTP_PASS")
+        or os.environ.get("SMTP_PASSWORD")
+        or os.environ.get("BREVO_SMTP_KEY")
+        or os.environ.get("EMAIL_SECRET")
+        or ""
+    ).strip()
+
+    from_email = (
+        os.environ.get("EMAIL_FROM")
+        or os.environ.get("SMTP_FROM")
+        or "noreply@larpiano.portways.app"
+    ).strip()
+
+    from_name = (
+        os.environ.get("EMAIL_FROM_NAME")
+        or os.environ.get("SMTP_FROM_NAME")
+        or "Larpiano"
+    ).strip()
+
+    use_tls = os.environ.get("EMAIL_USE_TLS", os.environ.get("SMTP_USE_TLS", "true")).lower() in ("true", "1", "yes")
+
+    return {
+        "host": host,
+        "port": port,
+        "username": user,
+        "password": password,
+        "from_email": from_email,
+        "from_name": from_name,
+        "use_tls": use_tls,
+    }
+
+
+def check_smtp_connectivity(config: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Performs a safe SMTP handshake diagnostic without sending an email.
+    
+    NEVER logs or exposes passwords or secret keys.
+    """
+    cfg = config or get_smtp_config_from_env()
+    host = cfg.get("host", "")
+    port = cfg.get("port", 587)
+    username = cfg.get("username", "")
+    password = cfg.get("password", "")
+    use_tls = cfg.get("use_tls", True)
+
+    if not host:
+        return {"configured": False, "status": "unconfigured", "error": "SMTP host is not defined."}
+
+    masked_user = f"{username[:3]}...{username[-3:]}" if len(username) > 6 else ("configured" if username else "missing")
+    result: dict[str, Any] = {
+        "configured": True,
+        "host": host,
+        "port": port,
+        "username_configured": bool(username),
+        "username_hint": masked_user,
+        "password_configured": bool(password),
+        "tls_enabled": use_tls,
+        "connected": False,
+        "authenticated": False,
+        "error": None,
+        "brevo_specific_note": None,
+    }
+
+    try:
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            result["connected"] = True
+            if use_tls:
+                server.starttls()
+                server.ehlo()
+            if username and password:
+                try:
+                    server.login(username, password)
+                    result["authenticated"] = True
+                except smtplib.SMTPAuthenticationError as auth_err:
+                    result["error"] = f"SMTP Authentication failed (code {auth_err.smtp_code})"
+                    if "brevo" in host.lower():
+                        result["brevo_specific_note"] = "Brevo rejected authentication. Verify the Brevo Master SMTP key or account validation status."
+                    return result
+                except Exception as login_err:
+                    result["error"] = f"SMTP Login failed: {type(login_err).__name__}"
+                    return result
+        return result
+    except Exception as conn_err:
+        result["error"] = f"SMTP Connection failed: {type(conn_err).__name__}"
+        return result
+
+
 _DEFAULT_SERVICE: Optional[EmailDeliveryService] = None
 _SERVICE_LOCK = threading.Lock()
 
@@ -302,26 +419,19 @@ def get_email_service() -> EmailDeliveryService:
         if _DEFAULT_SERVICE is not None:
             return _DEFAULT_SERVICE
 
+        cfg = get_smtp_config_from_env()
         provider = os.environ.get("EMAIL_PROVIDER", "").strip().lower()
-        host = os.environ.get("EMAIL_HOST", "").strip()
 
-        if provider == "smtp" and host:
-            port = int(os.environ.get("EMAIL_PORT", "587"))
-            username = os.environ.get("EMAIL_USER") or os.environ.get("EMAIL_API_KEY", "")
-            password = os.environ.get("EMAIL_PASS") or os.environ.get("EMAIL_SECRET", "")
-            from_email = os.environ.get("EMAIL_FROM", "noreply@larpiano.portways.app")
-            from_name = os.environ.get("EMAIL_FROM_NAME", "Larpiano")
-            use_tls = os.environ.get("EMAIL_USE_TLS", "true").lower() in ("true", "1", "yes")
-
-            log.info("Initialized SMTP email delivery service with host %s:%d", host, port)
+        if (provider in ("smtp", "brevo") or cfg["host"]) and cfg["host"]:
+            log.info("Initialized SMTP email delivery service with host %s:%d", cfg["host"], cfg["port"])
             _DEFAULT_SERVICE = SmtpEmailDeliveryService(
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                from_email=from_email,
-                from_name=from_name,
-                use_tls=use_tls,
+                host=cfg["host"],
+                port=cfg["port"],
+                username=cfg["username"],
+                password=cfg["password"],
+                from_email=cfg["from_email"],
+                from_name=cfg["from_name"],
+                use_tls=cfg["use_tls"],
             )
         else:
             if os.environ.get("DATABASE_URL", "").startswith(("postgres://", "postgresql://")):
@@ -337,3 +447,17 @@ def set_email_service_for_testing(service: EmailDeliveryService):
     global _DEFAULT_SERVICE
     with _SERVICE_LOCK:
         _DEFAULT_SERVICE = service
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Larpiano SMTP Diagnostics")
+    parser.add_argument("--diagnostics", action="store_true", help="Run SMTP connectivity test")
+    args = parser.parse_args()
+
+    if args.diagnostics:
+        diag = check_smtp_connectivity()
+        print("\n--- SMTP CONFIGURATION & CONNECTIVITY DIAGNOSTIC ---")
+        for k, v in diag.items():
+            print(f"  {k}: {v}")
+        print("---------------------------------------------------\n")

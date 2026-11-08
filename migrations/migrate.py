@@ -9,12 +9,29 @@ import sys
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent
 
+
 def get_connection():
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
         raise RuntimeError("DATABASE_URL is not set.")
     import psycopg
     return psycopg.connect(db_url, connect_timeout=10)
+
+
+def table_exists(conn, table_name: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = %s
+            )
+            """,
+            (table_name,),
+        )
+        row = cur.fetchone()
+        return bool(row and row[0])
+
 
 def init_migration_table(conn):
     with conn.cursor() as cur:
@@ -26,14 +43,20 @@ def init_migration_table(conn):
         """)
     conn.commit()
 
-def get_applied_migrations(conn) -> set[str]:
-    init_migration_table(conn)
+
+def get_applied_migrations(conn, allow_create: bool = True) -> set[str]:
+    """Retrieves applied migrations. When allow_create is False, behaves as strictly read-only."""
+    if not table_exists(conn, "schema_migrations"):
+        if not allow_create:
+            return set()
+        init_migration_table(conn)
     with conn.cursor() as cur:
         cur.execute("SELECT version FROM schema_migrations ORDER BY applied_at")
         return {row[0] for row in cur.fetchall()}
 
+
 def run_up(conn, dry_run: bool = False):
-    applied = get_applied_migrations(conn)
+    applied = get_applied_migrations(conn, allow_create=not dry_run)
     up_files = sorted(MIGRATIONS_DIR.glob("*.up.sql"))
 
     if not up_files:
@@ -54,12 +77,16 @@ def run_up(conn, dry_run: bool = False):
 
         with conn.cursor() as cur:
             cur.execute(sql)
-            cur.execute("INSERT INTO schema_migrations (version) VALUES (%s) ON CONFLICT (version) DO NOTHING", (version,))
+            cur.execute(
+                "INSERT INTO schema_migrations (version) VALUES (%s) ON CONFLICT (version) DO NOTHING",
+                (version,),
+            )
         conn.commit()
         print(f"[SUCCESS] {version} applied successfully.")
 
+
 def run_down(conn, target_version: str | None = None, dry_run: bool = False):
-    applied = get_applied_migrations(conn)
+    applied = get_applied_migrations(conn, allow_create=False)
     down_files = sorted(MIGRATIONS_DIR.glob("*.down.sql"), reverse=True)
 
     for sql_file in down_files:
@@ -82,8 +109,9 @@ def run_down(conn, target_version: str | None = None, dry_run: bool = False):
         print(f"[SUCCESS] {version} rolled back.")
         return  # Roll back one step by default
 
+
 def show_status(conn):
-    applied = get_applied_migrations(conn)
+    applied = get_applied_migrations(conn, allow_create=False)
     up_files = sorted(MIGRATIONS_DIR.glob("*.up.sql"))
     print("\n--- MIGRATION STATUS ---")
     for f in up_files:
@@ -91,6 +119,7 @@ def show_status(conn):
         status = "APPLIED" if version in applied else "PENDING"
         print(f"  [{status}] {version}")
     print("------------------------\n")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Larpiano Database Migration Tool")
@@ -110,6 +139,7 @@ def main():
     except Exception as exc:
         print(f"[ERROR] Migration failed: {exc}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

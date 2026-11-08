@@ -58,11 +58,15 @@ def get_db():
         finally:
             conn.close()
     else:
-        conn = sqlite3.connect(str(DEV_DB_PATH))
+        conn = sqlite3.connect(str(DEV_DB_PATH), timeout=20.0, isolation_level=None)
         conn.row_factory = sqlite3.Row
         try:
-            with conn:
-                yield conn
+            conn.execute("PRAGMA journal_mode = WAL")
+            conn.execute("PRAGMA busy_timeout = 20000")
+        except Exception:
+            pass
+        try:
+            yield conn
         finally:
             conn.close()
 
@@ -70,6 +74,10 @@ def get_db():
 def _ensure_sqlite_schema(conn: sqlite3.Connection):
     """Ensure SQLite schema exists in local development mode."""
     cur = conn.cursor()
+    try:
+        cur.execute("PRAGMA journal_mode = WAL")
+    except Exception:
+        pass
     cur.executescript("""
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,

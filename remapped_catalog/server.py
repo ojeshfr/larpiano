@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import base64
+import datetime
+import decimal
+import uuid
 import hashlib
 import hmac
 import json
@@ -202,7 +205,14 @@ class Handler(SimpleHTTPRequestHandler):
         return json.loads(raw.decode("utf-8"))
 
     def send_json(self, status: int, payload, head: bool = False):
-        content = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        def encode_database_value(value):
+            if isinstance(value, (uuid.UUID, datetime.date, datetime.datetime)):
+                return str(value) if isinstance(value, uuid.UUID) else value.isoformat()
+            if isinstance(value, decimal.Decimal):
+                return str(value)
+            raise TypeError(f"Unsupported JSON value: {type(value).__name__}")
+
+        content = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=encode_database_value).encode("utf-8")
         if len(content) > 4 * 1024 * 1024:
             status, content = 503, b'{"error":"Catalogue temporarily unavailable"}'
         self.send_response(status)

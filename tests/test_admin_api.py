@@ -178,6 +178,58 @@ class AdminApiTests(unittest.TestCase):
         audit = admin_api.get_audit_logs()
         self.assertTrue(any(l["action"] == "EXPORT_GENERATED" for l in audit["logs"]))
 
+    def test_provision_admin_flow_and_login_validation(self):
+        """Verify secure admin provisioning and authentication enforcement."""
+        import provision_admin
+
+        # Test password strength check
+        valid, msg = provision_admin.validate_admin_password("short")
+        self.assertFalse(valid)
+        valid, msg = provision_admin.validate_admin_password("WeakPassWithoutSymbol123")
+        self.assertFalse(valid)
+        valid, msg = provision_admin.validate_admin_password("UltraSecureP@ssw0rd!2026")
+        self.assertTrue(valid)
+
+        # Provision new administrator
+        admin_email = "superadmin@larpiano.test"
+        admin_pw = "EnterpriseP@ssw0rd!2026"
+        success = provision_admin.provision_admin(admin_email, admin_pw, "Super Admin")
+        self.assertTrue(success)
+
+        # Admin can successfully log in
+        login_res = admin_api.admin_login({"username": admin_email, "password": admin_pw})
+        self.assertIn("token", login_res)
+        self.assertEqual(login_res["user"]["role"], "admin")
+
+        # Non-admin user cannot log into admin endpoints
+        user = admin_api.create_admin_user({"email": "regular@larpiano.test", "display_name": "Regular Player"}, None)
+        with self.assertRaises(PermissionError):
+            admin_api.admin_login({"username": "regular@larpiano.test", "password": "AnyPassword123!"})
+
+    def test_smtp_diagnostics_safe_reporting(self):
+        """Verify check_smtp_connectivity safely diagnoses without leaking credentials."""
+        import email_service
+
+        # Safe diagnostic on unconfigured environment
+        diag = email_service.check_smtp_connectivity({"host": ""})
+        self.assertFalse(diag["configured"])
+        self.assertEqual(diag["status"], "unconfigured")
+
+        # Safe diagnostic on mock connection failure using mocked SMTP to avoid network delays
+        with unittest.mock.patch.object(email_service.smtplib, "SMTP", side_effect=ConnectionRefusedError("Simulated connection refused")):
+            diag_mock = email_service.check_smtp_connectivity({
+                "host": "smtp.mock.test",
+                "port": 587,
+                "username": "supersecretuser@example.com",
+                "password": "supersecretpassword123!",
+                "use_tls": True,
+            })
+        self.assertTrue(diag_mock["configured"])
+        self.assertFalse(diag_mock["connected"])
+        # Ensure password is NEVER leaked in error or result
+        self.assertNotIn("supersecretpassword123!", str(diag_mock))
+        self.assertEqual(diag_mock["username_hint"], "sup...com")
+
 
 if __name__ == "__main__":
     unittest.main()

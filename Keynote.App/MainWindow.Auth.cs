@@ -100,6 +100,8 @@ public partial class MainWindow
         authWindow.OnAuthenticated += user =>
         {
             authenticatedUser = user;
+            currentAccessToken = authWindow.CurrentAccessToken;
+            currentRefreshToken = authWindow.CurrentRefreshToken;
             if (presenceService != null)
             {
                 presenceService.IsConsentGranted = user.PresenceConsent;

@@ -23,6 +23,8 @@ public partial class AuthWindow : Window
     private string _pendingVerificationEmail = "";
 
     public AuthUserProfile? CurrentUser => _currentUser;
+    public string? CurrentAccessToken => _currentAccessToken;
+    public string? CurrentRefreshToken => _currentRefreshToken;
     public bool IsAuthenticated => _currentUser != null;
 
     public event Action<AuthUserProfile>? OnAuthenticated;

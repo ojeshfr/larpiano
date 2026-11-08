@@ -52,6 +52,7 @@ public partial class MainWindow
                         authenticatedUser = profile;
                         if (presenceService != null)
                         {
+                            presenceService.AccessToken = currentAccessToken;
                             presenceService.IsConsentGranted = profile.PresenceConsent;
                         }
 
@@ -104,7 +105,9 @@ public partial class MainWindow
             currentRefreshToken = authWindow.CurrentRefreshToken;
             if (presenceService != null)
             {
+                presenceService.AccessToken = currentAccessToken;
                 presenceService.IsConsentGranted = user.PresenceConsent;
+                _ = presenceService.StartAsync();
             }
             UpdateUserAccountHeader(user);
         };
@@ -117,6 +120,7 @@ public partial class MainWindow
             if (presenceService != null)
             {
                 presenceService.IsConsentGranted = false;
+                presenceService.AccessToken = null;
             }
             UpdateUserAccountHeader(null);
         };

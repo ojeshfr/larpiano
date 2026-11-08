@@ -445,16 +445,23 @@ public partial class AuthWindow : Window
         bool presence = ProfilePresenceConsent.IsChecked == true;
         bool telemetry = ProfileTelemetryConsent.IsChecked == true;
 
-        if (_presence != null)
+        if (_presence != null && !presence && _presence.IsConsentGranted)
         {
-            _presence.IsConsentGranted = presence;
+            await _presence.StopAsync().ConfigureAwait(true);
+            _presence.IsConsentGranted = false;
         }
 
-        await _api.UpdatePreferencesAsync(_currentAccessToken, presence, telemetry).ConfigureAwait(true);
+        bool saved = await _api.UpdatePreferencesAsync(_currentAccessToken, presence, telemetry).ConfigureAwait(true);
+        if (_presence != null && saved && presence)
+        {
+            _presence.IsConsentGranted = true;
+            await _presence.StartAsync().ConfigureAwait(true);
+        }
     }
 
     private async void SignOut_Click(object sender, RoutedEventArgs e)
     {
+        if (_presence != null) await _presence.StopAsync().ConfigureAwait(true);
         if (!string.IsNullOrWhiteSpace(_currentRefreshToken))
         {
             await _api.LogoutAsync(_currentRefreshToken).ConfigureAwait(true);
@@ -476,6 +483,7 @@ public partial class AuthWindow : Window
 
     private async void SignOutAll_Click(object sender, RoutedEventArgs e)
     {
+        if (_presence != null) await _presence.StopAsync().ConfigureAwait(true);
         if (!string.IsNullOrWhiteSpace(_currentAccessToken))
         {
             await _api.LogoutAllAsync(_currentAccessToken).ConfigureAwait(true);

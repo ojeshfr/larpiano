@@ -16,6 +16,7 @@ public class PresenceReportingServiceTests
         public int HeartbeatCount { get; private set; }
         public int EndSessionCount { get; private set; }
         public bool SimulateFailure { get; set; }
+        public string? LastAuthorization { get; private set; }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -28,6 +29,7 @@ public class PresenceReportingServiceTests
             if (path.EndsWith("/api/app/sessions/heartbeat"))
             {
                 HeartbeatCount++;
+                LastAuthorization = request.Headers.Authorization?.ToString();
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("{\"status\":\"ok\",\"heartbeat_interval_sec\":45}")
@@ -85,6 +87,7 @@ public class PresenceReportingServiceTests
         var service = new PresenceReportingService(client, "http://127.0.0.1:8088", "v1.1.0-beta.1")
         {
             IsConsentGranted = true,
+            AccessToken = "test-token",
             CurrentStatus = "playing"
         };
 
@@ -93,6 +96,7 @@ public class PresenceReportingServiceTests
         await service.StopAsync();
 
         Assert.True(handler.HeartbeatCount >= 1);
+        Assert.Equal("Bearer test-token", handler.LastAuthorization);
         Assert.Equal(1, handler.EndSessionCount);
     }
 
@@ -103,7 +107,8 @@ public class PresenceReportingServiceTests
         using var client = new HttpClient(handler);
         var service = new PresenceReportingService(client, "http://127.0.0.1:8088", "v1.1.0-beta.1")
         {
-            IsConsentGranted = true
+            IsConsentGranted = true,
+            AccessToken = "test-token"
         };
 
         // None of these should throw exceptions

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -61,6 +62,7 @@ public sealed class PresenceReportingService : IPresenceReportingService
 
     public string SessionIdentifier => _sessionIdentifier;
     public string AppVersion => _appVersion;
+    public string? AccessToken { get; set; }
 
     public bool IsConsentGranted
     {
@@ -128,7 +130,7 @@ public sealed class PresenceReportingService : IPresenceReportingService
 
     private async Task SendHeartbeatAsync(CancellationToken token)
     {
-        if (!_isConsentGranted) return;
+        if (!_isConsentGranted || string.IsNullOrWhiteSpace(AccessToken)) return;
 
         try
         {
@@ -139,7 +141,9 @@ public sealed class PresenceReportingService : IPresenceReportingService
                 status = _currentStatus
             };
 
-            using var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/app/sessions/heartbeat", payload, token).ConfigureAwait(false);
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/api/app/sessions/heartbeat") { Content = JsonContent.Create(payload) };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+            using var response = await _http.SendAsync(request, token).ConfigureAwait(false);
         }
         catch (Exception)
         {
@@ -168,13 +172,15 @@ public sealed class PresenceReportingService : IPresenceReportingService
             _heartbeatLoop = null;
         }
 
-        if (_isConsentGranted)
+        if (_isConsentGranted && !string.IsNullOrWhiteSpace(AccessToken))
         {
             try
             {
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
                 var payload = new { session_identifier = _sessionIdentifier };
-                await _http.PostAsJsonAsync($"{_baseUrl}/api/app/sessions/end", payload, cts.Token).ConfigureAwait(false);
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/api/app/sessions/end") { Content = JsonContent.Create(payload) };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+                using var response = await _http.SendAsync(request, cts.Token).ConfigureAwait(false);
             }
             catch (Exception)
             {

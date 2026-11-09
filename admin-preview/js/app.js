@@ -18,7 +18,7 @@ import { initReleaseModal, openDraftReleaseModal } from "./components/releaseMod
 import { initSearchModal, openSearchModal } from "./components/searchModal.js";
 import { showToast } from "./components/toast.js";
 import { login, logout, getCurrentUser } from "./api/auth.js";
-import { getAdminToken, setAdminToken } from "./api/client.js";
+import { getAdminToken, setAdminToken, getApiBaseUrl, onDataChange, isPreviewMode } from "./api/client.js";
 import { escapeText } from "./components/safeText.js";
 
 let currentRoute = "overview";
@@ -349,6 +349,49 @@ export function showLoginGate(notice = "") {
   });
 }
 
+
+export async function checkFleetHealth() {
+  const tag = document.querySelector(".fleet-channel-tag");
+  if (!tag) return;
+  const isPreview = isPreviewMode();
+  if (isPreview) {
+    tag.textContent = "v1.1.0-beta.2 · Offline Preview Mode";
+    tag.style.background = "rgba(245, 158, 11, 0.15)";
+    tag.style.color = "var(--warning)";
+    tag.style.borderColor = "rgba(245, 158, 11, 0.4)";
+    return;
+  }
+
+  const token = getAdminToken();
+  if (!token) {
+    tag.textContent = "Auth Required";
+    tag.style.background = "rgba(148, 163, 184, 0.15)";
+    tag.style.color = "var(--muted)";
+    tag.style.borderColor = "var(--border-subtle)";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/health`, { headers: { "Accept": "application/json" } });
+    if (res.ok) {
+      tag.textContent = "v1.1.0-beta.2 · Live API Connected";
+      tag.style.background = "rgba(52, 211, 153, 0.15)";
+      tag.style.color = "var(--success)";
+      tag.style.borderColor = "rgba(52, 211, 153, 0.4)";
+    } else {
+      tag.textContent = `API Error (${res.status})`;
+      tag.style.background = "rgba(239, 68, 68, 0.15)";
+      tag.style.color = "var(--danger)";
+      tag.style.borderColor = "rgba(239, 68, 68, 0.4)";
+    }
+  } catch (_) {
+    tag.textContent = "Backend API Offline";
+    tag.style.background = "rgba(239, 68, 68, 0.15)";
+    tag.style.color = "var(--danger)";
+    tag.style.borderColor = "rgba(239, 68, 68, 0.4)";
+  }
+}
+
 // Bootstrap
 async function bootstrap() {
   initSidebar();
@@ -359,6 +402,26 @@ async function bootstrap() {
   });
   initReleaseModal();
   initSearchModal(navigateTo, openUserDrawer);
+
+  checkFleetHealth();
+  setInterval(checkFleetHealth, 20000);
+
+  // Cross-tab synchronization via BroadcastChannel & storage events
+  onDataChange((msg) => {
+    if (!msg || !msg.type) return;
+    const viewport = document.getElementById("page-viewport");
+    if (!viewport) return;
+
+    if (msg.type === "USERS_CHANGED" && (currentRoute === "users" || currentRoute === "overview")) {
+      navigateTo(currentRoute);
+    } else if (msg.type === "ANNOUNCEMENTS_CHANGED" && currentRoute === "announcements") {
+      navigateTo(currentRoute);
+    } else if (msg.type === "SESSIONS_CHANGED" && (currentRoute === "sessions" || currentRoute === "overview")) {
+      navigateTo(currentRoute);
+    } else if (msg.type === "RELEASES_CHANGED" && (currentRoute === "releases" || currentRoute === "overview")) {
+      navigateTo(currentRoute);
+    }
+  });
 
   const token = getAdminToken();
   if (token) {

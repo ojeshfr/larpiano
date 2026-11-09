@@ -86,3 +86,35 @@ export async function apiFetch(endpoint, options = {}) {
     throw err;
   }
 }
+
+export function isPreviewMode() {
+  return typeof sessionStorage !== "undefined" && sessionStorage.getItem("larpiano_preview_active") === "true";
+}
+
+const syncChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("larpiano_admin_sync") : null;
+
+export function broadcastDataChange(mutationType) {
+  if (syncChannel) {
+    try {
+      syncChannel.postMessage({ type: mutationType, timestamp: Date.now() });
+    } catch (_) {}
+  }
+  try {
+    localStorage.setItem("larpiano_last_mutation", JSON.stringify({ type: mutationType, timestamp: Date.now() }));
+  } catch (_) {}
+}
+
+export function onDataChange(callback) {
+  if (syncChannel) {
+    syncChannel.onmessage = (event) => callback(event.data);
+  }
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", (event) => {
+      if (event.key === "larpiano_last_mutation" && event.newValue) {
+        try {
+          callback(JSON.parse(event.newValue));
+        } catch (_) {}
+      }
+    });
+  }
+}

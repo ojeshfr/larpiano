@@ -17,6 +17,7 @@ from pathlib import Path
 import re
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import urllib.parse
 from urllib.parse import parse_qs, unquote, urlsplit
 
 import admin_api
@@ -321,15 +322,13 @@ class Handler(SimpleHTTPRequestHandler):
             return True
 
         # 2. Existing Remapped Catalogue List
-        if (path == "/api/remapped/songs" or path.startswith("/api/remapped/songs?")) and method == "GET":
+        if path == "/api/remapped/songs" and method == "GET":
             try:
-                parsed_url = urllib.parse.urlparse(self.path)
-                query_params = urllib.parse.parse_qs(parsed_url.query)
-                category = query_params.get("category", [None])[0]
-                search = query_params.get("q", [None])[0]
+                category = qs.get("category", [None])[0]
+                search = qs.get("q", [None])[0]
                 self.send_json(200, list_songs(category=category, search=search), head)
             except Exception as exc:
-                log.error("Catalogue unavailable (%s)", type(exc).__name__)
+                log.error("Catalogue unavailable (%s: %s)", type(exc).__name__, exc)
                 self.send_json(503, {"error": "Catalogue temporarily unavailable"}, head)
             return True
 

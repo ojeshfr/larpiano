@@ -103,8 +103,17 @@ class AdminApiTests(unittest.TestCase):
         overview = admin_api.get_admin_overview()
         self.assertIn("metrics", overview)
         self.assertGreaterEqual(overview["metrics"]["onlineNow"], 1)
-        self.assertEqual(overview["live_activity_24h"], [])
+        self.assertEqual(len(overview["live_activity_24h"]), 24)
+        self.assertGreaterEqual(sum(overview["live_activity_24h"]), 1)
         self.assertGreaterEqual(len(overview["active_players"]), 1)
+
+        # Test real analytics endpoint
+        analytics = admin_api.get_admin_analytics("7d")
+        self.assertIn("dau", analytics)
+        self.assertIn("wau", analytics)
+        self.assertGreaterEqual(analytics["dau"], 1)
+        self.assertEqual(len(analytics["dailyUsers"]), 7)
+        self.assertTrue(any(v["count"] >= 1 for v in analytics["versionDistribution"]))
 
     def test_announcements_lifecycle(self):
         # Create

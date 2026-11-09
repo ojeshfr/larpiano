@@ -693,7 +693,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return True
 
             if path == "/api/admin/analytics" and method == "GET":
-                self.send_json(200, admin_api.get_admin_overview()["metrics"], head)
+                range_str = qs.get("range", ["7d"])[0]
+                self.send_json(200, admin_api.get_admin_analytics(range_str), head)
                 return True
 
             if path == "/api/admin/announcements" and method == "GET":

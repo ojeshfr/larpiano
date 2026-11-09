@@ -696,8 +696,28 @@ def get_admin_overview() -> dict:
     dominant_share = f"{(version_rows[0]['count'] / total_versions * 100):.1f}% of active sessions" if version_rows else None
     donut_pct = round(version_rows[0]["count"] / total_versions * 100) if version_rows else None
 
-    # Historical activity is unavailable until real aggregates are collected.
+    # Calculate real 24-hour hourly activity curve from database
     activity_curve = []
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    with get_db() as conn:
+        c_curve = conn.cursor()
+        for h in range(23, -1, -1):
+            w_start = now_utc - datetime.timedelta(hours=h+1)
+            w_end = now_utc - datetime.timedelta(hours=h)
+            if _is_pg():
+                c_curve.execute(
+                    """SELECT COUNT(DISTINCT session_identifier) as count
+                       FROM app_sessions
+                       WHERE started_at < %s AND last_seen_at >= %s""",
+                    (w_end, w_start)
+                )
+            else:
+                c_curve.execute(
+                    "SELECT COUNT(DISTINCT session_identifier) as count FROM app_sessions WHERE started_at < ? AND last_seen_at >= ?",
+                    (w_end.isoformat(), w_start.isoformat())
+                )
+            row_cnt = c_curve.fetchone()
+            activity_curve.append(int(row_cnt["count"]) if row_cnt else 0)
 
     recent_events = []
     for r in event_rows:
@@ -739,6 +759,175 @@ def get_admin_overview() -> dict:
         "live_activity_24h": activity_curve,
         "recent_events": recent_events,
         "active_players": active_players,
+    }
+
+
+def get_admin_analytics(range_str: str = "7d") -> dict:
+    """Compute real historical analytics, daily active users, and version distribution."""
+    num_days = 30 if range_str == "30d" else (90 if range_str == "90d" else 7)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    one_day_ago = now - datetime.timedelta(hours=24)
+    two_days_ago = now - datetime.timedelta(hours=48)
+    seven_days_ago = now - datetime.timedelta(days=7)
+    fourteen_days_ago = now - datetime.timedelta(days=14)
+
+    with get_db() as conn:
+        cur = conn.cursor()
+        if _is_pg():
+            # DAU (past 24h)
+            cur.execute(
+                """SELECT COUNT(DISTINCT COALESCE(user_id::text, session_identifier)) as count
+                   FROM app_sessions
+                   WHERE last_seen_at >= NOW() - INTERVAL '24 hours'"""
+            )
+            dau = cur.fetchone()["count"]
+
+            # Prior DAU (24h to 48h ago)
+            cur.execute(
+                """SELECT COUNT(DISTINCT COALESCE(user_id::text, session_identifier)) as count
+                   FROM app_sessions
+                   WHERE last_seen_at >= NOW() - INTERVAL '48 hours'
+                     AND last_seen_at < NOW() - INTERVAL '24 hours'"""
+            )
+            prior_dau = cur.fetchone()["count"]
+
+            # WAU (past 7d)
+            cur.execute(
+                """SELECT COUNT(DISTINCT COALESCE(user_id::text, session_identifier)) as count
+                   FROM app_sessions
+                   WHERE last_seen_at >= NOW() - INTERVAL '7 days'"""
+            )
+            wau = cur.fetchone()["count"]
+
+            # Prior WAU (7d to 14d ago)
+            cur.execute(
+                """SELECT COUNT(DISTINCT COALESCE(user_id::text, session_identifier)) as count
+                   FROM app_sessions
+                   WHERE last_seen_at >= NOW() - INTERVAL '14 days'
+                     AND last_seen_at < NOW() - INTERVAL '7 days'"""
+            )
+            prior_wau = cur.fetchone()["count"]
+
+            # Average session duration (minutes)
+            cur.execute(
+                """SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(ended_at, last_seen_at) - started_at)) / 60), 0) as avg_mins
+                   FROM app_sessions
+                   WHERE started_at >= NOW() - INTERVAL '30 days'"""
+            )
+            avg_session_mins = round(float(cur.fetchone()["avg_mins"] or 0), 1)
+
+            # Daily users trend
+            daily_users = []
+            for i in range(num_days - 1, -1, -1):
+                day_start = (now - datetime.timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+                day_end = day_start + datetime.timedelta(days=1)
+                cur.execute(
+                    """SELECT COUNT(DISTINCT COALESCE(user_id::text, session_identifier)) as count
+                       FROM app_sessions
+                       WHERE (started_at < %s AND last_seen_at >= %s)""",
+                    (day_end, day_start)
+                )
+                cnt = cur.fetchone()["count"]
+                daily_users.append({
+                    "label": day_start.strftime("%b %d"),
+                    "count": cnt
+                })
+
+            # Version distribution
+            cur.execute(
+                """SELECT app_version, COUNT(*) as count
+                   FROM app_sessions
+                   GROUP BY app_version ORDER BY count DESC"""
+            )
+            ver_rows = cur.fetchall()
+
+        else:
+            # SQLite query logic
+            c24 = one_day_ago.isoformat()
+            c48 = two_days_ago.isoformat()
+            c7d = seven_days_ago.isoformat()
+            c14d = fourteen_days_ago.isoformat()
+
+            cur.execute(
+                "SELECT COUNT(DISTINCT COALESCE(user_id, session_identifier)) as count FROM app_sessions WHERE last_seen_at >= ?",
+                (c24,)
+            )
+            dau = cur.fetchone()["count"]
+
+            cur.execute(
+                "SELECT COUNT(DISTINCT COALESCE(user_id, session_identifier)) as count FROM app_sessions WHERE last_seen_at >= ? AND last_seen_at < ?",
+                (c48, c24)
+            )
+            prior_dau = cur.fetchone()["count"]
+
+            cur.execute(
+                "SELECT COUNT(DISTINCT COALESCE(user_id, session_identifier)) as count FROM app_sessions WHERE last_seen_at >= ?",
+                (c7d,)
+            )
+            wau = cur.fetchone()["count"]
+
+            cur.execute(
+                "SELECT COUNT(DISTINCT COALESCE(user_id, session_identifier)) as count FROM app_sessions WHERE last_seen_at >= ? AND last_seen_at < ?",
+                (c14d, c7d)
+            )
+            prior_wau = cur.fetchone()["count"]
+
+            # Average session duration
+            cur.execute(
+                "SELECT AVG((julianday(COALESCE(ended_at, last_seen_at)) - julianday(started_at)) * 1440) as avg_mins FROM app_sessions"
+            )
+            row = cur.fetchone()
+            avg_session_mins = round(float(row["avg_mins"] or 0), 1) if row and row["avg_mins"] else 0
+
+            daily_users = []
+            for i in range(num_days - 1, -1, -1):
+                day_start = (now - datetime.timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+                day_end = day_start + datetime.timedelta(days=1)
+                cur.execute(
+                    "SELECT COUNT(DISTINCT COALESCE(user_id, session_identifier)) as count FROM app_sessions WHERE started_at < ? AND last_seen_at >= ?",
+                    (day_end.isoformat(), day_start.isoformat())
+                )
+                cnt = cur.fetchone()["count"]
+                daily_users.append({
+                    "label": day_start.strftime("%b %d"),
+                    "count": cnt
+                })
+
+            cur.execute("SELECT app_version, COUNT(*) as count FROM app_sessions GROUP BY app_version ORDER BY count DESC")
+            ver_rows = cur.fetchall()
+
+    # Delta formatting
+    if prior_dau == 0:
+        dau_delta = f"+{dau} today" if dau > 0 else "0% vs prior day"
+    else:
+        pct = round(((dau - prior_dau) / prior_dau) * 100)
+        dau_delta = f"{'+' if pct >= 0 else ''}{pct}% vs prior day"
+
+    if prior_wau == 0:
+        wau_delta = f"+{wau} this week" if wau > 0 else "0% vs prior week"
+    else:
+        pct = round(((wau - prior_wau) / prior_wau) * 100)
+        wau_delta = f"{'+' if pct >= 0 else ''}{pct}% vs prior week"
+
+    total_ver = sum(r["count"] for r in ver_rows) if ver_rows else 0
+    version_dist = []
+    if ver_rows and total_ver > 0:
+        for r in ver_rows:
+            pct = round((r["count"] / total_ver) * 100)
+            version_dist.append({"label": r["app_version"] or "Unknown", "count": r["count"], "percentage": pct})
+    else:
+        version_dist = [{"label": "v1.1.0-beta.2", "count": 0, "percentage": 100}]
+
+    return {
+        "dau": dau,
+        "wau": wau,
+        "avgSession": f"{avg_session_mins:.0f}m" if avg_session_mins > 0 else "0m",
+        "dauDelta": dau_delta,
+        "wauDelta": wau_delta,
+        "avgSessionDelta": "Real-time average",
+        "dailyUsers": daily_users,
+        "versionDistribution": version_dist,
+        "period": range_str,
     }
 
 

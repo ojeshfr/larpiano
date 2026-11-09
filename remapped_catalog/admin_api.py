@@ -287,7 +287,7 @@ def handle_heartbeat(data: dict) -> dict:
     if not session_id or len(session_id) > 128:
         raise ValueError("Invalid session_identifier")
     
-    app_version = str(data.get("app_version", "1.1.0-beta.1"))[:50]
+    app_version = str(data.get("app_version", "1.1.0"))[:50]
     status = str(data.get("status", "online"))[:50]
     if status not in ("online", "idle", "playing", "offline"):
         status = "online"
@@ -916,7 +916,7 @@ def get_admin_analytics(range_str: str = "7d") -> dict:
             pct = round((r["count"] / total_ver) * 100)
             version_dist.append({"label": r["app_version"] or "Unknown", "count": r["count"], "percentage": pct})
     else:
-        version_dist = [{"label": "v1.1.0-beta.2", "count": 0, "percentage": 100}]
+        version_dist = [{"label": "v1.1.0", "count": 0, "percentage": 100}]
 
     return {
         "dau": dau,

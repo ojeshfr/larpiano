@@ -74,7 +74,7 @@ export function openDraftReleaseModal() {
     bodyEl.innerHTML = `
       <div class="form-group">
         <label class="form-label">Target Semantic Version</label>
-        <input type="text" class="form-input" value="v1.1.0-beta.2" placeholder="e.g. v1.1.0-beta.2">
+        <input type="text" class="form-input" value="v1.1.0" placeholder="e.g. v1.1.0">
       </div>
       <div class="form-group">
         <label class="form-label">Distribution Channel</label>

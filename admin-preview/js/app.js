@@ -355,7 +355,7 @@ export async function checkFleetHealth() {
   if (!tag) return;
   const isPreview = isPreviewMode();
   if (isPreview) {
-    tag.textContent = "v1.1.0-beta.2 · Offline Preview Mode";
+    tag.textContent = "v1.1.0 · Offline Preview Mode";
     tag.style.background = "rgba(245, 158, 11, 0.15)";
     tag.style.color = "var(--warning)";
     tag.style.borderColor = "rgba(245, 158, 11, 0.4)";
@@ -374,7 +374,7 @@ export async function checkFleetHealth() {
   try {
     const res = await fetch(`${getApiBaseUrl()}/api/health`, { headers: { "Accept": "application/json" } });
     if (res.ok) {
-      tag.textContent = "v1.1.0-beta.2 · Live API Connected";
+      tag.textContent = "v1.1.0 · Live API Connected";
       tag.style.background = "rgba(52, 211, 153, 0.15)";
       tag.style.color = "var(--success)";
       tag.style.borderColor = "rgba(52, 211, 153, 0.4)";

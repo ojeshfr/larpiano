@@ -94,3 +94,4 @@ assert.equal(res4.success, true);
 assert.equal(getAdminToken(), "");
 
 console.log('All admin authentication & sign-out regression tests passed');
+process.exit(0);

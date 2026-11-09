@@ -19,3 +19,5 @@ __pycache__/
 *.pyc
 *.db
 /storage_bucket_data/
+
+.portways/

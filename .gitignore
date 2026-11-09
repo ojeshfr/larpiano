@@ -12,6 +12,10 @@ TestResults/
 /verification/
 /visual-pianos-c2.json
 /release-staging/
+/release-output/
+*.zip
+*.sha256
+SHA256SUMS.txt
 /artifacts/
 
 # Python cache and local dev database

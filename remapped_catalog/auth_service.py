@@ -355,11 +355,11 @@ def register_user(
                 """,
                 (user_id, clean_email, clean_name, pwd_hash, now),
             )
-            # Create default preferences
+            # Create default preferences - strictly opt-in: default to FALSE for new accounts
             cur.execute(
                 """
                 INSERT INTO user_preferences (user_id, presence_consent, telemetry_consent, updated_at)
-                VALUES (%s, TRUE, TRUE, %s)
+                VALUES (%s, FALSE, FALSE, %s)
                 ON CONFLICT (user_id) DO NOTHING
                 """,
                 (user_id, now),
@@ -383,7 +383,7 @@ def register_user(
             cur.execute(
                 """
                 INSERT INTO user_preferences (user_id, presence_consent, telemetry_consent, updated_at)
-                VALUES (?, 1, 1, ?)
+                VALUES (?, 0, 0, ?)
                 ON CONFLICT (user_id) DO NOTHING
                 """,
                 (user_id, now.isoformat()),
@@ -518,8 +518,8 @@ def verify_email_code(
     # Issue initial session
     tokens = create_user_session(user_id=user_id, ip_address=ip_address, user_agent=user_agent)
 
-    pref_presence = True
-    pref_telemetry = True
+    pref_presence = False
+    pref_telemetry = False
     with admin_api.get_db() as conn:
         cur = conn.cursor()
         if admin_api._is_pg():
@@ -729,8 +729,8 @@ def login_user(
 
     tokens = create_user_session(user_id=user_id, ip_address=ip_address, user_agent=user_agent)
 
-    pref_presence = True
-    pref_telemetry = True
+    pref_presence = False
+    pref_telemetry = False
     with admin_api.get_db() as conn:
         cur = conn.cursor()
         if admin_api._is_pg():
@@ -1202,8 +1202,8 @@ def get_current_user_profile(user_id: str) -> Optional[dict]:
             "email_verified": bool(row["email_verified"]),
             "created_at": str(row["created_at"]),
             "last_login_at": str(row["last_login_at"]) if row["last_login_at"] else None,
-            "telemetry_consent": bool(row["telemetry_consent"]) if row["telemetry_consent"] is not None else True,
-            "presence_consent": bool(row["presence_consent"]) if row["presence_consent"] is not None else True,
+            "telemetry_consent": bool(row["telemetry_consent"]) if row["telemetry_consent"] is not None else False,
+            "presence_consent": bool(row["presence_consent"]) if row["presence_consent"] is not None else False,
         }
 
 

@@ -222,9 +222,12 @@
                         <!-- Opt-in Preferences -->
                         <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,16">
                             <StackPanel>
-                                <TextBlock Text="Privacy &amp; Telemetry" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8" />
-                                <CheckBox x:Name="ProfilePresenceConsent" Content="Opt-in to live presence indicator" IsChecked="True" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,6" />
-                                <CheckBox x:Name="ProfileTelemetryConsent" Content="Share anonymous note statistics" IsChecked="True" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
+                                <TextBlock Text="Privacy &amp; Telemetry" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
+                                <TextBlock Text="Explicit opt-in controls. Disabled by default for new accounts." Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,0,0,8" />
+                                <CheckBox x:Name="ProfilePresenceConsent" Content="Opt-in to live presence indicator" IsChecked="False" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,2" />
+                                <TextBlock Text="Allows account to appear in live session monitors while active." Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="20,0,0,8" />
+                                <CheckBox x:Name="ProfileTelemetryConsent" Content="Share anonymous note statistics" IsChecked="False" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,2" />
+                                <TextBlock Text="Anonymous aggregate metrics only. Never uploads song titles or notes." Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="20,0,0,0" />
                             </StackPanel>
                         </Border>
 

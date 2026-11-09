@@ -2,7 +2,7 @@
 
 All notable changes to **larpiano** will be documented in this file.
 
-## [1.1.0-beta.2] — 2026-11-09
+## [1.1.0] — 2026-11-09
 
 ### Added
 - **Strict Opt-in Privacy System:** New accounts default to privacy-first settings (`presence_consent = false`, `telemetry_consent = false`) with zero login/signup interruption and settings controls in the user profile.

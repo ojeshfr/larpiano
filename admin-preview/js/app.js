@@ -18,6 +18,8 @@ import { initReleaseModal, openDraftReleaseModal } from "./components/releaseMod
 import { initSearchModal, openSearchModal } from "./components/searchModal.js";
 import { showToast } from "./components/toast.js";
 import { login, logout, getCurrentUser } from "./api/auth.js";
+import { getAdminToken, setAdminToken } from "./api/client.js";
+import { escapeText } from "./components/safeText.js";
 
 let currentRoute = "overview";
 
@@ -176,16 +178,42 @@ function initHeaderPopovers() {
     });
   }
 
-  // Demo sign out / profile actions
+  // Profile popover actions
   document.getElementById("profile-action-settings")?.addEventListener("click", () => {
     profilePopover?.classList.remove("open");
     navigateTo("settings");
   });
 
-  document.getElementById("profile-action-signout")?.addEventListener("click", async () => {
+  const signoutBtn = document.getElementById("profile-action-signout");
+  signoutBtn?.addEventListener("click", async () => {
     profilePopover?.classList.remove("open");
-    await logout();
-    location.reload();
+
+    sessionStorage.removeItem("larpiano_preview_active");
+    sessionStorage.removeItem("larpiano_admin_token");
+    sessionStorage.removeItem("admin_token");
+    localStorage.removeItem("larpiano_admin_token");
+    localStorage.removeItem("admin_token");
+
+    const currentToken = getAdminToken();
+    let result = { serverRevoked: false };
+    if (currentToken) {
+      result = await logout();
+    } else {
+      setAdminToken(null);
+    }
+    updateHeaderProfile(null);
+
+    // Invalidate and clear protected view content
+    const viewport = document.getElementById("page-viewport");
+    if (viewport) {
+      viewport.innerHTML = "";
+    }
+
+    const notice = currentToken && result.serverRevoked
+      ? "Signed out successfully."
+      : "Signed out.";
+
+    showLoginGate(notice);
   });
 
   // Close popovers on outer click
@@ -195,36 +223,134 @@ function initHeaderPopovers() {
   });
 }
 
-// Bootstrap
-async function bootstrap() {
-  const isLocalPreview = window.location.port === "8089" || window.location.protocol === "file:" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+export function updateHeaderProfile(user) {
+  const nameEl = document.querySelector(".profile-name");
+  const roleEl = document.querySelector(".profile-role");
+  const avatarEl = document.querySelector(".profile-avatar");
+  const popoverNameEl = document.querySelector(".popover-user-name");
+  const popoverRoleEl = document.querySelector(".popover-user-role");
+  const signoutItem = document.getElementById("profile-action-signout");
+  const bannerTag = document.querySelector(".demo-tag");
+  const bannerText = document.querySelector(".demo-banner-text");
 
-  try {
-    await getCurrentUser();
-  } catch (_) {
-    if (!isLocalPreview) {
-      const gate = document.createElement("div");
-    gate.className = "admin-login-gate";
-    gate.innerHTML = `<form class="admin-login-form"><h1>Admin sign in</h1><p>Sign in with an administrator account or enter your configured access token.</p><label>Email or username<input name="username" autocomplete="username"></label><label>Password<input name="password" type="password" autocomplete="current-password"></label><label>Access token (optional)<input name="token" type="password" autocomplete="off"></label><p class="admin-login-error" role="alert"></p><button type="submit">Sign in</button></form>`;
-    document.body.appendChild(gate);
-    const form = gate.querySelector("form");
-    const error = gate.querySelector(".admin-login-error");
-    form.addEventListener("submit", async event => {
-      event.preventDefault();
-      const data = new FormData(form);
-      const submit = form.querySelector("button");
-      submit.disabled = true;
-      error.textContent = "";
-      try {
-        await login({username: String(data.get("username") || ""), password: String(data.get("password") || ""), token: String(data.get("token") || "")});
-        gate.remove();
-        await bootstrap();
-      } catch (_) { error.textContent = "Sign in failed. Check your credentials and try again."; }
-      finally { submit.disabled = false; }
-      });
-      return;
+  if (user && user.is_preview) {
+    if (nameEl) nameEl.textContent = "Preview Guest";
+    if (roleEl) roleEl.textContent = "Offline Preview";
+    if (avatarEl) avatarEl.textContent = "P";
+    if (popoverNameEl) popoverNameEl.textContent = "Preview Guest";
+    if (popoverRoleEl) popoverRoleEl.textContent = "Offline Sandbox (Read-Only)";
+    if (bannerTag) bannerTag.textContent = "OFFLINE PREVIEW";
+    if (bannerText) bannerText.textContent = "Unauthenticated Read-Only Sandbox · Zero Administrative Privileges";
+    if (signoutItem) {
+      signoutItem.innerHTML = `<span>🚪</span> Exit Preview`;
+      signoutItem.style.color = "var(--warning)";
+    }
+  } else if (user) {
+    const name = user.display_name || user.email || user.username || "Administrator";
+    const role = user.role === "admin" ? "Administrator" : (user.role || "Operator");
+    const initial = name.charAt(0).toUpperCase();
+
+    if (nameEl) nameEl.textContent = name;
+    if (roleEl) roleEl.textContent = role;
+    if (avatarEl) avatarEl.textContent = initial;
+    if (popoverNameEl) popoverNameEl.textContent = name;
+    if (popoverRoleEl) popoverRoleEl.textContent = role;
+    if (bannerTag) bannerTag.textContent = "CONTROL CENTER";
+    if (bannerText) bannerText.textContent = "Larpiano Admin Fleet Console";
+    if (signoutItem) {
+      signoutItem.innerHTML = `<span>🚪</span> Sign out`;
+      signoutItem.style.color = "var(--danger)";
+    }
+  } else {
+    if (nameEl) nameEl.textContent = "Not signed in";
+    if (roleEl) roleEl.textContent = "Unauthenticated";
+    if (avatarEl) avatarEl.textContent = "—";
+    if (popoverNameEl) popoverNameEl.textContent = "Not signed in";
+    if (popoverRoleEl) popoverRoleEl.textContent = "Guest";
+    if (bannerTag) bannerTag.textContent = "CONTROL CENTER";
+    if (bannerText) bannerText.textContent = "Larpiano Admin Fleet Console";
+    if (signoutItem) {
+      signoutItem.innerHTML = `<span>🔑</span> Sign in`;
+      signoutItem.style.color = "var(--accent-soft)";
     }
   }
+}
+
+export function showLoginGate(notice = "") {
+  let gate = document.querySelector(".admin-login-gate");
+  if (gate) {
+    const noticeEl = gate.querySelector(".admin-login-notice");
+    if (noticeEl) {
+      noticeEl.textContent = notice;
+      noticeEl.style.display = notice ? "block" : "none";
+    }
+    return;
+  }
+
+  gate = document.createElement("div");
+  gate.className = "admin-login-gate";
+  gate.innerHTML = `
+    <form class="admin-login-form">
+      <h1>Admin Sign In</h1>
+      <p>Sign in with an administrator account or enter your configured access token.</p>
+      ${notice ? `<div class="admin-login-notice" style="color: var(--accent-soft); font-size: 13px; margin-bottom: 12px; padding: 8px 12px; background: rgba(167, 139, 250, 0.1); border-radius: 6px; border: 1px solid var(--border-accent);">${escapeText(notice)}</div>` : `<div class="admin-login-notice" style="display: none;"></div>`}
+      <label>Email or Username
+        <input name="username" autocomplete="username" autofocus>
+      </label>
+      <label>Password
+        <input name="password" type="password" autocomplete="current-password">
+      </label>
+      <label>Access Token (optional)
+        <input name="token" type="password" autocomplete="off">
+      </label>
+      <p class="admin-login-error" role="alert" style="min-height: 1.2em; font-size: 12px; margin-top: 4px;"></p>
+      <div style="display: flex; gap: 10px; margin-top: 16px; align-items: center;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Sign In</button>
+        <button type="button" id="admin-guest-preview-btn" class="btn btn-secondary" style="font-size: 12px;">Offline Preview</button>
+      </div>
+    </form>
+  `;
+  document.body.appendChild(gate);
+
+  const form = gate.querySelector("form");
+  const error = gate.querySelector(".admin-login-error");
+  const guestBtn = gate.querySelector("#admin-guest-preview-btn");
+
+  guestBtn?.addEventListener("click", () => {
+    gate.remove();
+    sessionStorage.setItem("larpiano_preview_active", "true");
+    updateHeaderProfile({ display_name: "Preview Guest", role: "Offline Preview (Read-Only)", is_preview: true });
+    const initialHash = window.location.hash.replace("#/", "");
+    navigateTo(initialHash || "overview");
+  });
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const submit = form.querySelector("button[type='submit']");
+    submit.disabled = true;
+    error.textContent = "";
+    try {
+      const res = await login({
+        username: String(data.get("username") || ""),
+        password: String(data.get("password") || ""),
+        token: String(data.get("token") || "")
+      });
+      gate.remove();
+      sessionStorage.removeItem("larpiano_preview_active");
+      updateHeaderProfile(res.user || { display_name: "Administrator", role: "admin" });
+      const initialHash = window.location.hash.replace("#/", "");
+      navigateTo(initialHash || "overview");
+    } catch (err) {
+      error.textContent = err.message || "Sign in failed. Check your credentials and try again.";
+    } finally {
+      submit.disabled = false;
+    }
+  });
+}
+
+// Bootstrap
+async function bootstrap() {
   initSidebar();
   initHeaderPopovers();
   initUserDrawer();
@@ -234,13 +360,42 @@ async function bootstrap() {
   initReleaseModal();
   initSearchModal(navigateTo, openUserDrawer);
 
-  // Initial Route based on URL hash
-  const initialHash = window.location.hash.replace("#/", "");
-  navigateTo(initialHash || "overview");
+  const token = getAdminToken();
+  if (token) {
+    try {
+      const res = await getCurrentUser();
+      sessionStorage.removeItem("larpiano_preview_active");
+      updateHeaderProfile(res?.user || { display_name: "Administrator", role: "admin" });
+      const initialHash = window.location.hash.replace("#/", "");
+      navigateTo(initialHash || "overview");
+      return;
+    } catch (_) {
+      // Clear invalid or stale token
+      setAdminToken(null);
+    }
+  }
+
+  // Check if explicit preview mode was activated during this session
+  const isPreview = sessionStorage.getItem("larpiano_preview_active") === "true";
+  if (isPreview) {
+    updateHeaderProfile({ display_name: "Preview Guest", role: "Offline Preview (Read-Only)", is_preview: true });
+    const initialHash = window.location.hash.replace("#/", "");
+    navigateTo(initialHash || "overview");
+    return;
+  }
+
+  // Not authenticated & no preview: ALWAYS show login gate on refresh/reopen
+  updateHeaderProfile(null);
+  const viewport = document.getElementById("page-viewport");
+  if (viewport) {
+    viewport.innerHTML = "";
+  }
+  showLoginGate();
 }
 
+// Script is at bottom of body; ensure bootstrap always executes reliably
 if (document.readyState === "loading") {
-  window.addEventListener("DOMContentLoaded", bootstrap);
+  document.addEventListener("DOMContentLoaded", bootstrap);
 } else {
   bootstrap();
 }

@@ -152,6 +152,84 @@ class AuthApiIntegrationTests(unittest.TestCase):
         self.assertTrue(h_ref_fail.serve_api(method="POST"))
         self.assertEqual(self.get_status(h_ref_fail), 401)
 
+    def test_logout_with_bearer_token_and_subsequent_protected_request_rejection(self):
+        """Verify sign-out with Bearer token revokes the session immediately, blocking protected calls."""
+        email = "bearer_logout@example.com"
+        pwd = "Virtuoso2026!#"
+
+        # Register & verify
+        h_reg = self.make_handler("POST", "/api/auth/register", body={"email": email, "password": pwd, "display_name": "BearerUser"})
+        self.assertTrue(h_reg.serve_api(method="POST"))
+        code = self.mock_email.sent_emails[-1]["code"]
+
+        h_ver = self.make_handler("POST", "/api/auth/verify-email", body={"email": email, "code": code})
+        self.assertTrue(h_ver.serve_api(method="POST"))
+        tokens = self.get_response_json(h_ver)["data"]["tokens"]
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
+
+        # /me works before logout
+        h_me_before = self.make_handler("GET", "/api/auth/me", headers={"Authorization": f"Bearer {access_token}"})
+        self.assertTrue(h_me_before.serve_api(method="GET"))
+        self.assertEqual(self.get_status(h_me_before), 200)
+
+        # Call logout with Bearer token AND refresh token
+        h_logout = self.make_handler("POST", "/api/auth/logout", headers={"Authorization": f"Bearer {access_token}"}, body={"refresh_token": refresh_token})
+        self.assertTrue(h_logout.serve_api(method="POST"))
+        self.assertEqual(self.get_status(h_logout), 200)
+
+        # Protected /me endpoint MUST now be rejected with 401
+        h_me_after = self.make_handler("GET", "/api/auth/me", headers={"Authorization": f"Bearer {access_token}"})
+        self.assertTrue(h_me_after.serve_api(method="GET"))
+        self.assertEqual(self.get_status(h_me_after), 401)
+
+    def test_logout_idempotency_and_double_signout(self):
+        """Verify signing out twice or with empty/invalid payload succeeds without crashing."""
+        # 1. Sign out with empty payload
+        h1 = self.make_handler("POST", "/api/auth/logout", body={})
+        self.assertTrue(h1.serve_api(method="POST"))
+        self.assertEqual(self.get_status(h1), 200)
+
+        # 2. Sign out with non-existent token
+        h2 = self.make_handler("POST", "/api/auth/logout", body={"refresh_token": "non-existent-token-12345"})
+        self.assertTrue(h2.serve_api(method="POST"))
+        self.assertEqual(self.get_status(h2), 200)
+
+        # 3. Double sign-out
+        h3 = self.make_handler("POST", "/api/auth/logout", body={"refresh_token": "non-existent-token-12345"})
+        self.assertTrue(h3.serve_api(method="POST"))
+        self.assertEqual(self.get_status(h3), 200)
+
+    def test_admin_auth_logout_lifecycle_and_invalidation(self):
+        """Verify /api/admin/auth/logout invalidates admin tokens and protects admin routes."""
+        # Seed an admin session token
+        admin_token = "test-admin-secret-token-abcdef123456"
+        admin_api.ACTIVE_TOKENS[admin_token] = {
+            "user": {"id": "admin-1", "email": "admin@example.com", "display_name": "Admin", "role": "admin"},
+            "expires_at": admin_api.datetime.datetime.now(admin_api.datetime.timezone.utc) + admin_api.datetime.timedelta(days=1)
+        }
+
+        # Admin route works
+        h_ov1 = self.make_handler("GET", "/api/admin/overview", headers={"Authorization": f"Bearer {admin_token}"})
+        self.assertTrue(h_ov1.serve_api(method="GET"))
+        self.assertEqual(self.get_status(h_ov1), 200)
+
+        # Call /api/admin/auth/logout
+        h_out = self.make_handler("POST", "/api/admin/auth/logout", headers={"Authorization": f"Bearer {admin_token}"})
+        self.assertTrue(h_out.serve_api(method="POST"))
+        self.assertEqual(self.get_status(h_out), 200)
+        self.assertNotIn(admin_token, admin_api.ACTIVE_TOKENS)
+
+        # Admin route now fails with 401 Unauthorized
+        h_ov2 = self.make_handler("GET", "/api/admin/overview", headers={"Authorization": f"Bearer {admin_token}"})
+        self.assertTrue(h_ov2.serve_api(method="GET"))
+        self.assertEqual(self.get_status(h_ov2), 401)
+
+        # Calling admin logout again is idempotent and succeeds with 200
+        h_out2 = self.make_handler("POST", "/api/admin/auth/logout", headers={"Authorization": f"Bearer {admin_token}"})
+        self.assertTrue(h_out2.serve_api(method="POST"))
+        self.assertEqual(self.get_status(h_out2), 200)
+
 
 if __name__ == "__main__":
     unittest.main()

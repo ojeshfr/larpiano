@@ -5,15 +5,12 @@
  * request parsing, and error handling for all dashboard API modules.
  */
 
-const DEFAULT_LOCAL_BACKEND = "http://127.0.0.1:8088";
-
 export function getApiBaseUrl() {
-  // If viewing via local preview server (port 8089), route requests to local Python API server
-  if (window.location.port === "8089") {
-    return DEFAULT_LOCAL_BACKEND;
+  if (typeof window !== "undefined" && window.__LARPIANO_API_URL__) {
+    return window.__LARPIANO_API_URL__;
   }
-  
-  // Production / Portways: same origin relative path
+  // All environments (including serve.py proxy on 8089 and Portways production)
+  // use relative origin path to prevent CORS failures and proxy through serve.py
   return "";
 }
 
@@ -26,6 +23,9 @@ export function setAdminToken(token) {
     sessionStorage.setItem("larpiano_admin_token", token);
   } else {
     sessionStorage.removeItem("larpiano_admin_token");
+    sessionStorage.removeItem("admin_token");
+    localStorage.removeItem("larpiano_admin_token");
+    localStorage.removeItem("admin_token");
   }
 }
 
@@ -39,6 +39,15 @@ export async function apiFetch(endpoint, options = {}) {
   };
 
   const token = getAdminToken();
+  const isMutatingAdminAction = endpoint.startsWith("/api/admin/") && 
+    !endpoint.includes("/auth/") && 
+    options.method && 
+    options.method.toUpperCase() !== "GET";
+
+  if (isMutatingAdminAction && !token) {
+    throw new Error("Administrative privileges required. Protected operations are disabled in Offline Preview.");
+  }
+
   if (token && !headers["Authorization"]) {
     headers["Authorization"] = `Bearer ${token}`;
   }

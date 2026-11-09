@@ -252,6 +252,15 @@ class Handler(SimpleHTTPRequestHandler):
         path = parsed.path
         qs = parse_qs(parsed.query)
 
+        # 0. Service Health Check
+        if path == "/api/health" and method == "GET":
+            self.send_json(200, {
+                "status": "ok",
+                "service": "larpiano-backend",
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }, head)
+            return True
+
         # 1. Existing Private Catalogue
         if path == "/api/private/songs" or path.startswith("/api/private/songs/"):
             if method != "GET":
@@ -410,7 +419,16 @@ class Handler(SimpleHTTPRequestHandler):
             if path == "/api/auth/logout" and method == "POST":
                 try:
                     body = self.read_json_body()
-                    auth_service.logout_session(body.get("refresh_token", ""), ip_address=ip, user_agent=ua)
+                    refresh_token = body.get("refresh_token", "") if isinstance(body, dict) else ""
+                    auth_header = self.headers.get("Authorization", "")
+                    access_token = auth_header.removeprefix("Bearer ").strip() if auth_header.startswith("Bearer ") else ""
+
+                    auth_service.logout_session(
+                        raw_refresh_token=refresh_token,
+                        access_token=access_token,
+                        ip_address=ip,
+                        user_agent=ua
+                    )
                     self.send_json(200, {"success": True, "message": "Signed out successfully."}, head)
                 except Exception as exc:
                     self.send_json(400, {"success": False, "error": str(exc)}, head)
@@ -591,6 +609,17 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(500, {"error": str(e)}, head)
             return True
 
+        # Admin logout is idempotent and handles its own session cleanup
+        if path == "/api/admin/auth/logout" and method == "POST":
+            supplied = self.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+            if supplied:
+                session_data = admin_api.ACTIVE_TOKENS.pop(supplied, None)
+                if session_data and session_data.get("user"):
+                    uid = session_data["user"].get("id")
+                    admin_api.audit_log(uid, "ADMIN_LOGOUT", "user", uid or "operator")
+            self.send_json(200, {"status": "ok", "success": True, "message": "Signed out successfully."}, head)
+            return True
+
         # All other /api/admin/* endpoints require administrator authentication
         if path.startswith("/api/admin/"):
             admin_user = admin_api.verify_admin_token(self.headers.get("Authorization"))
@@ -600,12 +629,6 @@ class Handler(SimpleHTTPRequestHandler):
 
             if path == "/api/admin/auth/me" and method == "GET":
                 self.send_json(200, {"user": admin_user}, head)
-                return True
-
-            if path == "/api/admin/auth/logout" and method == "POST":
-                supplied = self.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-                admin_api.ACTIVE_TOKENS.pop(supplied, None)
-                self.send_json(200, {"status": "ok"}, head)
                 return True
 
             if path == "/api/admin/overview" and method == "GET":

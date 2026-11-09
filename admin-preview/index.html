@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Larpiano Control Center — Admin Preview</title>
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
 
@@ -12,10 +15,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <!-- CSS Design Tokens, Layout & Components -->
-  <link rel="stylesheet" href="css/tokens.css?v=5.0.0" />
-  <link rel="stylesheet" href="css/layout.css?v=5.0.0" />
-  <link rel="stylesheet" href="css/components.css?v=5.0.0" />
-  <link rel="stylesheet" href="css/pages.css?v=5.0.0" />
+  <link rel="stylesheet" href="css/tokens.css?v=5.2.0" />
+  <link rel="stylesheet" href="css/layout.css?v=5.2.0" />
+  <link rel="stylesheet" href="css/components.css?v=5.2.0" />
+  <link rel="stylesheet" href="css/pages.css?v=5.2.0" />
 </head>
 <body>
 
@@ -194,22 +197,22 @@
           <!-- Admin Profile Pill -->
           <div style="position: relative;">
             <button class="header-profile-btn" id="header-profile-btn">
-              <div class="profile-avatar">O</div>
-              <span class="profile-name">ojesh</span>
+              <div class="profile-avatar">A</div>
+              <span class="profile-name">Administrator</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--subtle);"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
 
             <!-- Profile Popover -->
             <div class="popover-menu" id="profile-popover">
               <div style="padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 4px;">
-                <div style="font-size: 13px; font-weight: 600; color: var(--text);">ojesh (Owner)</div>
-                <div style="font-size: 11px; color: var(--subtle);">admin@larpiano.internal</div>
+                <div class="popover-user-name" style="font-size: 13px; font-weight: 600; color: var(--text);">Administrator</div>
+                <div class="popover-user-role" style="font-size: 11px; color: var(--subtle);">Control Center</div>
               </div>
               <div class="popover-item" id="profile-action-settings">
                 <span>⚙️</span> Control Center Settings
               </div>
               <div class="popover-item" id="profile-action-signout" style="color: var(--danger);">
-                <span>🚪</span> Sign out (Demo)
+                <span>🚪</span> Sign out
               </div>
             </div>
           </div>
@@ -313,6 +316,6 @@
   <canvas id="confetti-canvas"></canvas>
 
   <!-- ES Module Application Coordinator -->
-  <script type="module" src="js/app.js?v=5.0.0"></script>
+  <script type="module" src="js/app.js?v=5.2.0"></script>
 </body>
 </html>

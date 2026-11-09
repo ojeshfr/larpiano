@@ -58,6 +58,13 @@ public partial class AuthWindow : Window
         }
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        _resendTimer?.Stop();
+        _resendTimer = null;
+        base.OnClosed(e);
+    }
+
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Close();
@@ -461,45 +468,75 @@ public partial class AuthWindow : Window
 
     private async void SignOut_Click(object sender, RoutedEventArgs e)
     {
-        if (_presence != null) await _presence.StopAsync().ConfigureAwait(true);
-        if (!string.IsNullOrWhiteSpace(_currentRefreshToken))
+        try
         {
-            await _api.LogoutAsync(_currentRefreshToken).ConfigureAwait(true);
+            if (_presence != null)
+            {
+                try { await _presence.StopAsync().ConfigureAwait(true); } catch { }
+            }
+
+            var refresh = _currentRefreshToken;
+            var access = _currentAccessToken;
+
+            if (!string.IsNullOrWhiteSpace(refresh) || !string.IsNullOrWhiteSpace(access))
+            {
+                await _api.LogoutAsync(refresh, access).ConfigureAwait(true);
+            }
         }
-
-        await _tokenStore.ClearTokensAsync().ConfigureAwait(true);
-        _currentUser = null;
-        _currentAccessToken = null;
-        _currentRefreshToken = null;
-
-        if (_presence != null)
+        catch
         {
-            _presence.IsConsentGranted = false;
+            // Network failure or server error; local sign-out must still proceed
         }
+        finally
+        {
+            try { await _tokenStore.ClearTokensAsync().ConfigureAwait(true); } catch { }
+            _currentUser = null;
+            _currentAccessToken = null;
+            _currentRefreshToken = null;
 
-        OnLoggedOut?.Invoke();
-        ShowWelcomeView();
+            if (_presence != null)
+            {
+                _presence.IsConsentGranted = false;
+            }
+
+            OnLoggedOut?.Invoke();
+            ShowWelcomeView();
+        }
     }
 
     private async void SignOutAll_Click(object sender, RoutedEventArgs e)
     {
-        if (_presence != null) await _presence.StopAsync().ConfigureAwait(true);
-        if (!string.IsNullOrWhiteSpace(_currentAccessToken))
+        try
         {
-            await _api.LogoutAllAsync(_currentAccessToken).ConfigureAwait(true);
+            if (_presence != null)
+            {
+                try { await _presence.StopAsync().ConfigureAwait(true); } catch { }
+            }
+
+            var access = _currentAccessToken;
+            if (!string.IsNullOrWhiteSpace(access))
+            {
+                await _api.LogoutAllAsync(access).ConfigureAwait(true);
+            }
         }
-
-        await _tokenStore.ClearTokensAsync().ConfigureAwait(true);
-        _currentUser = null;
-        _currentAccessToken = null;
-        _currentRefreshToken = null;
-
-        if (_presence != null)
+        catch
         {
-            _presence.IsConsentGranted = false;
+            // Network failure or server error; local sign-out must still proceed
         }
+        finally
+        {
+            try { await _tokenStore.ClearTokensAsync().ConfigureAwait(true); } catch { }
+            _currentUser = null;
+            _currentAccessToken = null;
+            _currentRefreshToken = null;
 
-        OnLoggedOut?.Invoke();
-        ShowWelcomeView();
+            if (_presence != null)
+            {
+                _presence.IsConsentGranted = false;
+            }
+
+            OnLoggedOut?.Invoke();
+            ShowWelcomeView();
+        }
     }
 }

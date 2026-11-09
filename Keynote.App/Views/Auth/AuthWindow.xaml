@@ -15,7 +15,7 @@
         <WindowChrome CaptionHeight="44" CornerRadius="14" GlassFrameThickness="0" UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
 
-    <Border Background="{StaticResource PanelBackgroundColor}"
+    <Border Background="{StaticResource PanelBackgroundBrush}"
             BorderBrush="{StaticResource BorderSubtleBrush}"
             BorderThickness="1"
             CornerRadius="14"
@@ -30,7 +30,7 @@
             </Grid.RowDefinitions>
 
             <!-- Titlebar Drag Area -->
-            <Border Grid.Row="0" Background="{StaticResource HeaderBackgroundColor}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
+            <Border Grid.Row="0" Background="{StaticResource HeaderBackgroundBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
                 <Grid Margin="16,0,12,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Image Source="/Assets/logo.png" Width="20" Height="20" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality" />

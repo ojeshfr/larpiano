@@ -897,23 +897,47 @@ def rotate_refresh_token(
 
 
 def logout_session(
-    raw_refresh_token: str,
+    raw_refresh_token: str = "",
+    access_token: str = "",
     ip_address: str = "",
     user_agent: str = "",
 ) -> bool:
-    """Revoke a single refresh token session."""
-    if not raw_refresh_token:
-        return False
-    token_hash = hashlib.sha256(raw_refresh_token.strip().encode("utf-8")).hexdigest()
+    """Revoke a refresh token and/or access token session."""
     now = datetime.datetime.now(datetime.timezone.utc)
+    revoked_user_id = None
 
     with admin_api.get_db() as conn:
         cur = conn.cursor()
-        if admin_api._is_pg():
-            cur.execute("UPDATE user_sessions SET revoked_at = %s WHERE refresh_token_hash = %s", (now, token_hash))
-        else:
-            cur.execute("UPDATE user_sessions SET revoked_at = ? WHERE refresh_token_hash = ?", (now.isoformat(), token_hash))
+        marker = "%s" if admin_api._is_pg() else "?"
+        now_val = now if admin_api._is_pg() else now.isoformat()
+
+        # 1. Revoke by refresh token hash if provided
+        if raw_refresh_token and raw_refresh_token.strip():
+            token_hash = hashlib.sha256(raw_refresh_token.strip().encode("utf-8")).hexdigest()
+            cur.execute(f"SELECT user_id FROM user_sessions WHERE refresh_token_hash = {marker}", (token_hash,))
+            row = cur.fetchone()
+            if row:
+                revoked_user_id = row["user_id"] if isinstance(row, dict) else row[0]
+            cur.execute(f"UPDATE user_sessions SET revoked_at = {marker} WHERE refresh_token_hash = {marker}", (now_val, token_hash))
+
+        # 2. Revoke by access token session_id if provided
+        if access_token and access_token.strip():
+            try:
+                payload = jwt.decode(access_token.strip(), JWT_SECRET, algorithms=[JWT_ALGORITHM], options={"verify_exp": False})
+                sid = payload.get("sid")
+                sub = payload.get("sub")
+                if sid:
+                    cur.execute(f"UPDATE user_sessions SET revoked_at = {marker} WHERE id = {marker}", (now_val, sid))
+                    if not revoked_user_id and sub:
+                        revoked_user_id = sub
+            except Exception:
+                pass
+
         conn.commit()
+
+    if revoked_user_id:
+        log_auth_audit("LOGOUT_SESSION", user_id=str(revoked_user_id), ip_address=ip_address, user_agent=user_agent)
+
     return True
 
 

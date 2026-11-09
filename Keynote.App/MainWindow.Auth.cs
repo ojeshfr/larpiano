@@ -15,11 +15,14 @@ public partial class MainWindow
     private string? currentAccessToken;
     private string? currentRefreshToken;
     private PresenceReportingService? presenceService;
+    private int authEpoch = 0;
 
     private void InitializeAuth()
     {
         presenceService = new PresenceReportingService();
         _ = presenceService.StartAsync();
+
+        int currentEpoch = Interlocked.Increment(ref authEpoch);
 
         // Asynchronously check stored DPAPI credentials
         _ = Task.Run(async () =>
@@ -29,6 +32,8 @@ public partial class MainWindow
                 var stored = await authTokenStore.LoadTokensAsync().ConfigureAwait(false);
                 if (stored != null)
                 {
+                    if (Volatile.Read(ref authEpoch) != currentEpoch) return;
+
                     currentAccessToken = stored.AccessToken;
                     currentRefreshToken = stored.RefreshToken;
 
@@ -36,16 +41,22 @@ public partial class MainWindow
                     var profile = await authApiClient.GetProfileAsync(stored.AccessToken).ConfigureAwait(false);
                     if (profile == null && !string.IsNullOrWhiteSpace(stored.RefreshToken))
                     {
+                        if (Volatile.Read(ref authEpoch) != currentEpoch) return;
+
                         // Access token may be expired; try rotating
                         var refreshed = await authApiClient.RefreshAsync(stored.RefreshToken).ConfigureAwait(false);
                         if (refreshed.Success && refreshed.Tokens != null)
                         {
+                            if (Volatile.Read(ref authEpoch) != currentEpoch) return;
+
                             currentAccessToken = refreshed.Tokens.AccessToken;
                             currentRefreshToken = refreshed.Tokens.RefreshToken;
                             await authTokenStore.SaveTokensAsync(refreshed.Tokens.AccessToken, refreshed.Tokens.RefreshToken).ConfigureAwait(false);
                             profile = refreshed.User ?? await authApiClient.GetProfileAsync(currentAccessToken).ConfigureAwait(false);
                         }
                     }
+
+                    if (Volatile.Read(ref authEpoch) != currentEpoch) return;
 
                     if (profile != null)
                     {
@@ -59,12 +70,99 @@ public partial class MainWindow
                         await Dispatcher.InvokeAsync(() => UpdateUserAccountHeader(profile));
                     }
                 }
+                else
+                {
+                    if (!WorkflowMode && !Environment.GetCommandLineArgs().Contains("--smoke-test"))
+                    {
+                        await Dispatcher.InvokeAsync(() =>
+                        {
+                            if (Volatile.Read(ref authEpoch) == currentEpoch && authenticatedUser == null)
+                            {
+                                ShowStartupAuthWindow();
+                            }
+                        });
+                    }
+                }
             }
             catch (Exception)
             {
                 // Resilient fallback: network error or offline mode should leave Guest mode active
             }
         });
+    }
+
+    private void ShowStartupAuthWindow()
+    {
+        if (WorkflowMode || Environment.GetCommandLineArgs().Contains("--smoke-test")) return;
+        if (authenticatedUser != null) return;
+
+        if (!this.IsLoaded)
+        {
+            RoutedEventHandler? onLoaded = null;
+            onLoaded = (s, e) =>
+            {
+                this.Loaded -= onLoaded;
+                ShowStartupAuthWindow();
+            };
+            this.Loaded += onLoaded;
+            return;
+        }
+
+        var authWindow = new AuthWindow(
+            api: authApiClient,
+            tokenStore: authTokenStore,
+            presence: presenceService,
+            existingUser: authenticatedUser,
+            existingAccessToken: currentAccessToken,
+            existingRefreshToken: currentRefreshToken)
+        {
+            Owner = this
+        };
+
+        authWindow.OnAuthenticated += user =>
+        {
+            authenticatedUser = user;
+            currentAccessToken = authWindow.CurrentAccessToken;
+            currentRefreshToken = authWindow.CurrentRefreshToken;
+            if (presenceService != null)
+            {
+                presenceService.AccessToken = currentAccessToken;
+                presenceService.IsConsentGranted = user.PresenceConsent;
+                _ = presenceService.StartAsync();
+            }
+            UpdateUserAccountHeader(user);
+        };
+
+        authWindow.OnLoggedOut += () =>
+        {
+            Interlocked.Increment(ref authEpoch);
+            authenticatedUser = null;
+            currentAccessToken = null;
+            currentRefreshToken = null;
+            if (presenceService != null)
+            {
+                presenceService.IsConsentGranted = false;
+                presenceService.AccessToken = null;
+            }
+            UpdateUserAccountHeader(null);
+        };
+
+        authWindow.OnGuestModeSelected += () =>
+        {
+            Interlocked.Increment(ref authEpoch);
+            authenticatedUser = null;
+            currentAccessToken = null;
+            currentRefreshToken = null;
+            if (presenceService != null)
+            {
+                presenceService.IsConsentGranted = false;
+                presenceService.AccessToken = null;
+            }
+            UpdateUserAccountHeader(null);
+            this.Activate();
+        };
+
+        authWindow.ShowDialog();
     }
 
     private void UpdateUserAccountHeader(AuthUserProfile? user)
@@ -93,10 +191,16 @@ public partial class MainWindow
             presence: presenceService,
             existingUser: authenticatedUser,
             existingAccessToken: currentAccessToken,
-            existingRefreshToken: currentRefreshToken)
+            existingRefreshToken: currentRefreshToken);
+
+        if (this.IsLoaded && this.IsVisible)
         {
-            Owner = this
-        };
+            authWindow.Owner = this;
+        }
+        else
+        {
+            authWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
 
         authWindow.OnAuthenticated += user =>
         {
@@ -114,6 +218,21 @@ public partial class MainWindow
 
         authWindow.OnLoggedOut += () =>
         {
+            Interlocked.Increment(ref authEpoch);
+            authenticatedUser = null;
+            currentAccessToken = null;
+            currentRefreshToken = null;
+            if (presenceService != null)
+            {
+                presenceService.IsConsentGranted = false;
+                presenceService.AccessToken = null;
+            }
+            UpdateUserAccountHeader(null);
+        };
+
+        authWindow.OnGuestModeSelected += () =>
+        {
+            Interlocked.Increment(ref authEpoch);
             authenticatedUser = null;
             currentAccessToken = null;
             currentRefreshToken = null;

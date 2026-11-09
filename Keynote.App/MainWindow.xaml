@@ -699,28 +699,28 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="Modern picks" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="Connect your friends collection, then choose an arrangement to play." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="Modern &amp; Cloud Library" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Browse and play curated cloud arrangements. Fully calibrated for Visual Pianos (61 keys C2–C7)." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Grid.Row="1">
-                            <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,14">
+                            <!-- Category Filter & Search Bar -->
+                            <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,12">
                                 <StackPanel>
-                                    <TextBlock Text="Friends collection" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AccentPurpleBrush}" />
-                                    <TextBlock Text="Connect to see private songs alongside creator downloads." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,9" TextWrapping="Wrap" />
-                                    <WrapPanel>
-                                        <PasswordBox x:Name="FriendsCode" Width="230" MinHeight="38" Background="#171523" Foreground="{StaticResource TextPrimaryBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" Padding="9,5" ToolTip="Friends collection access code" AutomationProperties.Name="Friends collection access code" />
-                                        <Button x:Name="FriendsConnect" Content="Connect" Click="ConnectFriends" Margin="8,0,0,0" Style="{StaticResource PrimaryButton}" />
-                                        <TextBlock x:Name="FriendsStatus" Foreground="{StaticResource TextSecondaryBrush}" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                    <WrapPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Category:" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                        <RadioButton x:Name="CatAll" Content="All" IsChecked="True" Checked="OnCategoryFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="CatPop" Content="Pop &amp; Modern" Checked="OnCategoryFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="CatClassical" Content="Classical" Checked="OnCategoryFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="CatAnimeGames" Content="Anime &amp; Games" Checked="OnCategoryFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="CatFilmTV" Content="Film &amp; TV" Checked="OnCategoryFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="CatTraditional" Content="Traditional" Checked="OnCategoryFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
                                     </WrapPanel>
+                                    <DockPanel LastChildFill="True">
+                                        <TextBlock x:Name="ModernStatusText" DockPanel.Dock="Right" Text="Connecting to cloud library…" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11" />
+                                        <TextBox x:Name="ModernQuery" MinHeight="36" ToolTip="Search songs or artists" TextChanged="ModernFilterChanged" AutomationProperties.Name="Search cloud and modern songs" />
+                                    </DockPanel>
                                 </StackPanel>
                             </Border>
-                            <DockPanel LastChildFill="True">
-                                <CheckBox x:Name="ModernFriendsOnly" DockPanel.Dock="Right" Content="Friends + creator downloads" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Margin="12,0,0,0" Checked="ModernFriendsFilterChanged" Unchecked="ModernFriendsFilterChanged" />
-                                <StackPanel>
-                                    <TextBlock Text="Search songs or artists" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6" />
-                                    <TextBox x:Name="ModernQuery" MinHeight="38" ToolTip="Search by song or artist" TextChanged="ModernFilterChanged" AutomationProperties.Name="Search modern picks" />
-                                </StackPanel>
-                            </DockPanel>
                         </StackPanel>
                         <Grid Grid.Row="2" Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>

@@ -131,17 +131,43 @@ def static_catalog():
     return seed_cache
 
 
-def list_songs():
+def list_songs(category: str | None = None, search: str | None = None):
     if not os.environ.get("DATABASE_URL"):
-        return [metadata for _, metadata, _ in static_catalog()]
+        songs = [metadata for _, metadata, _ in static_catalog()]
+        if category and category.lower() != "all":
+            songs = [s for s in songs if s.get("category", "").lower() == category.lower()]
+        if search:
+            q = search.lower()
+            songs = [s for s in songs if q in s.get("title", "").lower() or q in s.get("artist", "").lower()]
+        return songs
     initialize()
     with DB_SLOTS, connect() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT metadata FROM remapped_catalog_songs ORDER BY metadata->>'title', sha256 LIMIT %s", (MAX_ENTRIES,))
+            query = "SELECT metadata FROM remapped_catalog_songs WHERE 1=1"
+            params = []
+            if category and category.lower() != "all":
+                query += " AND LOWER(metadata->>'category') = LOWER(%s)"
+                params.append(category)
+            if search:
+                query += " AND (metadata->>'title' ILIKE %s OR metadata->>'artist' ILIKE %s)"
+                params.extend([f"%{search}%", f"%{search}%"])
+            query += " ORDER BY metadata->>'title', sha256 LIMIT %s"
+            params.append(MAX_ENTRIES)
+            cur.execute(query, tuple(params))
             return [row[0] for row in cur.fetchall()]
 
 
 def get_song(digest: str):
+    # 1. Try S3 object storage first
+    try:
+        from . import storage
+        data, _, _ = storage.get_object(f"music/remapped/{digest}.mid")
+        if data and len(data) <= MAX_MIDI_BYTES and hashlib.sha256(data).hexdigest() == digest and data[:4] == b"MThd":
+            return data
+    except Exception:
+        pass
+
+    # 2. Fall back to PostgreSQL database
     if not os.environ.get("DATABASE_URL"):
         return next((midi for key, _, midi in static_catalog() if key == digest), None)
     initialize()
@@ -150,7 +176,7 @@ def get_song(digest: str):
             cur.execute("SELECT midi FROM remapped_catalog_songs WHERE sha256=%s", (digest,))
             row = cur.fetchone()
     if row is None:
-        return None
+        return next((midi for key, _, midi in static_catalog() if key == digest), None)
     data = bytes(row[0])
     if len(data) > MAX_MIDI_BYTES or hashlib.sha256(data).hexdigest() != digest or data[:4] != b"MThd":
         raise ValueError("Stored MIDI failed integrity verification")
@@ -295,9 +321,13 @@ class Handler(SimpleHTTPRequestHandler):
             return True
 
         # 2. Existing Remapped Catalogue List
-        if path == "/api/remapped/songs" and method == "GET":
+        if (path == "/api/remapped/songs" or path.startswith("/api/remapped/songs?")) and method == "GET":
             try:
-                self.send_json(200, list_songs(), head)
+                parsed_url = urllib.parse.urlparse(self.path)
+                query_params = urllib.parse.parse_qs(parsed_url.query)
+                category = query_params.get("category", [None])[0]
+                search = query_params.get("q", [None])[0]
+                self.send_json(200, list_songs(category=category, search=search), head)
             except Exception as exc:
                 log.error("Catalogue unavailable (%s)", type(exc).__name__)
                 self.send_json(503, {"error": "Catalogue temporarily unavailable"}, head)

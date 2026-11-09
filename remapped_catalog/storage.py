@@ -35,6 +35,14 @@ ALLOWED_PREFIXES = {
         "max_bytes": 10 * 1024 * 1024,  # 10 MB
         "allowed_types": {"text/csv", "application/json", "text/plain"},
     },
+    "music/original/": {
+        "max_bytes": 10 * 1024 * 1024,  # 10 MB
+        "allowed_types": {"audio/midi", "audio/x-midi", "application/x-midi", "application/octet-stream"},
+    },
+    "music/remapped/": {
+        "max_bytes": 10 * 1024 * 1024,  # 10 MB
+        "allowed_types": {"audio/midi", "audio/x-midi", "application/x-midi", "application/octet-stream"},
+    },
 }
 
 LOCAL_ROOT = Path(os.environ.get("STORAGE_LOCAL_ROOT", Path(__file__).resolve().parent.parent / "storage_bucket_data")).resolve()
@@ -144,6 +152,7 @@ def _s3_request(method: str, key: str, data: bytes = b"", content_type: str = "a
 
     url = f"{cfg['endpoint']}{canonical_uri}"
     req = urllib.request.Request(url, data=data if method in ("PUT", "POST") else None, method=method)
+    req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
     req.add_header("Host", host)
     req.add_header("x-amz-date", amz_date)
     req.add_header("x-amz-content-sha256", payload_hash)
@@ -162,6 +171,40 @@ def _s3_request(method: str, key: str, data: bytes = b"", content_type: str = "a
 
 
 # --- Storage API (Unified Interface) ---
+
+def put_midi_object(prefix: str, sha256_name: str, data: bytes) -> dict:
+    """Store a remapped or original MIDI file with deterministic key prefix/sha256.mid."""
+    if prefix not in ("music/original/", "music/remapped/"):
+        raise ValueError(f"Prefix '{prefix}' not allowed for MIDI storage.")
+    digest = hashlib.sha256(data).hexdigest()
+    if sha256_name.endswith(".mid"):
+        filename = sha256_name
+    else:
+        filename = f"{sha256_name}.mid"
+    key = f"{prefix}{filename}"
+    content_type = "audio/midi"
+
+    if is_s3_configured():
+        status, body, _ = _s3_request("PUT", key, data, content_type)
+        if status not in (200, 201):
+            raise RuntimeError(f"S3 upload failed with status {status}: {body.decode('utf-8', errors='ignore')[:200]}")
+    else:
+        dest = (LOCAL_ROOT / key).resolve()
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
+        meta_file = dest.with_suffix(dest.suffix + ".meta")
+        meta_file.write_text(f"content_type={content_type}\nsha256={digest}\n", encoding="utf-8")
+
+    return {
+        "key": key,
+        "filename": filename,
+        "prefix": prefix,
+        "size": len(data),
+        "sha256": digest,
+        "content_type": content_type,
+        "download_url": f"/api/remapped/songs/{digest}/midi",
+    }
+
 
 def put_object(prefix: str, filename: str, data: bytes, content_type: str) -> dict:
     """Store an object under a strictly validated prefix with SHA-256 verification."""

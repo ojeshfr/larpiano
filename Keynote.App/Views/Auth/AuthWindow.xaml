@@ -219,15 +219,29 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Opt-in Preferences -->
+                        <!-- Privacy & Telemetry Configuration -->
                         <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,16">
                             <StackPanel>
                                 <TextBlock Text="Privacy &amp; Telemetry" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
-                                <TextBlock Text="Explicit opt-in controls. Disabled by default for new accounts." Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,0,0,8" />
-                                <CheckBox x:Name="ProfilePresenceConsent" Content="Opt-in to live presence indicator" IsChecked="False" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,2" />
-                                <TextBlock Text="Allows account to appear in live session monitors while active." Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="20,0,0,8" />
-                                <CheckBox x:Name="ProfileTelemetryConsent" Content="Share anonymous note statistics" IsChecked="False" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,2" />
-                                <TextBlock Text="Anonymous aggregate metrics only. Never uploads song titles or notes." Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="20,0,0,0" />
+                                <TextBlock Text="Platform privacy configuration. These features are enabled by default and remain active while using Larpiano." Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                                <!-- Live Presence Row -->
+                                <Grid Margin="0,0,0,3">
+                                    <TextBlock Text="Live Presence Indicator" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" FontSize="11" VerticalAlignment="Center" />
+                                    <Border Background="#1A34D399" BorderBrush="#3334D399" BorderThickness="1" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="ENABLED ✓" Foreground="{StaticResource StatusReadyBrush}" FontSize="10" FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+                                <TextBlock Text="Allows the account to appear in Larpiano's live session monitoring while the application is active." Foreground="{StaticResource TextMutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                                <!-- Anonymous Note Statistics Row -->
+                                <Grid Margin="0,0,0,3">
+                                    <TextBlock Text="Anonymous Note Statistics" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" FontSize="11" VerticalAlignment="Center" />
+                                    <Border Background="#1A34D399" BorderBrush="#3334D399" BorderThickness="1" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="ENABLED ✓" Foreground="{StaticResource StatusReadyBrush}" FontSize="10" FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+                                <TextBlock Text="Contributes anonymous aggregate usage statistics. Individual notes, MIDI files, song titles and filenames are never uploaded." Foreground="{StaticResource TextMutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,0" />
                             </StackPanel>
                         </Border>
 

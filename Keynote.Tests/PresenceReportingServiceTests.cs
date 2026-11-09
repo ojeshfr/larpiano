@@ -61,13 +61,24 @@ public class PresenceReportingServiceTests
     }
 
     [Fact]
+    public void Service_DefaultsToConsentGranted()
+    {
+        var handler = new MockHttpHandler();
+        using var client = new HttpClient(handler);
+        var service = new PresenceReportingService(client, "http://127.0.0.1:8088", "v1.1.0");
+        Assert.True(service.IsConsentGranted);
+    }
+
+    [Fact]
     public async Task Heartbeat_NotSent_WhenConsentNotGranted()
     {
         var handler = new MockHttpHandler();
         using var client = new HttpClient(handler);
-        var service = new PresenceReportingService(client, "http://127.0.0.1:8088", "v1.1.0-beta.1");
+        var service = new PresenceReportingService(client, "http://127.0.0.1:8088", "v1.1.0-beta.1")
+        {
+            IsConsentGranted = false
+        };
 
-        // Consent is false by default (Guest mode)
         Assert.False(service.IsConsentGranted);
 
         await service.StartAsync();

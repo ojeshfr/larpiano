@@ -58,7 +58,7 @@ public sealed class PresenceReportingService : IPresenceReportingService
     private CancellationTokenSource? _cts;
     private Task? _heartbeatLoop;
     private string _currentStatus = "online";
-    private bool _isConsentGranted = false;
+    private bool _isConsentGranted = true;
 
     public string SessionIdentifier => _sessionIdentifier;
     public string AppVersion => _appVersion;

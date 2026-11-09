@@ -23,8 +23,8 @@ public sealed record AuthUserProfile(
     [property: JsonPropertyName("display_name")] string DisplayName,
     [property: JsonPropertyName("role")] string Role = "user",
     [property: JsonPropertyName("email_verified")] bool EmailVerified = false,
-    [property: JsonPropertyName("presence_consent")] bool PresenceConsent = false,
-    [property: JsonPropertyName("telemetry_consent")] bool TelemetryConsent = false
+    [property: JsonPropertyName("presence_consent")] bool PresenceConsent = true,
+    [property: JsonPropertyName("telemetry_consent")] bool TelemetryConsent = true
 );
 
 public sealed record AuthResult(

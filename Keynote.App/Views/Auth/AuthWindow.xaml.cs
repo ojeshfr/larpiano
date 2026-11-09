@@ -137,9 +137,6 @@ public partial class AuthWindow : Window
         ProfileRole.Text = _currentUser.Role == "admin" ? "Administrator" : "Pianist";
         ProfileVerifiedBadge.Text = _currentUser.EmailVerified ? "Verified ✓" : "Unverified ⚠";
 
-        ProfilePresenceConsent.IsChecked = _currentUser.PresenceConsent;
-        ProfileTelemetryConsent.IsChecked = _currentUser.TelemetryConsent;
-
         ProfilePanel.Visibility = Visibility.Visible;
     }
 
@@ -442,27 +439,6 @@ public partial class AuthWindow : Window
         {
             ResetErrorText.Text = "Reset failed: " + ex.Message;
             ResetErrorText.Visibility = Visibility.Visible;
-        }
-    }
-
-    private async void OnConsentChanged(object sender, RoutedEventArgs e)
-    {
-        if (_currentUser == null || string.IsNullOrWhiteSpace(_currentAccessToken)) return;
-
-        bool presence = ProfilePresenceConsent.IsChecked == true;
-        bool telemetry = ProfileTelemetryConsent.IsChecked == true;
-
-        if (_presence != null && !presence && _presence.IsConsentGranted)
-        {
-            await _presence.StopAsync().ConfigureAwait(true);
-            _presence.IsConsentGranted = false;
-        }
-
-        bool saved = await _api.UpdatePreferencesAsync(_currentAccessToken, presence, telemetry).ConfigureAwait(true);
-        if (_presence != null && saved && presence)
-        {
-            _presence.IsConsentGranted = true;
-            await _presence.StartAsync().ConfigureAwait(true);
         }
     }
 

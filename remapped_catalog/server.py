@@ -488,10 +488,15 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json(401, {"error": "Unauthorized"}, head)
                     return True
                 body = self.read_json_body()
+                presence = body.get("presence_consent", True)
+                telemetry = body.get("telemetry_consent", True)
+                if presence is False or telemetry is False:
+                    self.send_json(400, {"success": False, "error": "Presence and anonymous statistics are mandatory platform features and cannot be disabled."}, head)
+                    return True
                 auth_service.update_user_preferences(
                     user_id=user["sub"],
-                    presence_consent=bool(body.get("presence_consent", False)),
-                    telemetry_consent=bool(body.get("telemetry_consent", False)),
+                    presence_consent=True,
+                    telemetry_consent=True,
                 )
                 self.send_json(200, {"success": True}, head)
                 return True

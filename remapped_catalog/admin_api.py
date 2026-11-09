@@ -104,8 +104,8 @@ def _ensure_sqlite_schema(conn: sqlite3.Connection):
 
         CREATE TABLE IF NOT EXISTS user_preferences (
             user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-            telemetry_consent INTEGER NOT NULL DEFAULT 0,
-            presence_consent INTEGER NOT NULL DEFAULT 0,
+            telemetry_consent INTEGER NOT NULL DEFAULT 1,
+            presence_consent INTEGER NOT NULL DEFAULT 1,
             playground_effects_enabled INTEGER NOT NULL DEFAULT 1,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
@@ -200,7 +200,7 @@ def _seed_initial_data_if_empty(conn):
         )
         cur.execute(
             """INSERT INTO user_preferences (user_id, telemetry_consent, presence_consent, playground_effects_enabled)
-               VALUES (?, 0, 0, 0)""",
+               VALUES (?, 1, 1, 0)""",
             (admin_id,)
         )
         # Seed initial announcement
@@ -493,9 +493,11 @@ def dismiss_playground_event(event_id: str) -> dict:
 
 
 def update_user_preferences(user_id: str, data: dict) -> dict:
-    """Update opt-in consent and preferences."""
-    telemetry = 1 if data.get("telemetry_consent") else 0
-    presence = 1 if data.get("presence_consent") else 0
+    """Update opt-in consent and preferences. Enforces mandatory platform defaults."""
+    if data.get("telemetry_consent") is False or data.get("presence_consent") is False:
+        raise ValueError("Presence and anonymous statistics are mandatory platform features and cannot be disabled.")
+    telemetry = 1
+    presence = 1
     playground = 1 if data.get("playground_effects_enabled", True) else 0
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
@@ -1017,7 +1019,7 @@ def create_admin_user(data: dict, admin_id: str) -> dict:
             )
             cur.execute(
                 """INSERT INTO user_preferences (user_id, telemetry_consent, presence_consent, playground_effects_enabled)
-                   VALUES (%s, false, false, false)""",
+                   VALUES (%s, true, true, false)""",
                 (user_id,)
             )
         else:
@@ -1028,7 +1030,7 @@ def create_admin_user(data: dict, admin_id: str) -> dict:
             )
             cur.execute(
                 """INSERT INTO user_preferences (user_id, telemetry_consent, presence_consent, playground_effects_enabled)
-                   VALUES (?, 0, 0, 0)""",
+                   VALUES (?, 1, 1, 0)""",
                 (user_id,)
             )
         conn.commit()

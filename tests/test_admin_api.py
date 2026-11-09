@@ -39,11 +39,11 @@ class AdminApiTests(unittest.TestCase):
         admin = next(u for u in users["users"] if u["display_name"] == "Admin")
         self.assertEqual(admin["role"], "admin")
 
-    def test_admin_created_users_start_without_telemetry_consent(self):
+    def test_admin_created_users_start_with_mandatory_privacy_defaults(self):
         user = admin_api.create_admin_user({"email": "new-user@example.test", "display_name": "New user"}, None)
         with admin_api.get_db() as conn:
             row = conn.execute("SELECT telemetry_consent, presence_consent, playground_effects_enabled FROM user_preferences WHERE user_id = ?", (user["id"],)).fetchone()
-            self.assertEqual(tuple(row), (0, 0, 0))
+            self.assertEqual(tuple(row), (1, 1, 0))
 
     def test_heartbeat_upsert_and_no_append_spam(self):
         sess_id = "test-session-uuid-1234"

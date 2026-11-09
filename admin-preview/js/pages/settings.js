@@ -117,7 +117,7 @@ export function renderSettings(container) {
         </div>
         <div class="settings-row">
           <div class="settings-info">
-            <div class="settings-label">GitHub Release Check Service</div>
+            <div class="settings-label">Portways Release Check Service</div>
             <div class="settings-desc">Client update checking endpoint</div>
           </div>
           <span class="badge badge-online"><span class="status-indicator-dot online"></span>Operational</span>

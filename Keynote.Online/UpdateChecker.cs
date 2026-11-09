@@ -21,6 +21,26 @@ public sealed class UpdateChecker(IReleaseSource source) {
  }
 }
 
+public sealed class PortwaysReleaseSource(HttpClient client, string baseUrl = "https://larpiano.portways.app") : IReleaseSource {
+ public static HttpClient CreateClient() { var client=new HttpClient(new HttpClientHandler {AllowAutoRedirect=false}) {Timeout=TimeSpan.FromSeconds(20)}; client.DefaultRequestHeaders.UserAgent.ParseAdd("larpiano-updater/1.1"); client.DefaultRequestHeaders.Accept.ParseAdd("application/json"); return client; }
+ public async Task<ReleaseQuery> GetLatestAsync(CancellationToken cancellationToken) {
+  try {
+   var url = $"{baseUrl.TrimEnd('/')}/api/releases/latest";
+   using var response=await client.GetAsync(url,HttpCompletionOption.ResponseHeadersRead,cancellationToken);
+   if(response.StatusCode==HttpStatusCode.NotFound)return new(false,null);
+   if(!response.IsSuccessStatusCode)return new(false,null,$"Update server returned HTTP {(int)response.StatusCode}. Try again later.");
+   if(response.Content.Headers.ContentLength>65536)return new(false,null,"Release response was too large.");
+   await using var stream=await response.Content.ReadAsStreamAsync(cancellationToken); using var buffer=new MemoryStream(); var chunk=new byte[4096]; int read;
+   while((read=await stream.ReadAsync(chunk,cancellationToken))>0) {if(buffer.Length+read>65536)return new(false,null,"Release response was too large.");buffer.Write(chunk,0,read);}
+   using var json=JsonDocument.Parse(buffer.ToArray());
+   if(!json.RootElement.TryGetProperty("tag_name",out var tag)||tag.ValueKind!=JsonValueKind.String)return new(false,null,"The release response did not contain a version.");
+   return new(true,tag.GetString());
+  } catch(OperationCanceledException) when(!cancellationToken.IsCancellationRequested) {return new(false,null,"The update check timed out. Try again.");}
+  catch(HttpRequestException) {return new(false,null,"Could not reach update server. Check your connection and try again.");}
+  catch(JsonException) {return new(false,null,"The server returned an invalid release response.");}
+ }
+}
+
 public sealed class GitHubReleaseSource(HttpClient client) : IReleaseSource {
  public static HttpClient CreateClient() { var client=new HttpClient(new HttpClientHandler {AllowAutoRedirect=false}) {Timeout=TimeSpan.FromSeconds(20)}; client.DefaultRequestHeaders.UserAgent.ParseAdd("larpiano-updater/1.0"); client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json"); return client; }
  public async Task<ReleaseQuery> GetLatestAsync(CancellationToken cancellationToken) {

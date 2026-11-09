@@ -39,9 +39,9 @@ export function openReleaseNotes(release) {
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <label class="form-label">GitHub Release URL</label>
+        <label class="form-label">Release Download URL</label>
         <div style="display: flex; gap: 8px;">
-          <input type="text" class="form-input" readonly value="${escapeText(safeHttpsUrl(release.githubUrl))}" style="flex: 1; font-family: var(--font-mono); font-size: 12px;">
+          <input type="text" class="form-input" readonly value="${escapeText(safeHttpsUrl(release.download_url || release.downloadUrl || release.githubUrl))}" style="flex: 1; font-family: var(--font-mono); font-size: 12px;">
           <button id="modal-copy-url-btn" class="btn btn-secondary">Copy</button>
         </div>
       </div>
@@ -50,10 +50,10 @@ export function openReleaseNotes(release) {
     const copyBtn = document.getElementById("modal-copy-url-btn");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText(safeHttpsUrl(release.githubUrl)).then(() => {
-          showToast("GitHub URL copied to clipboard", "success");
+        navigator.clipboard.writeText(safeHttpsUrl(release.download_url || release.downloadUrl || release.githubUrl)).then(() => {
+          showToast("Release URL copied to clipboard", "success");
         }).catch(() => {
-          showToast("URL copied: " + release.githubUrl, "info");
+          showToast("URL copied: " + safeHttpsUrl(release.download_url || release.downloadUrl || release.githubUrl), "info");
         });
       });
     }

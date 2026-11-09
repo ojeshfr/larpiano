@@ -601,7 +601,7 @@
                                     <StackPanel>
                                         <TextBlock x:Name="InstalledUpdate" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
                                         <TextBlock x:Name="LatestUpdate" Text="Latest release: not checked" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,7,0,0" />
-                                        <TextBlock x:Name="UpdaterMessage" Text="Check GitHub for a published release." Foreground="{StaticResource AccentLavenderBrush}" Margin="0,16,0,0" TextWrapping="Wrap" />
+                                        <TextBlock x:Name="UpdaterMessage" Text="Check Portways for a published release." Foreground="{StaticResource AccentLavenderBrush}" Margin="0,16,0,0" TextWrapping="Wrap" />
                                         <WrapPanel Margin="0,18,0,0">
                                             <Button x:Name="CheckUpdateButton" Content="Check for updates" Click="CheckForUpdates" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" />
                                             <Button x:Name="InstallUpdateButton" Content="Download and install" Click="InstallUpdate" IsEnabled="False" Margin="0,0,8,8" />

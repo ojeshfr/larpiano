@@ -25,7 +25,7 @@ export function renderReleases(container) {
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
         <div>
           <h1 class="page-title">Releases</h1>
-          <p class="page-subtitle">Windows x64 builds, release notes, and GitHub release assets.</p>
+          <p class="page-subtitle">Windows x64 builds, release notes, and Portways release distribution.</p>
         </div>
         <button id="btn-draft-release-notes" class="btn btn-secondary">
           <span>+</span> Draft release note
@@ -47,7 +47,7 @@ export function renderReleases(container) {
                 <span class="badge ${latest.local_storage_available ? 'badge-online' : 'badge-role-user'}">${latest.local_storage_available ? 'Portways S3 Active' : 'External'}</span>
               </div>
               <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">
-                Published on ${escapeText(latestDate)} · ${latest.external_download_host_available ? 'Synced with GitHub API' : escapeText(latest.external_download_host_status || 'External sync offline')}
+                Published on ${escapeText(latestDate)} · ${latest.local_storage_available ? 'Hosted on Portways Storage' : (latest.external_download_host_available ? 'Synced with GitHub API' : escapeText(latest.external_download_host_status || 'External sync offline'))}
               </p>
             </div>
           </div>
@@ -80,7 +80,7 @@ export function renderReleases(container) {
               const isPrerelease = rel.prerelease || (rel.channel === "Beta");
               const pubDate = rel.date || (rel.published_at ? new Date(rel.published_at).toLocaleDateString() : "Recent");
               const statusStr = index === 0 ? "Latest Public" : "Archived";
-              const url = safeHttpsUrl(rel.githubUrl || rel.html_url) || "https://github.com/ojeshfrrr/larpiano/releases";
+              const url = safeHttpsUrl(rel.download_url || rel.githubUrl || rel.html_url) || "/api/releases/latest/download";
 
               return `
                 <tr>
@@ -128,7 +128,7 @@ export function renderReleases(container) {
 
     document.getElementById("btn-copy-latest-url")?.addEventListener("click", () => {
       navigator.clipboard?.writeText(latestUrl);
-      showToast("GitHub Release URL copied to clipboard!", "success");
+      showToast("Release URL copied to clipboard!", "success");
     });
 
     container.querySelectorAll(".btn-table-view-notes").forEach(btn => {

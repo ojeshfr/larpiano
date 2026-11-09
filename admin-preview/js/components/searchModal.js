@@ -66,7 +66,7 @@ function renderResults(query) {
     { id: "sessions", label: "Live Sessions", desc: "Active desktop clients linked to Roblox", icon: "💻" },
     { id: "analytics", label: "Analytics", desc: "Daily active users & version distribution", icon: "📈" },
     { id: "announcements", label: "Announcements", desc: "Broadcast alerts & in-app notices", icon: "📢" },
-    { id: "releases", label: "Releases", desc: "Windows builds & GitHub release notes", icon: "🏷️" },
+    { id: "releases", label: "Releases", desc: "Windows builds & Portways release notes", icon: "🏷️" },
     { id: "playground", label: "Admin Playground", desc: "Test local effects & notification toasts", icon: "⚡" },
     { id: "audit", label: "Audit Log", desc: "Timestamped admin actions & event history", icon: "🛡️" },
     { id: "settings", label: "Settings", desc: "Profile, layout density & privacy limits", icon: "⚙️" }

@@ -400,7 +400,7 @@ export const MOCK_ANNOUNCEMENTS = [
   {
     id: "anc_1",
     title: "v1.1.0-beta.1 is now live",
-    message: "v1.1.0-beta.1 dropped. Compact floating HUD, cleaner Aero2 context menus, and auto-focus for Roblox. Download the ZIP from GitHub.",
+    message: "v1.1.0 released. Compact floating HUD, cleaner Aero2 context menus, and auto-focus for Roblox. Download the ZIP from Portways.",
     audience: "Global",
     status: "Active",
     created: "Nov 8, 2026",

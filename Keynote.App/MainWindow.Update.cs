@@ -4,12 +4,12 @@ using System.Windows;
 using Keynote.Online;
 namespace Keynote.App;
 public partial class MainWindow {
- static readonly System.Net.Http.HttpClient updateHttp=GitHubReleaseSource.CreateClient();
+ static readonly System.Net.Http.HttpClient updateHttp=PortwaysReleaseSource.CreateClient();
  static readonly System.Net.Http.HttpClient packageHttp=CreatePackageClient();
- readonly UpdateChecker updateChecker=new(new GitHubReleaseSource(updateHttp));
+ readonly UpdateChecker updateChecker=new(new PortwaysReleaseSource(updateHttp));
  CancellationTokenSource? updateCancellation;
  string? availableVersion;
- static System.Net.Http.HttpClient CreatePackageClient() {var client=GitHubReleaseSource.CreateClient(); client.Timeout=TimeSpan.FromMinutes(10);return client;}
+ static System.Net.Http.HttpClient CreatePackageClient() {var client=PortwaysReleaseSource.CreateClient(); client.Timeout=TimeSpan.FromMinutes(10);return client;}
  static string InstalledVersion => typeof(MainWindow).Assembly.GetName().Version is Version v ? $"{v.Major}.{v.Minor}.{Math.Max(0,v.Build)}" : "unknown";
  async void CheckForUpdates(object sender,RoutedEventArgs e) {
   if(updateCancellation!=null)return;
@@ -46,7 +46,7 @@ public partial class MainWindow {
   finally {if(ReferenceEquals(updateCancellation,operation))updateCancellation=null;operation.Dispose();if(!handedOff){try{if(Directory.Exists(staging))Directory.Delete(staging,true);}catch(IOException){}catch(UnauthorizedAccessException){} if(!disposed){CheckUpdateButton.IsEnabled=true;InstallUpdateButton.IsEnabled=availableVersion!=null;CancelUpdateButton.Visibility=Visibility.Collapsed;UpdateProgress.Visibility=Visibility.Collapsed;}}}
  }
  void CancelUpdate(object sender,RoutedEventArgs e)=>updateCancellation?.Cancel();
- void OpenReleases(object sender,RoutedEventArgs e) {try {Process.Start(new ProcessStartInfo("https://github.com/ojeshfrrr/larpiano/releases"){UseShellExecute=true});}catch(Exception ex) {UpdaterMessage.Text="Could not open GitHub: "+ex.Message;} }
+ void OpenReleases(object sender,RoutedEventArgs e) {try {Process.Start(new ProcessStartInfo("https://larpiano.portways.app/#download"){UseShellExecute=true});}catch(Exception ex) {UpdaterMessage.Text="Could not open releases: "+ex.Message;} }
  const string InstallerScript="""
 param([int]$ParentId,[string]$Target,[string]$Source)
 $ErrorActionPreference = 'Stop'

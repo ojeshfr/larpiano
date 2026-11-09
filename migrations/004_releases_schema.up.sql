@@ -46,9 +46,9 @@ INSERT INTO app_releases (
     '2026-11-09 10:14:45+00',
     'releases/v1.1.0/larpiano-windows-x64.zip',
     'larpiano-windows-x64.zip',
-    60601547,
-    '0a8f87f3746dc5a97efb1c102ffaba9fabfece6e06ae015995eaf0397729b4fb',
-    '/api/releases/v1.1.0/larpiano-windows-x64.zip',
+    60602878,
+    '98c66d95af60e3b0a93ea82248bd82236232641ce7d404bb1c0767167a5f8ecd',
+    '/api/releases/latest/download',
     'https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0',
     'https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip',
     TRUE

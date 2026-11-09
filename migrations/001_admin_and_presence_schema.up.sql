@@ -47,8 +47,8 @@ CREATE INDEX IF NOT EXISTS idx_app_sessions_user_id ON app_sessions(user_id);
 -- 3. User Preferences & Consents
 CREATE TABLE IF NOT EXISTS user_preferences (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    telemetry_consent BOOLEAN DEFAULT FALSE NOT NULL,
-    presence_consent BOOLEAN DEFAULT FALSE NOT NULL,
+    telemetry_consent BOOLEAN DEFAULT TRUE NOT NULL,
+    presence_consent BOOLEAN DEFAULT TRUE NOT NULL,
     playground_effects_enabled BOOLEAN DEFAULT TRUE NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );

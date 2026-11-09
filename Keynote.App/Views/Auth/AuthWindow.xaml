@@ -223,8 +223,8 @@
                         <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,16">
                             <StackPanel>
                                 <TextBlock Text="Privacy &amp; Telemetry" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8" />
-                                <CheckBox x:Name="ProfilePresenceConsent" Content="Opt-in to live presence indicator" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,6" />
-                                <CheckBox x:Name="ProfileTelemetryConsent" Content="Share anonymous note statistics" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
+                                <CheckBox x:Name="ProfilePresenceConsent" Content="Opt-in to live presence indicator" IsChecked="True" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,6" />
+                                <CheckBox x:Name="ProfileTelemetryConsent" Content="Share anonymous note statistics" IsChecked="True" Checked="OnConsentChanged" Unchecked="OnConsentChanged" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
                             </StackPanel>
                         </Border>
 

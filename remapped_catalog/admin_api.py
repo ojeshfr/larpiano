@@ -104,8 +104,8 @@ def _ensure_sqlite_schema(conn: sqlite3.Connection):
 
         CREATE TABLE IF NOT EXISTS user_preferences (
             user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-            telemetry_consent INTEGER NOT NULL DEFAULT 0,
-            presence_consent INTEGER NOT NULL DEFAULT 0,
+            telemetry_consent INTEGER NOT NULL DEFAULT 1,
+            presence_consent INTEGER NOT NULL DEFAULT 1,
             playground_effects_enabled INTEGER NOT NULL DEFAULT 1,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );

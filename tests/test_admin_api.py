@@ -239,6 +239,61 @@ class AdminApiTests(unittest.TestCase):
         self.assertNotIn("supersecretpassword123!", str(diag_mock))
         self.assertEqual(diag_mock["username_hint"], "sup...com")
 
+    def test_admin_releases_decoupled_from_github_failures(self):
+        """Verify Admin Releases endpoints are completely decoupled from external GitHub downtime.
+        Tests 403, 404, 429, 500, and timeout conditions."""
+        import urllib.error
+        import admin_api
+
+        # 1. Test GitHub 403 Forbidden (Account Suspended)
+        err_403 = urllib.error.HTTPError("https://api.github.com/...", 403, "Forbidden", {}, None)
+        with unittest.mock.patch.object(admin_api.urllib.request, "urlopen", side_effect=err_403):
+            admin_api._RELEASES_CACHE = {"timestamp": 0, "data": []}
+            releases = admin_api.get_releases_cached()
+            self.assertEqual(len(releases), 5)
+            latest = releases[0]
+            self.assertEqual(latest["tag_name"], "v1.1.0")
+            self.assertTrue(latest["release_metadata_available"])
+            self.assertFalse(latest["external_download_host_available"])
+            self.assertIn("403", latest["external_download_host_status"])
+            self.assertTrue(latest["local_storage_available"])
+            self.assertEqual(latest["download_url"], "/api/releases/latest/download")
+
+        # 2. Test GitHub 404 Not Found
+        err_404 = urllib.error.HTTPError("https://api.github.com/...", 404, "Not Found", {}, None)
+        with unittest.mock.patch.object(admin_api.urllib.request, "urlopen", side_effect=err_404):
+            admin_api._RELEASES_CACHE = {"timestamp": 0, "data": []}
+            releases = admin_api.get_releases_cached()
+            self.assertEqual(len(releases), 5)
+            self.assertFalse(releases[0]["external_download_host_available"])
+            self.assertIn("404", releases[0]["external_download_host_status"])
+
+        # 3. Test GitHub 429 Rate Limit Exceeded
+        err_429 = urllib.error.HTTPError("https://api.github.com/...", 429, "Too Many Requests", {}, None)
+        with unittest.mock.patch.object(admin_api.urllib.request, "urlopen", side_effect=err_429):
+            admin_api._RELEASES_CACHE = {"timestamp": 0, "data": []}
+            releases = admin_api.get_releases_cached()
+            self.assertEqual(len(releases), 5)
+            self.assertFalse(releases[0]["external_download_host_available"])
+            self.assertIn("429", releases[0]["external_download_host_status"])
+
+        # 4. Test GitHub 500 Internal Server Error
+        err_500 = urllib.error.HTTPError("https://api.github.com/...", 500, "Server Error", {}, None)
+        with unittest.mock.patch.object(admin_api.urllib.request, "urlopen", side_effect=err_500):
+            admin_api._RELEASES_CACHE = {"timestamp": 0, "data": []}
+            releases = admin_api.get_releases_cached()
+            self.assertEqual(len(releases), 5)
+            self.assertFalse(releases[0]["external_download_host_available"])
+            self.assertIn("500", releases[0]["external_download_host_status"])
+
+        # 5. Test Network Timeout
+        with unittest.mock.patch.object(admin_api.urllib.request, "urlopen", side_effect=TimeoutError("Timed out")):
+            admin_api._RELEASES_CACHE = {"timestamp": 0, "data": []}
+            releases = admin_api.get_releases_cached()
+            self.assertEqual(len(releases), 5)
+            self.assertFalse(releases[0]["external_download_host_available"])
+            self.assertIn("timed out", releases[0]["external_download_host_status"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

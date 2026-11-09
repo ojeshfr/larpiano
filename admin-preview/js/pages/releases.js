@@ -44,9 +44,10 @@ export function renderReleases(container) {
                 <h2 style="font-size: 20px; font-weight: 600; color: var(--text); font-family: var(--font-mono);">${escapeText(latestVer)}</h2>
                 <span class="badge badge-channel-beta">${latest.prerelease ? 'Pre-release' : 'Production Build'}</span>
                 <span class="badge badge-role-user">Windows x64</span>
+                <span class="badge ${latest.local_storage_available ? 'badge-online' : 'badge-role-user'}">${latest.local_storage_available ? 'Portways S3 Active' : 'External'}</span>
               </div>
               <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">
-                Published on ${escapeText(latestDate)} · Synced with GitHub API
+                Published on ${escapeText(latestDate)} · ${latest.external_download_host_available ? 'Synced with GitHub API' : escapeText(latest.external_download_host_status || 'External sync offline')}
               </p>
             </div>
           </div>
@@ -55,9 +56,7 @@ export function renderReleases(container) {
             <button id="btn-view-latest-notes" class="btn btn-secondary btn-sm">
               Release highlights
             </button>
-            <button id="btn-copy-latest-url" class="btn btn-primary btn-sm" data-url="${escapeText(latestUrl)}">
-              Copy GitHub URL
-            </button>
+            ${latest.download_url ? `<a href="${escapeText(latest.download_url)}" class="btn btn-primary btn-sm" download>Download ZIP</a>` : `<button id="btn-copy-latest-url" class="btn btn-primary btn-sm" data-url="${escapeText(latestUrl)}">Copy URL</button>`}
           </div>
         </div>
       </div>
@@ -116,7 +115,7 @@ export function renderReleases(container) {
       </div>
 
       <div style="margin-top: var(--space-3); font-size: var(--text-xs); color: var(--subtle); display: flex; justify-content: space-between;">
-        <span>Connected to GitHub API repository: ojeshfrrr/larpiano</span>
+        <span>Authoritative Source: PostgreSQL app_releases · Upstream Host: ${escapeText(latest.external_download_host_status || 'Offline')}</span>
         <span>${releaseList.length} releases</span>
       </div>
     `;

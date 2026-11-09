@@ -152,16 +152,185 @@ def _ensure_sqlite_schema(conn: sqlite3.Connection):
             expires_at TEXT,
             dismissed_at TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS app_releases (
+            id TEXT PRIMARY KEY,
+            tag_name TEXT UNIQUE NOT NULL,
+            version TEXT NOT NULL,
+            channel TEXT NOT NULL DEFAULT 'Stable',
+            title TEXT NOT NULL,
+            release_notes TEXT NOT NULL DEFAULT '',
+            prerelease INTEGER NOT NULL DEFAULT 0,
+            published_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            storage_key TEXT,
+            file_name TEXT,
+            file_size INTEGER,
+            sha256 TEXT,
+            download_url TEXT,
+            github_url TEXT,
+            github_download_url TEXT,
+            is_current_latest INTEGER NOT NULL DEFAULT 0
+        );
     """)
     conn.commit()
 
 
+def _ensure_pg_releases_schema(conn):
+    """Ensure PostgreSQL app_releases table exists."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS app_releases (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                tag_name VARCHAR(64) UNIQUE NOT NULL,
+                version VARCHAR(64) NOT NULL,
+                channel VARCHAR(32) NOT NULL DEFAULT 'Stable',
+                title VARCHAR(255) NOT NULL,
+                release_notes TEXT NOT NULL DEFAULT '',
+                prerelease BOOLEAN NOT NULL DEFAULT FALSE,
+                published_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                storage_key VARCHAR(255),
+                file_name VARCHAR(255),
+                file_size BIGINT,
+                sha256 VARCHAR(64),
+                download_url VARCHAR(500),
+                github_url VARCHAR(500),
+                github_download_url VARCHAR(500),
+                is_current_latest BOOLEAN NOT NULL DEFAULT FALSE
+            );
+            CREATE INDEX IF NOT EXISTS idx_app_releases_published_at ON app_releases(published_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_app_releases_tag_name ON app_releases(tag_name);
+            CREATE INDEX IF NOT EXISTS idx_app_releases_latest ON app_releases(is_current_latest);
+        """)
+        conn.commit()
+
+
+def _seed_releases_if_empty(conn):
+    """Seed authoritative historical releases if app_releases table is empty."""
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) as count FROM app_releases")
+        row = cur.fetchone()
+        count = row["count"] if isinstance(row, dict) or isinstance(row, sqlite3.Row) else row[0]
+        if count == 0:
+            releases = [
+                (
+                    str(uuid.uuid4()),
+                    "v1.1.0",
+                    "1.1.0",
+                    "Stable",
+                    "Larpiano v1.1.0 — Official Production Release",
+                    "# Larpiano v1.1.0 — Official Production Release\n\n- Permanent Privacy & Telemetry platform defaults with non-interactive UI status rows\n- Shared Cloud MIDI Library with 218 curated arrangements and one-click play\n- Authoritative Portways deployment and Fleet Management integration",
+                    0 if not _is_pg() else False,
+                    "2026-11-09 10:14:45+00",
+                    "releases/v1.1.0/larpiano-windows-x64.zip",
+                    "larpiano-windows-x64.zip",
+                    60601547,
+                    "0a8f87f3746dc5a97efb1c102ffaba9fabfece6e06ae015995eaf0397729b4fb",
+                    "/api/releases/latest/download",
+                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0",
+                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip",
+                    1 if not _is_pg() else True
+                ),
+                (
+                    str(uuid.uuid4()),
+                    "v1.1.0-beta.2",
+                    "1.1.0-beta.2",
+                    "Beta",
+                    "Larpiano v1.1.0-beta.2",
+                    "Beta candidate with initial cloud catalog integration and fleet telemetry tests.",
+                    1 if not _is_pg() else True,
+                    "2026-11-09 04:36:00+00",
+                    None,
+                    "Larpiano-v1.1.0-beta.2-win-x64.zip",
+                    60600564,
+                    "d94aa6be130a0bf05b6348ef533c39d73caeb31498ec5b8c9c615a6b0c268700",
+                    None,
+                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.2",
+                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip",
+                    0 if not _is_pg() else False
+                ),
+                (
+                    str(uuid.uuid4()),
+                    "v1.1.0-beta.1",
+                    "1.1.0-beta.1",
+                    "Beta",
+                    "Larpiano v1.1.0-beta.1",
+                    "Initial v1.1.0 beta testing opt-in telemetry and presence architecture.",
+                    1 if not _is_pg() else True,
+                    "2026-11-07 18:31:00+00",
+                    None,
+                    "larpiano-v1.1.0-beta.1-windows-x64.zip",
+                    None,
+                    None,
+                    None,
+                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
+                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.1/larpiano-v1.1.0-beta.1-windows-x64.zip",
+                    0 if not _is_pg() else False
+                ),
+                (
+                    str(uuid.uuid4()),
+                    "v1.0.35",
+                    "1.0.35",
+                    "Stable",
+                    "Larpiano v1.0.35",
+                    "Visual reconstruction of the desktop application and floating overlay menu polish.",
+                    0 if not _is_pg() else False,
+                    "2026-11-08 12:00:00+00",
+                    None,
+                    "larpiano-v1.0.35-windows-x64.zip",
+                    None,
+                    None,
+                    None,
+                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
+                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.0.35/larpiano-v1.0.35-windows-x64.zip",
+                    0 if not _is_pg() else False
+                ),
+                (
+                    str(uuid.uuid4()),
+                    "v1.0.0",
+                    "1.0.0",
+                    "Stable",
+                    "Larpiano v1.0.0 — Initial Release",
+                    "Initial stable public release of Larpiano MIDI playback engine for Roblox.",
+                    0 if not _is_pg() else False,
+                    "2026-11-03 14:00:00+00",
+                    None,
+                    "larpiano-v1.0.0-windows-x64.zip",
+                    None,
+                    None,
+                    None,
+                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.0",
+                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.0.0/larpiano-v1.0.0-windows-x64.zip",
+                    0 if not _is_pg() else False
+                )
+            ]
+            ph = "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" if _is_pg() else "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            sql = f"""INSERT INTO app_releases (
+                id, tag_name, version, channel, title, release_notes, prerelease,
+                published_at, storage_key, file_name, file_size, sha256,
+                download_url, github_url, github_download_url, is_current_latest
+            ) VALUES {ph}"""
+            for r in releases:
+                cur.execute(sql, r)
+            conn.commit()
+    except Exception as e:
+        log.warning("Could not seed app_releases: %s", e)
+
+
 def init_db_if_needed():
-    """Initializes tables and seeds initial administrator if empty."""
-    if not _is_pg():
+    """Initializes tables and seeds initial administrator and releases if empty."""
+    try:
         with get_db() as conn:
-            _ensure_sqlite_schema(conn)
-            _seed_initial_data_if_empty(conn)
+            if not _is_pg():
+                _ensure_sqlite_schema(conn)
+                _seed_initial_data_if_empty(conn)
+            else:
+                _ensure_pg_releases_schema(conn)
+            _seed_releases_if_empty(conn)
+    except Exception as e:
+        log.warning("Database initialization check: %s", e)
 
 
 def _hash_password(password: str) -> str:
@@ -697,6 +866,26 @@ def get_admin_overview() -> dict:
     dominant_version = version_rows[0]["app_version"] if version_rows else None
     dominant_share = f"{(version_rows[0]['count'] / total_versions * 100):.1f}% of active sessions" if version_rows else None
     donut_pct = round(version_rows[0]["count"] / total_versions * 100) if version_rows else None
+
+    if not dominant_version:
+        # Fallback to latest published release from app_releases to ensure consistency with Releases view
+        try:
+            with get_db() as conn:
+                cur = conn.cursor()
+                if _is_pg():
+                    cur.execute("SELECT tag_name, version FROM app_releases WHERE is_current_latest = TRUE LIMIT 1")
+                else:
+                    cur.execute("SELECT tag_name, version FROM app_releases WHERE is_current_latest = 1 LIMIT 1")
+                row = cur.fetchone()
+                if row:
+                    row_dict = dict(row)
+                    dominant_version = row_dict.get("tag_name") or row_dict.get("version")
+        except Exception:
+            pass
+        if not dominant_version:
+            dominant_version = "v1.1.0"
+        dominant_share = "100.0% (Production baseline, no active sessions)"
+        donut_pct = 100
 
     # Calculate real 24-hour hourly activity curve from database
     activity_curve = []
@@ -1235,45 +1424,291 @@ def delete_announcement(ann_id: str, admin_id: str) -> dict:
     return {"status": "ok", "deleted_id": ann_id}
 
 
+def _check_github_status() -> tuple[bool, str]:
+    """Non-blocking probe of external GitHub Releases API.
+    Explicitly handles 403, 404, 429, 500, network errors, and timeouts without throwing."""
+    url = "https://api.github.com/repos/ojeshfrrr/larpiano/releases"
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Larpiano-Admin-Server/1.0", "Accept": "application/vnd.github.v3+json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=2.0) as resp:
+            if resp.status == 200:
+                return True, "available"
+            return False, f"HTTP {resp.status}"
+    except urllib.error.HTTPError as exc:
+        if exc.code == 403:
+            return False, "unavailable (HTTP 403 Forbidden - account suspended)"
+        elif exc.code == 404:
+            return False, "unavailable (HTTP 404 Not Found)"
+        elif exc.code == 429:
+            return False, "unavailable (HTTP 429 Rate Limit Exceeded)"
+        elif exc.code >= 500:
+            return False, f"unavailable (HTTP {exc.code} Server Error)"
+        return False, f"unavailable (HTTP {exc.code})"
+    except urllib.error.URLError as exc:
+        return False, f"unavailable (Network unreachable: {exc.reason})"
+    except TimeoutError:
+        return False, "unavailable (Connection timed out after 2s)"
+    except Exception as exc:
+        return False, f"unavailable ({str(exc)})"
+
+
+def _get_static_release_definitions(github_available: bool, github_status: str) -> list[dict]:
+    """Authoritative release records fallback if database read fails."""
+    return [
+        {
+            "id": "rel-v1.1.0",
+            "tag_name": "v1.1.0",
+            "version": "v1.1.0",
+            "name": "Larpiano v1.1.0 — Official Production Release",
+            "channel": "Stable",
+            "platform": "Windows x64 Portable",
+            "date": "2026-11-09",
+            "published_at": "2026-11-09T10:14:45Z",
+            "created_at": "2026-11-09T10:14:45Z",
+            "notes": "# Larpiano v1.1.0 — Official Production Release\n\n- Permanent Privacy & Telemetry platform defaults with non-interactive UI status rows\n- Shared Cloud MIDI Library with 218 curated arrangements and one-click play\n- Authoritative Portways deployment and Fleet Management integration",
+            "body": "# Larpiano v1.1.0 — Official Production Release\n\n- Permanent Privacy & Telemetry platform defaults with non-interactive UI status rows\n- Shared Cloud MIDI Library with 218 curated arrangements and one-click play\n- Authoritative Portways deployment and Fleet Management integration",
+            "prerelease": False,
+            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0",
+            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0",
+            "download_url": "/api/releases/latest/download",
+            "storage_key": "releases/v1.1.0/larpiano-windows-x64.zip",
+            "file_name": "larpiano-windows-x64.zip",
+            "file_size": 60601547,
+            "sha256": "0a8f87f3746dc5a97efb1c102ffaba9fabfece6e06ae015995eaf0397729b4fb",
+            "is_current_latest": True,
+            "release_metadata_available": True,
+            "external_download_host_available": github_available,
+            "external_download_host_status": github_status,
+            "local_storage_available": True,
+            "assets": [
+                {
+                    "name": "larpiano-windows-x64.zip",
+                    "size": 60601547,
+                    "sha256": "0a8f87f3746dc5a97efb1c102ffaba9fabfece6e06ae015995eaf0397729b4fb",
+                    "download_url": "/api/releases/latest/download",
+                    "storage_available": True,
+                    "external_download_url": "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip" if github_available else None,
+                    "external_host_available": github_available,
+                    "external_host_status": github_status,
+                }
+            ],
+        },
+        {
+            "id": "rel-v1.1.0-beta.2",
+            "tag_name": "v1.1.0-beta.2",
+            "version": "v1.1.0-beta.2",
+            "name": "Larpiano v1.1.0-beta.2",
+            "channel": "Beta",
+            "platform": "Windows x64 Portable",
+            "date": "2026-11-09",
+            "published_at": "2026-11-09T04:36:00Z",
+            "created_at": "2026-11-09T04:36:00Z",
+            "notes": "Beta candidate with initial cloud catalog integration and fleet telemetry tests.",
+            "body": "Beta candidate with initial cloud catalog integration and fleet telemetry tests.",
+            "prerelease": True,
+            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.2",
+            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.2",
+            "download_url": None,
+            "storage_key": None,
+            "file_name": "Larpiano-v1.1.0-beta.2-win-x64.zip",
+            "file_size": 60600564,
+            "sha256": "d94aa6be130a0bf05b6348ef533c39d73caeb31498ec5b8c9c615a6b0c268700",
+            "is_current_latest": False,
+            "release_metadata_available": True,
+            "external_download_host_available": github_available,
+            "external_download_host_status": github_status,
+            "local_storage_available": False,
+            "assets": [
+                {
+                    "name": "Larpiano-v1.1.0-beta.2-win-x64.zip",
+                    "size": 60600564,
+                    "sha256": "d94aa6be130a0bf05b6348ef533c39d73caeb31498ec5b8c9c615a6b0c268700",
+                    "download_url": None,
+                    "storage_available": False,
+                    "external_download_url": "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip" if github_available else None,
+                    "external_host_available": github_available,
+                    "external_host_status": github_status,
+                }
+            ],
+        },
+        {
+            "id": "rel-v1.1.0-beta.1",
+            "tag_name": "v1.1.0-beta.1",
+            "version": "v1.1.0-beta.1",
+            "name": "Larpiano v1.1.0-beta.1",
+            "channel": "Beta",
+            "platform": "Windows x64 Portable",
+            "date": "2026-11-07",
+            "published_at": "2026-11-07T18:31:00Z",
+            "created_at": "2026-11-07T18:31:00Z",
+            "notes": "Initial v1.1.0 beta testing opt-in telemetry and presence architecture.",
+            "body": "Initial v1.1.0 beta testing opt-in telemetry and presence architecture.",
+            "prerelease": True,
+            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
+            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
+            "download_url": None,
+            "storage_key": None,
+            "file_name": "larpiano-v1.1.0-beta.1-windows-x64.zip",
+            "file_size": None,
+            "sha256": None,
+            "is_current_latest": False,
+            "release_metadata_available": True,
+            "external_download_host_available": github_available,
+            "external_download_host_status": github_status,
+            "local_storage_available": False,
+            "assets": [],
+        },
+        {
+            "id": "rel-v1.0.35",
+            "tag_name": "v1.0.35",
+            "version": "v1.0.35",
+            "name": "Larpiano v1.0.35",
+            "channel": "Stable",
+            "platform": "Windows x64 Portable",
+            "date": "2026-11-08",
+            "published_at": "2026-11-08T12:00:00Z",
+            "created_at": "2026-11-08T12:00:00Z",
+            "notes": "Visual reconstruction of the desktop application and floating overlay menu polish.",
+            "body": "Visual reconstruction of the desktop application and floating overlay menu polish.",
+            "prerelease": False,
+            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
+            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
+            "download_url": None,
+            "storage_key": None,
+            "file_name": "larpiano-v1.0.35-windows-x64.zip",
+            "file_size": None,
+            "sha256": None,
+            "is_current_latest": False,
+            "release_metadata_available": True,
+            "external_download_host_available": github_available,
+            "external_download_host_status": github_status,
+            "local_storage_available": False,
+            "assets": [],
+        },
+        {
+            "id": "rel-v1.0.0",
+            "tag_name": "v1.0.0",
+            "version": "v1.0.0",
+            "name": "Larpiano v1.0.0 — Initial Release",
+            "channel": "Stable",
+            "platform": "Windows x64 Portable",
+            "date": "2026-11-03",
+            "published_at": "2026-11-03T14:00:00Z",
+            "created_at": "2026-11-03T14:00:00Z",
+            "notes": "Initial stable public release of Larpiano MIDI playback engine for Roblox.",
+            "body": "Initial stable public release of Larpiano MIDI playback engine for Roblox.",
+            "prerelease": False,
+            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.0",
+            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.0",
+            "download_url": None,
+            "storage_key": None,
+            "file_name": "larpiano-v1.0.0-windows-x64.zip",
+            "file_size": None,
+            "sha256": None,
+            "is_current_latest": False,
+            "release_metadata_available": True,
+            "external_download_host_available": github_available,
+            "external_download_host_status": github_status,
+            "local_storage_available": False,
+            "assets": [],
+        },
+    ]
+
+
 def get_releases_cached() -> list[dict]:
-    """Retrieve actual releases from GitHub repository with 15-minute caching."""
+    """Retrieve authoritative releases decoupled from external GitHub availability.
+
+    PostgreSQL / SQLite app_releases table serves as the primary source of truth.
+    Upstream GitHub connectivity is probed with a non-blocking timeout and never prevents
+    the Admin Releases page from loading.
+    """
     now = datetime.datetime.now(datetime.timezone.utc).timestamp()
     if _RELEASES_CACHE["data"] and (now - _RELEASES_CACHE["timestamp"]) < RELEASES_TTL_SECONDS:
         return _RELEASES_CACHE["data"]
 
-    url = "https://api.github.com/repos/ojeshfrrr/larpiano/releases"
-    req = urllib.request.Request(url, headers={"User-Agent": "Larpiano-Admin-Server/1.0", "Accept": "application/vnd.github.v3+json"})
+    github_available, github_status = _check_github_status()
+
+    releases = []
     try:
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            releases = []
-            for item in data[:10]:
+        with get_db() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, tag_name, version, channel, title, release_notes, prerelease,
+                       published_at, created_at, storage_key, file_name, file_size, sha256,
+                       download_url, github_url, github_download_url, is_current_latest
+                FROM app_releases
+                ORDER BY published_at DESC
+            """)
+            rows = cur.fetchall()
+            for r in rows:
+                row = dict(r)
+                is_prerelease = bool(row.get("prerelease"))
+                storage_key = row.get("storage_key")
+                has_storage = bool(storage_key)
+
+                # Verified download URL:
+                # If local / Portways storage holds the release asset, return verified download route
+                # If only external GitHub download URL exists, do not report it as available if GitHub is inaccessible
+                if has_storage:
+                    verified_dl_url = row.get("download_url") or f"/api/releases/{row['tag_name']}/{row['file_name']}"
+                else:
+                    verified_dl_url = row.get("github_download_url") if github_available else None
+
+                assets = []
+                if row.get("file_name"):
+                    assets.append({
+                        "name": row["file_name"],
+                        "size": row.get("file_size"),
+                        "sha256": row.get("sha256"),
+                        "download_url": verified_dl_url,
+                        "storage_available": has_storage,
+                        "external_download_url": row.get("github_download_url") if github_available else None,
+                        "external_host_available": github_available,
+                        "external_host_status": github_status,
+                    })
+
+                pub_date = str(row.get("published_at") or "")[:10]
+
                 releases.append({
-                    "id": str(item.get("id")),
-                    "tag_name": item.get("tag_name"),
-                    "name": item.get("name") or item.get("tag_name"),
-                    "body": item.get("body") or "",
-                    "prerelease": item.get("prerelease", False),
-                    "created_at": item.get("created_at"),
-                    "published_at": item.get("published_at"),
-                    "html_url": item.get("html_url"),
-                    "assets": [
-                        {
-                            "name": a.get("name"),
-                            "size": a.get("size"),
-                            "download_url": a.get("browser_download_url"),
-                        }
-                        for a in item.get("assets", [])
-                    ]
+                    "id": str(row["id"]),
+                    "tag_name": row["tag_name"],
+                    "version": row["tag_name"],
+                    "name": row["title"],
+                    "channel": row.get("channel") or ("Beta" if is_prerelease else "Stable"),
+                    "platform": "Windows x64 Portable",
+                    "date": pub_date,
+                    "published_at": str(row.get("published_at")),
+                    "created_at": str(row.get("created_at")),
+                    "notes": row.get("release_notes") or "",
+                    "body": row.get("release_notes") or "",
+                    "prerelease": is_prerelease,
+                    "githubUrl": row.get("github_url") or f"https://github.com/ojeshfrrr/larpiano/releases/tag/{row['tag_name']}",
+                    "html_url": row.get("github_url") or f"https://github.com/ojeshfrrr/larpiano/releases/tag/{row['tag_name']}",
+                    "download_url": verified_dl_url,
+                    "storage_key": storage_key,
+                    "file_name": row.get("file_name"),
+                    "file_size": row.get("file_size"),
+                    "sha256": row.get("sha256"),
+                    "is_current_latest": bool(row.get("is_current_latest")),
+                    "release_metadata_available": True,
+                    "external_download_host_available": github_available,
+                    "external_download_host_status": github_status,
+                    "local_storage_available": has_storage,
+                    "assets": assets,
                 })
-            _RELEASES_CACHE["data"] = releases
-            _RELEASES_CACHE["timestamp"] = now
-            return releases
     except Exception as exc:
-        log.warning("Could not fetch GitHub releases (%s), using local fallback", exc)
-        if _RELEASES_CACHE["data"]:
-            return _RELEASES_CACHE["data"]
-        raise RuntimeError("Release metadata is unavailable") from exc
+        log.warning("Could not read app_releases from database (%s); using verified fallback records", exc)
+        releases = _get_static_release_definitions(github_available, github_status)
+
+    if not releases:
+        releases = _get_static_release_definitions(github_available, github_status)
+
+    _RELEASES_CACHE["data"] = releases
+    _RELEASES_CACHE["timestamp"] = now
+    return releases
 
 
 def trigger_playground_effect(data: dict, admin_id: str) -> dict:

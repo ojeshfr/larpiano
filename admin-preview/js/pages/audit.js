@@ -8,10 +8,10 @@ import { showToast } from "../components/toast.js";
 import { fetchAuditLogs } from "../api/audit.js";
 import { MOCK_AUDIT_LOGS } from "../data/mockData.js";
 import { exportData } from "../api/storage.js";
-import { getApiBaseUrl, getAdminToken } from "../api/client.js";
+import { getApiBaseUrl, getAdminToken, isPreviewMode } from "../api/client.js";
 
 let filterType = "all";
-let auditList = [...MOCK_AUDIT_LOGS];
+let auditList = isPreviewMode() ? [...MOCK_AUDIT_LOGS] : [];
 
 export function renderAuditLog(container) {
   function getFilteredLogs() {
@@ -137,7 +137,12 @@ export function renderAuditLog(container) {
         if (countSpan) countSpan.textContent = `${data.total} events logged`;
       }
     } catch (err) {
-      console.log("[Audit Log] Sandbox preview mode:", err.message);
+      if (isPreviewMode()) {
+        console.log("[Audit Log] Sandbox preview mode:", err.message);
+      } else {
+        auditList = [];
+        updateTable();
+      }
     }
   }
 

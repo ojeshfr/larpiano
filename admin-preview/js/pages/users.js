@@ -7,11 +7,12 @@ import { escapeText } from "../components/safeText.js";
 import { openUserDrawer } from "../components/userDrawer.js";
 import { showToast } from "../components/toast.js";
 import { fetchUsers, createUser, updateUser } from "../api/users.js";
+import { isPreviewMode } from "../api/client.js";
 import { MOCK_USERS } from "../data/mockData.js";
 
 let currentFilter = "all";
 let searchQuery = "";
-let loadedUsers = [...MOCK_USERS];
+let loadedUsers = isPreviewMode() ? [...MOCK_USERS] : [];
 
 export function renderUsers(container) {
   function getFilteredUsers() {
@@ -244,7 +245,13 @@ export function renderUsers(container) {
         if (countSpan) countSpan.textContent = `${data.total} total accounts`;
       }
     } catch (err) {
-      console.log("[Users] Sandbox preview mode:", err.message);
+      if (isPreviewMode()) {
+        console.log("[Users] Sandbox preview mode:", err.message);
+      } else {
+        loadedUsers = [];
+        updateTable();
+        showToast(`Failed to load users: ${err.message}`, "error");
+      }
     }
   }
 

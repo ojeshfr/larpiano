@@ -9,6 +9,7 @@ import { renderKpiCard } from "../components/kpiCard.js";
 import { renderActivityChart } from "../components/chart.js";
 import { openUserDrawer } from "../components/userDrawer.js";
 import { fetchOverview } from "../api/overview.js";
+import { isPreviewMode } from "../api/client.js";
 import { escapeText } from "../components/safeText.js";
 
 let refreshTimer = null;
@@ -106,7 +107,7 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
             <button id="overview-view-all-events" class="btn btn-ghost btn-sm" style="font-size: 12px; color: var(--accent-soft);">Full audit log →</button>
           </div>
           <div class="events-list">
-            ${events.map(evt => {
+            ${events.length === 0 ? `<div style="padding: 28px; text-align: center; color: var(--subtle); font-size: 13px;">No recent audit events</div>` : events.map(evt => {
               const tagClass = escapeText(evt.tagClass || 'tag-roblox');
               const tag = escapeText(evt.tag || 'EVENT');
               const title = escapeText(evt.title || evt.action || '');
@@ -149,7 +150,7 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
                 </tr>
               </thead>
               <tbody>
-                ${players.map(u => {
+                ${players.length === 0 ? `<tr><td colspan="5" style="text-align: center; padding: 28px; color: var(--subtle); font-size: 13px;">No players currently online</td></tr>` : players.map(u => {
                   const uid = escapeText(u.id || u.session_identifier || 'u_anon');
                   const name = escapeText(u.name || u.display_name || 'Guest Pianist');
                   const initial = (name.charAt(0) || 'P').toUpperCase();
@@ -251,11 +252,20 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
     });
   }
 
-  // Initial immediate render with baseline data
-  const initialPlayers = MOCK_USERS.filter(u => u.status === "Online" || u.status === "Idle").slice(0, 5);
-  renderView(DEMO_METRICS, HOURLY_ACTIVITY_24H, RECENT_EVENTS, initialPlayers, false);
+  // Initial render: mock data only in explicit preview mode
+  if (isPreviewMode()) {
+    const initialPlayers = MOCK_USERS.filter(u => u.status === "Online" || u.status === "Idle").slice(0, 5);
+    renderView(DEMO_METRICS, HOURLY_ACTIVITY_24H, RECENT_EVENTS, initialPlayers, false);
+  } else {
+    container.innerHTML = `
+      <div style="padding: 48px; text-align: center; color: var(--muted);">
+        <div class="live-pulse-dot" style="display: inline-block; margin-bottom: 12px;"></div>
+        <p style="font-size: 14px;">Connecting to Larpiano Control Center...</p>
+      </div>
+    `;
+  }
 
-  // Fetch real data from backend API
+  // Fetch real authoritative data from backend API
   async function loadLiveData() {
     try {
       const data = await fetchOverview();
@@ -264,23 +274,31 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
         return;
       }
       if (data && data.metrics) {
-        const livePlayers = (data.active_players && data.active_players.length > 0)
-          ? data.active_players
-          : initialPlayers;
+        const livePlayers = isPreviewMode()
+          ? ((data.active_players && data.active_players.length > 0) ? data.active_players : MOCK_USERS.slice(0, 5))
+          : (data.active_players || []);
         
-        const liveEvents = (data.recent_events && data.recent_events.length > 0)
-          ? data.recent_events.slice(0, 5)
-          : RECENT_EVENTS;
+        const liveEvents = isPreviewMode()
+          ? ((data.recent_events && data.recent_events.length > 0) ? data.recent_events.slice(0, 5) : RECENT_EVENTS)
+          : (data.recent_events || []).slice(0, 5);
 
         const liveCurve = (data.live_activity_24h && data.live_activity_24h.length === 24)
           ? data.live_activity_24h
-          : HOURLY_ACTIVITY_24H;
+          : (isPreviewMode() ? HOURLY_ACTIVITY_24H : new Array(24).fill(0));
 
         renderView(data.metrics, liveCurve, liveEvents, livePlayers, true);
       }
     } catch (err) {
-      // Backend offline or compiling: baseline remains interactive
-      console.log("[Overview] Operating in resilient fallback mode:", err.message);
+      if (!isPreviewMode()) {
+        container.innerHTML = `
+          <div class="card" style="padding: 32px; text-align: center; border-color: rgba(239, 68, 68, 0.3);">
+            <h2 style="color: var(--danger); margin-bottom: 8px;">API Offline</h2>
+            <p style="color: var(--muted); font-size: 13px;">${escapeText(err.message || 'Unable to connect to live backend')}</p>
+            <button id="btn-retry-overview" class="btn btn-primary" style="margin-top: 16px;">Retry Connection</button>
+          </div>
+        `;
+        document.getElementById("btn-retry-overview")?.addEventListener("click", loadLiveData);
+      }
     }
   }
 

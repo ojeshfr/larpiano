@@ -7,10 +7,11 @@ import { escapeText, safeHttpsUrl } from "../components/safeText.js";
 import { openReleaseNotes, openDraftReleaseModal } from "../components/releaseModal.js";
 import { showToast } from "../components/toast.js";
 import { fetchReleases } from "../api/releases.js";
+import { isPreviewMode } from "../api/client.js";
 import { MOCK_RELEASES } from "../data/mockData.js";
 
 export function renderReleases(container) {
-  let releaseList = [...MOCK_RELEASES];
+  let releaseList = isPreviewMode() ? [...MOCK_RELEASES] : [];
 
   function renderView() {
     if (!releaseList.length) { container.textContent = "No releases available."; return; }
@@ -156,9 +157,17 @@ export function renderReleases(container) {
       if (Array.isArray(data) && data.length > 0) {
         releaseList = data;
         renderView();
+      } else if (!isPreviewMode()) {
+        releaseList = [];
+        renderView();
       }
     } catch (err) {
-      console.log("[Releases] Sandbox preview mode:", err.message);
+      if (isPreviewMode()) {
+        console.log("[Releases] Sandbox preview mode:", err.message);
+      } else {
+        releaseList = [];
+        renderView();
+      }
     }
   }
 

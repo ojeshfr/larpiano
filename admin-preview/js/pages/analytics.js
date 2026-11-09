@@ -7,6 +7,7 @@ import { MOCK_ANALYTICS } from "../data/mockData.js";
 import { renderBarChart, renderDonutChart } from "../components/chart.js";
 import { showToast } from "../components/toast.js";
 import { fetchAnalytics } from "../api/analytics.js";
+import { isPreviewMode } from "../api/client.js";
 import { escapeText } from "../components/safeText.js";
 
 let selectedRange = "7d";

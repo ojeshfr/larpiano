@@ -7,10 +7,11 @@ import { escapeText } from "../components/safeText.js";
 import { openAnnouncementModal } from "../components/announcementModal.js";
 import { showToast } from "../components/toast.js";
 import { fetchAnnouncements, deleteAnnouncement, updateAnnouncement } from "../api/announcements.js";
+import { isPreviewMode } from "../api/client.js";
 import { MOCK_ANNOUNCEMENTS } from "../data/mockData.js";
 
 export function renderAnnouncements(container) {
-  let announcementsList = [...MOCK_ANNOUNCEMENTS];
+  let announcementsList = isPreviewMode() ? [...MOCK_ANNOUNCEMENTS] : [];
 
   function renderCards() {
     if (announcementsList.length === 0) {
@@ -138,7 +139,12 @@ export function renderAnnouncements(container) {
         updateDOM();
       }
     } catch (err) {
-      console.log("[Announcements] Sandbox preview mode:", err.message);
+      if (isPreviewMode()) {
+        console.log("[Announcements] Sandbox preview mode:", err.message);
+      } else {
+        announcementsList = [];
+        updateDOM();
+      }
     }
   }
 

@@ -568,6 +568,25 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(400, {"error": str(e)}, head)
             return True
 
+        if path == "/api/app/telemetry" and method == "POST":
+            try:
+                user = self.get_auth_user()
+                if not user:
+                    self.send_json(401, {"error": "Unauthorized"}, head)
+                    return True
+                profile = auth_service.get_current_user_profile(user["sub"])
+                if not profile or not profile.get("telemetry_consent"):
+                    self.send_json(403, {"error": "Telemetry consent required"}, head)
+                    return True
+                body = self.read_json_body()
+                result = admin_api.record_telemetry_event(body, user["sub"])
+                self.send_json(200, result, head)
+            except ValueError as e:
+                self.send_json(400, {"error": str(e)}, head)
+            except Exception as e:
+                self.send_json(500, {"error": "Failed to record telemetry"}, head)
+            return True
+
         # --- Admin Endpoints ---
         if path == "/api/admin/auth/login" and method == "POST":
             try:

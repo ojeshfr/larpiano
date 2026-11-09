@@ -129,7 +129,8 @@ def _ensure_sqlite_schema(conn: sqlite3.Connection):
             weekly_active_users INTEGER NOT NULL DEFAULT 0,
             new_accounts INTEGER NOT NULL DEFAULT 0,
             active_sessions INTEGER NOT NULL DEFAULT 0,
-            download_events INTEGER NOT NULL DEFAULT 0
+            download_events INTEGER NOT NULL DEFAULT 0,
+            notes_played INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS admin_audit_logs (
@@ -374,6 +375,53 @@ def handle_session_end(data: dict) -> dict:
     return {"status": "ok"}
 
 
+def record_telemetry_event(data: dict, user_id: str) -> dict:
+    """Record anonymous aggregate note statistics.
+    
+    Strict Privacy Guarantee:
+    - Never accepts raw notes, song titles, filenames, user identifiers, or keystroke timings.
+    - Only records aggregate counts: note_count, session_duration_seconds, app_version.
+    """
+    forbidden_keys = {"title", "song", "file", "filename", "notes", "midi", "raw", "keys", "username", "email", "keystrokes"}
+    found_forbidden = [k for k in data.keys() if any(f in k.lower() for f in forbidden_keys)]
+    if found_forbidden:
+        raise ValueError(f"Forbidden sensitive telemetry fields detected: {found_forbidden}")
+
+    try:
+        note_count = max(0, int(data.get("note_count", 0)))
+    except (TypeError, ValueError):
+        note_count = 0
+
+    today = datetime.datetime.now(datetime.timezone.utc).date()
+    today_str = today.isoformat()
+
+    with get_db() as conn:
+        cur = conn.cursor()
+        if _is_pg():
+            cur.execute(
+                """
+                INSERT INTO daily_analytics (date, notes_played)
+                VALUES (%s, %s)
+                ON CONFLICT (date) DO UPDATE
+                SET notes_played = daily_analytics.notes_played + EXCLUDED.notes_played
+                """,
+                (today, note_count)
+            )
+        else:
+            cur.execute(
+                """
+                INSERT INTO daily_analytics (date, notes_played)
+                VALUES (?, ?)
+                ON CONFLICT (date) DO UPDATE
+                SET notes_played = daily_analytics.notes_played + excluded.notes_played
+                """,
+                (today_str, note_count)
+            )
+        conn.commit()
+
+    return {"status": "ok", "notes_recorded": note_count}
+
+
 def get_app_announcements() -> list[dict]:
     """Return active published announcements for desktop clients."""
     with get_db() as conn:
@@ -475,6 +523,11 @@ def update_user_preferences(user_id: str, data: dict) -> dict:
                        updated_at = excluded.updated_at""",
                 (user_id, telemetry, presence, playground, now_iso)
             )
+        if not presence:
+            if _is_pg():
+                cur.execute("UPDATE app_sessions SET ended_at = NOW(), current_status = 'offline' WHERE user_id = %s AND ended_at IS NULL", (user_id,))
+            else:
+                cur.execute("UPDATE app_sessions SET ended_at = ?, current_status = 'offline' WHERE user_id = ? AND ended_at IS NULL", (now_iso, user_id))
         conn.commit()
 
     return {"status": "ok"}

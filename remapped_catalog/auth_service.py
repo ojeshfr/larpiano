@@ -1242,6 +1242,17 @@ def update_user_preferences(
                 """,
                 (user_id, 1 if presence_consent else 0, 1 if telemetry_consent else 0, now.isoformat()),
             )
+        if not presence_consent:
+            if admin_api._is_pg():
+                cur.execute(
+                    "UPDATE app_sessions SET ended_at = NOW(), current_status = 'offline' WHERE user_id = %s AND ended_at IS NULL",
+                    (user_id,)
+                )
+            else:
+                cur.execute(
+                    "UPDATE app_sessions SET ended_at = ?, current_status = 'offline' WHERE user_id = ? AND ended_at IS NULL",
+                    (now.isoformat(), user_id)
+                )
         conn.commit()
 
     log_auth_audit(

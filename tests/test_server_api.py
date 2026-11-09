@@ -174,6 +174,36 @@ class ServerApiIntegrationTests(unittest.TestCase):
         app_list = json.loads(h_app.wfile.getvalue())
         self.assertTrue(any(a["id"] == ann["id"] for a in app_list))
 
+    def test_telemetry_consent_enforcement_and_rejection_of_sensitive_data(self):
+        # 1. Unauthenticated -> 401
+        h_unauth = self.make_handler("POST", "/api/app/telemetry", body={"note_count": 50})
+        h_unauth.serve_api(method="POST")
+        self.assertIn(("status", 401), h_unauth.responses)
+
+        # 2. Authenticated but no consent -> 403
+        with patch.object(server.Handler, "get_auth_user", return_value={"sub": "user-no-consent"}), \
+             patch.object(server.auth_service, "get_current_user_profile", return_value={"telemetry_consent": False}):
+            h_noconsent = self.make_handler("POST", "/api/app/telemetry", body={"note_count": 50})
+            h_noconsent.serve_api(method="POST")
+            self.assertIn(("status", 403), h_noconsent.responses)
+
+        # 3. Authenticated with consent but sensitive song title -> 400
+        with patch.object(server.Handler, "get_auth_user", return_value={"sub": "user-consented"}), \
+             patch.object(server.auth_service, "get_current_user_profile", return_value={"telemetry_consent": True}):
+            h_sensitive = self.make_handler("POST", "/api/app/telemetry", body={"note_count": 50, "song_title": "Fur Elise"})
+            h_sensitive.serve_api(method="POST")
+            self.assertIn(("status", 400), h_sensitive.responses)
+
+        # 4. Authenticated with consent with valid aggregate metrics -> 200
+        with patch.object(server.Handler, "get_auth_user", return_value={"sub": "user-consented"}), \
+             patch.object(server.auth_service, "get_current_user_profile", return_value={"telemetry_consent": True}):
+            h_valid = self.make_handler("POST", "/api/app/telemetry", body={"note_count": 120, "app_version": "v1.1.0-beta.2"})
+            h_valid.serve_api(method="POST")
+            self.assertIn(("status", 200), h_valid.responses)
+            res = json.loads(h_valid.wfile.getvalue())
+            self.assertEqual(res["status"], "ok")
+            self.assertEqual(res["notes_recorded"], 120)
+
 
 if __name__ == "__main__":
     unittest.main()

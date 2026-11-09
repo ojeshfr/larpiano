@@ -130,7 +130,6 @@ public sealed class UpdatePackageService(HttpClient client, string baseUrl = "ht
 
   var host = url.Host;
   if (host.Equals("larpiano.portways.app", StringComparison.OrdinalIgnoreCase) ||
-      host.EndsWith(".portways.app", StringComparison.OrdinalIgnoreCase) ||
       host.Equals("github.com", StringComparison.OrdinalIgnoreCase) ||
       host.Equals("release-assets.githubusercontent.com", StringComparison.OrdinalIgnoreCase)) {
    return;

@@ -69,6 +69,16 @@ public class UpdatePackageServiceTests {
   }finally{if(Directory.Exists(dir))Directory.Delete(dir,true);}
  }
 
+ [Fact] public async Task RejectsAnotherPortwaysSiteAsPackageSource() {
+  var bytes=Package();
+  using var http=new HttpClient(new Handler((r,t)=>Task.FromResult(
+   new HttpResponseMessage(HttpStatusCode.OK){Content=new StringContent(PortwaysMetadata(bytes,url:"https://other-project.portways.app/update.zip"))})));
+  var dir=Stage();
+  try {
+   await Assert.ThrowsAsync<InvalidDataException>(()=>new UpdatePackageService(http).DownloadAsync("1.2.3",dir,null,CancellationToken.None));
+  } finally {if(Directory.Exists(dir))Directory.Delete(dir,true);}
+ }
+
  [Fact] public async Task RejectsArchiveWithoutExecutable() {
   var bytes=Package("../Keynote.App.exe");
   using var http=new HttpClient(new Handler((r,t)=>Task.FromResult(

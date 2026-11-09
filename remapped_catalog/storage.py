@@ -43,6 +43,10 @@ ALLOWED_PREFIXES = {
         "max_bytes": 10 * 1024 * 1024,  # 10 MB
         "allowed_types": {"audio/midi", "audio/x-midi", "application/x-midi", "application/octet-stream"},
     },
+    "releases/": {
+        "max_bytes": 150 * 1024 * 1024,  # 150 MB
+        "allowed_types": {"application/zip", "application/x-zip-compressed", "application/octet-stream"},
+    },
 }
 
 LOCAL_ROOT = Path(os.environ.get("STORAGE_LOCAL_ROOT", Path(__file__).resolve().parent.parent / "storage_bucket_data")).resolve()
@@ -162,7 +166,7 @@ def _s3_request(method: str, key: str, data: bytes = b"", content_type: str = "a
         req.add_header("Content-Length", str(len(data)))
 
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=60) as resp:
             headers = dict(resp.headers)
             body = resp.read()
             return resp.status, body, headers

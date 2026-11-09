@@ -358,6 +358,89 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(503, {"error": "Song temporarily unavailable"}, head)
             return True
 
+        # --- Public Release Distribution Endpoints ---
+        if path.startswith("/api/releases/"):
+            if path == "/api/releases/latest" and method == "GET":
+                rels = admin_api.get_releases_cached()
+                if rels:
+                    latest = rels[0]
+                    self.send_json(200, {
+                        "tag_name": latest.get("tag_name"),
+                        "version": latest.get("version"),
+                        "name": latest.get("name"),
+                        "channel": latest.get("channel"),
+                        "published_at": latest.get("published_at"),
+                        "download_url": latest.get("download_url"),
+                        "file_name": latest.get("file_name"),
+                        "file_size": latest.get("file_size"),
+                        "sha256": latest.get("sha256"),
+                        "notes": latest.get("notes"),
+                        "local_storage_available": latest.get("local_storage_available"),
+                    }, head)
+                else:
+                    self.send_json(404, {"error": "No releases found"}, head)
+                return True
+
+            if path == "/api/releases/latest/download" and method in ("GET", "HEAD"):
+                # Serve latest release artifact directly from Portways S3 or local storage
+                try:
+                    rels = admin_api.get_releases_cached()
+                    latest = rels[0] if rels else None
+                    if not latest or not latest.get("storage_key"):
+                        self.send_json(404, {"error": "Latest release binary not available"}, head)
+                        return True
+
+                    storage_key = latest["storage_key"]
+                    filename = latest.get("file_name") or "larpiano-windows-x64.zip"
+                    expected_sha = latest.get("sha256")
+
+                    data, content_type, actual_sha = storage.get_object(storage_key)
+                    if expected_sha and actual_sha != expected_sha:
+                        log.error("Release asset checksum mismatch: %s != %s", actual_sha, expected_sha)
+                        self.send_json(500, {"error": "Release asset checksum verification failed"}, head)
+                        return True
+
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/zip")
+                    self.send_header("Content-Length", str(len(data)))
+                    self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+                    self.send_header("X-Checksum-SHA256", actual_sha)
+                    self.send_header("Cache-Control", "public, max-age=3600")
+                    self.end_headers()
+                    if not head:
+                        self.wfile.write(data)
+                except Exception as exc:
+                    log.error("Release download failed: %s", exc)
+                    self.send_json(503, {"error": "Release download temporarily unavailable"}, head)
+                return True
+
+            match_rel = re.fullmatch(r"/api/releases/([^/]+)/([^/]+)", path)
+            if match_rel and method in ("GET", "HEAD"):
+                tag = match_rel.group(1)
+                fname = match_rel.group(2)
+                try:
+                    # Validate tag and file against app_releases
+                    rels = admin_api.get_releases_cached()
+                    matched = next((r for r in rels if r.get("tag_name") == tag and (r.get("file_name") == fname or fname == "larpiano-windows-x64.zip")), None)
+                    if not matched or not matched.get("storage_key"):
+                        self.send_json(404, {"error": f"Release asset {tag}/{fname} not found"}, head)
+                        return True
+
+                    data, content_type, actual_sha = storage.get_object(matched["storage_key"])
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/zip")
+                    self.send_header("Content-Length", str(len(data)))
+                    self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
+                    self.send_header("X-Checksum-SHA256", actual_sha)
+                    self.send_header("Cache-Control", "public, max-age=86400, immutable")
+                    self.end_headers()
+                    if not head:
+                        self.wfile.write(data)
+                except Exception as exc:
+                    log.error("Release asset fetch failed: %s", exc)
+                    self.send_json(503, {"error": "Release asset unavailable"}, head)
+                return True
+
         # --- App Client Presence & Telemetry Endpoints ---
         if path.startswith("/api/auth/"):
             ip = self.get_client_ip()
@@ -927,7 +1010,26 @@ class BoundedServer(ThreadingHTTPServer):
             self.request_slots.release()
 
 
+def run_migrations_on_startup():
+    """Run database migrations and schema checks on startup."""
+    try:
+        if admin_api._is_pg():
+            sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+            from migrations.migrate import run_up, get_connection
+            with get_connection() as conn:
+                run_up(conn)
+            log.info("PostgreSQL migrations applied/verified.")
+    except Exception as e:
+        log.warning("Migration runner on startup: %s", e)
+
+    try:
+        admin_api.init_db_if_needed()
+    except Exception as e:
+        log.warning("admin_api.init_db_if_needed on startup: %s", e)
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    run_migrations_on_startup()
     port = int(os.environ.get("PORT", "80"))
     BoundedServer(("0.0.0.0", port), Handler).serve_forever()

@@ -204,6 +204,47 @@ class ServerApiIntegrationTests(unittest.TestCase):
             self.assertEqual(res["status"], "ok")
             self.assertEqual(res["notes_recorded"], 120)
 
+    def test_public_releases_latest_and_download_endpoints(self):
+        # 1. Test GET /api/releases/latest
+        h_latest = self.make_handler("GET", "/api/releases/latest")
+        handled = h_latest.serve_api(method="GET")
+        self.assertTrue(handled)
+        self.assertIn(("status", 200), h_latest.responses)
+        rel_info = json.loads(h_latest.wfile.getvalue())
+        self.assertEqual(rel_info["tag_name"], "v1.1.0")
+        self.assertEqual(rel_info["download_url"], "/api/releases/latest/download")
+        self.assertIsNotNone(rel_info["sha256"])
+
+        # 2. Setup mock release zip in local storage root
+        test_zip_data = b"PK\x03\x04MockZipPayloadLarpiano110Test"
+        import hashlib
+        zip_sha = hashlib.sha256(test_zip_data).hexdigest()
+        dest = storage.LOCAL_ROOT / "releases" / "v1.1.0" / "larpiano-windows-x64.zip"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(test_zip_data)
+        meta = dest.with_suffix(dest.suffix + ".meta")
+        meta.write_text(f"content_type=application/zip\nsha256={zip_sha}\n", encoding="utf-8")
+
+        # Update database expected sha to match
+        with admin_api.get_db() as conn:
+            conn.execute("UPDATE app_releases SET sha256 = ?, file_size = ? WHERE tag_name = 'v1.1.0'", (zip_sha, len(test_zip_data)))
+            conn.commit()
+        admin_api._RELEASES_CACHE = {"timestamp": 0, "data": []}
+
+        # 3. Test GET /api/releases/latest/download
+        h_dl = self.make_handler("GET", "/api/releases/latest/download")
+        handled_dl = h_dl.serve_api(method="GET")
+        self.assertTrue(handled_dl)
+        self.assertIn(("status", 200), h_dl.responses)
+        self.assertEqual(h_dl.wfile.getvalue(), test_zip_data)
+
+        # 4. Test GET /api/releases/v1.1.0/larpiano-windows-x64.zip
+        h_dl2 = self.make_handler("GET", "/api/releases/v1.1.0/larpiano-windows-x64.zip")
+        handled_dl2 = h_dl2.serve_api(method="GET")
+        self.assertTrue(handled_dl2)
+        self.assertIn(("status", 200), h_dl2.responses)
+        self.assertEqual(h_dl2.wfile.getvalue(), test_zip_data)
+
 
 if __name__ == "__main__":
     unittest.main()

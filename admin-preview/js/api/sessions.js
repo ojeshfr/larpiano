@@ -1,4 +1,4 @@
-import { apiFetch } from "./client.js";
+import { apiFetch, broadcastDataChange } from "./client.js";
 
 export async function fetchLiveSessions({ status = "all", limit = 50, offset = 0 } = {}) {
   const params = new URLSearchParams();
@@ -11,7 +11,9 @@ export async function fetchLiveSessions({ status = "all", limit = 50, offset = 0
 }
 
 export async function terminateSession(sessionId) {
-  return await apiFetch(`/api/admin/sessions/${encodeURIComponent(sessionId)}/terminate`, {
+  const res = await apiFetch(`/api/admin/sessions/${encodeURIComponent(sessionId)}/terminate`, {
     method: "POST"
   });
+  broadcastDataChange("SESSIONS_CHANGED");
+  return res;
 }

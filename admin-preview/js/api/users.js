@@ -1,4 +1,4 @@
-import { apiFetch } from "./client.js";
+import { apiFetch, broadcastDataChange } from "./client.js";
 
 export async function fetchUsers({ search = "", status = "", role = "", limit = 50, offset = 0 } = {}) {
   const params = new URLSearchParams();
@@ -13,15 +13,19 @@ export async function fetchUsers({ search = "", status = "", role = "", limit = 
 }
 
 export async function createUser(userData) {
-  return await apiFetch("/api/admin/users", {
+  const res = await apiFetch("/api/admin/users", {
     method: "POST",
     body: userData
   });
+  broadcastDataChange("USERS_CHANGED");
+  return res;
 }
 
 export async function updateUser(userId, updates) {
-  return await apiFetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+  const res = await apiFetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
     method: "PATCH",
     body: updates
   });
+  broadcastDataChange("USERS_CHANGED");
+  return res;
 }

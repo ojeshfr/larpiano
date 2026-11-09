@@ -2,6 +2,19 @@
 
 All notable changes to **larpiano** will be documented in this file.
 
+## [1.1.0-beta.2] — 2026-11-09
+
+### Added
+- **Strict Opt-in Privacy System:** New accounts default to privacy-first settings (`presence_consent = false`, `telemetry_consent = false`) with zero login/signup interruption and settings controls in the user profile.
+- **Server-Side Enforcement:** Backend API rejects unconsented presence heartbeats and telemetry submissions; immediately closes active presence sessions when consent is revoked.
+- **Real Admin Analytics Engine:** 24-hour activity curve, DAU/WAU tracking, session durations, and version distribution computed directly from PostgreSQL tables.
+- **Cross-Tab Synchronization:** Automated data invalidation across open admin dashboard browser tabs via `BroadcastChannel`.
+
+### Fixed
+- **Admin Dashboard Integrity:** Eliminated mock data leakage across all 7 admin pages (Overview, Analytics, Users, Live Sessions, Announcements, Releases, Audit Log).
+- **Dynamic Fleet Health Indicator:** Connection banner reflects real backend status (`LIVE API CONNECTED`, `API OFFLINE`) based on live `/api/health` probes.
+- **Authentication Error Handling:** Graceful fallback and clear error messaging for non-JSON or HTML responses during backend deployment transitions.
+
 ## [1.0.35] — 2026-11-08
 
 ### Fixed

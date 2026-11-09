@@ -82,11 +82,11 @@ public sealed class PresenceReportingService : IPresenceReportingService
         }
     }
 
-    public PresenceReportingService(HttpClient? httpClient = null, string? baseUrl = null, string? appVersion = "v1.1.0-beta.1")
+    public PresenceReportingService(HttpClient? httpClient = null, string? baseUrl = null, string? appVersion = "v1.1.0-beta.2")
     {
         _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
         _baseUrl = (baseUrl ?? Environment.GetEnvironmentVariable("LARPIANO_API_URL") ?? "https://larpiano.portways.app").TrimEnd('/');
-        _appVersion = appVersion ?? "v1.1.0-beta.1";
+        _appVersion = appVersion ?? "v1.1.0-beta.2";
         _sessionIdentifier = "wpf-" + Guid.NewGuid().ToString("N")[..16];
     }
 

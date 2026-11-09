@@ -108,7 +108,7 @@
                                                     <DropShadowEffect BlurRadius="12" Direction="0" ShadowDepth="0" Color="#A78BFA" Opacity="0.85" />
                                                 </Path.Effect>
                                             </Path>
-                                            <TextBlock Text="larpiano v1.0.35" Foreground="#6A657D" FontSize="12" FontFamily="{StaticResource ModernSansFontFamily}" />
+                                            <TextBlock Text="larpiano v1.1.0-beta.2" Foreground="#6A657D" FontSize="12" FontFamily="{StaticResource ModernSansFontFamily}" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>

@@ -202,6 +202,13 @@ def _ensure_pg_releases_schema(conn):
             CREATE INDEX IF NOT EXISTS idx_app_releases_published_at ON app_releases(published_at DESC);
             CREATE INDEX IF NOT EXISTS idx_app_releases_tag_name ON app_releases(tag_name);
             CREATE INDEX IF NOT EXISTS idx_app_releases_latest ON app_releases(is_current_latest);
+            UPDATE app_releases
+            SET file_size = 60602986,
+                sha256 = '0aa30ca516160687dbfbe7228cfdd9f8a611bf40da6154be58feea9ce121c348',
+                download_url = '/api/releases/latest/download',
+                storage_key = 'releases/v1.1.0/larpiano-windows-x64.zip'
+            WHERE tag_name = 'v1.1.0'
+              AND (sha256 != '0aa30ca516160687dbfbe7228cfdd9f8a611bf40da6154be58feea9ce121c348' OR file_size != 60602986);
         """)
         conn.commit()
 

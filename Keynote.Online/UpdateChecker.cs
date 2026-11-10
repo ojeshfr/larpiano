@@ -45,7 +45,7 @@ public sealed class GitHubReleaseSource(HttpClient client) : IReleaseSource {
  public static HttpClient CreateClient() { var client=new HttpClient(new HttpClientHandler {AllowAutoRedirect=false}) {Timeout=TimeSpan.FromSeconds(20)}; client.DefaultRequestHeaders.UserAgent.ParseAdd("larpiano-updater/1.0"); client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json"); return client; }
  public async Task<ReleaseQuery> GetLatestAsync(CancellationToken cancellationToken) {
   try {
-   using var response=await client.GetAsync("https://api.github.com/repos/ojeshfrrr/larpiano/releases/latest",HttpCompletionOption.ResponseHeadersRead,cancellationToken);
+   using var response=await client.GetAsync("https://api.github.com/repos/xhakkurw233/larpiano/releases/latest",HttpCompletionOption.ResponseHeadersRead,cancellationToken);
    if(response.StatusCode==HttpStatusCode.NotFound)return new(false,null);
    if(!response.IsSuccessStatusCode)return new(false,null,$"GitHub could not complete the update check (HTTP {(int)response.StatusCode}). Try again later.");
    if(response.Content.Headers.ContentLength>65536)return new(false,null,"GitHub's release response was too large.");

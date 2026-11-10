@@ -442,7 +442,7 @@ export const MOCK_RELEASES = [
     date: "Nov 8, 2026",
     status: "Latest Beta",
     platform: "Windows x64",
-    githubUrl: "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
+    githubUrl: "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.1",
     notes: "Redesigned dark UI, compact floating HUD for Roblox, background window detection, and 223 passing unit tests."
   },
   {
@@ -451,7 +451,7 @@ export const MOCK_RELEASES = [
     date: "Nov 7, 2026",
     status: "Published",
     platform: "Windows x64",
-    githubUrl: "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
+    githubUrl: "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.35",
     notes: "Fixed white gutter stripe in overlay context menus, added multi-instance Roblox cycling, and fixed background focus polling."
   },
   {
@@ -460,7 +460,7 @@ export const MOCK_RELEASES = [
     date: "Nov 7, 2026",
     status: "Published",
     platform: "Windows x64",
-    githubUrl: "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.34",
+    githubUrl: "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.34",
     notes: "Hardened Roblox window focus checks and continuous background polling."
   },
   {
@@ -469,7 +469,7 @@ export const MOCK_RELEASES = [
     date: "Nov 4, 2026",
     status: "Archived",
     platform: "Windows x64",
-    githubUrl: "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.28",
+    githubUrl: "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.28",
     notes: "First public release with MIDI extraction and local song library."
   }
 ];

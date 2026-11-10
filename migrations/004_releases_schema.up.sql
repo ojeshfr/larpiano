@@ -49,8 +49,8 @@ INSERT INTO app_releases (
     60602878,
     '98c66d95af60e3b0a93ea82248bd82236232641ce7d404bb1c0767167a5f8ecd',
     '/api/releases/latest/download',
-    'https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0',
-    'https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip',
+    'https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0',
+    'https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip',
     TRUE
 ),
 (
@@ -66,8 +66,8 @@ INSERT INTO app_releases (
     60600564,
     'd94aa6be130a0bf05b6348ef533c39d73caeb31498ec5b8c9c615a6b0c268700',
     NULL,
-    'https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.2',
-    'https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip',
+    'https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.2',
+    'https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip',
     FALSE
 ),
 (
@@ -83,8 +83,8 @@ INSERT INTO app_releases (
     NULL,
     NULL,
     NULL,
-    'https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1',
-    'https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.1/larpiano-v1.1.0-beta.1-windows-x64.zip',
+    'https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.1',
+    'https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0-beta.1/larpiano-v1.1.0-beta.1-windows-x64.zip',
     FALSE
 ),
 (
@@ -100,8 +100,8 @@ INSERT INTO app_releases (
     NULL,
     NULL,
     NULL,
-    'https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35',
-    'https://github.com/ojeshfrrr/larpiano/releases/download/v1.0.35/larpiano-v1.0.35-windows-x64.zip',
+    'https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.35',
+    'https://github.com/xhakkurw233/larpiano/releases/download/v1.0.35/larpiano-v1.0.35-windows-x64.zip',
     FALSE
 ),
 (
@@ -117,8 +117,8 @@ INSERT INTO app_releases (
     NULL,
     NULL,
     NULL,
-    'https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.0',
-    'https://github.com/ojeshfrrr/larpiano/releases/download/v1.0.0/larpiano-v1.0.0-windows-x64.zip',
+    'https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.0',
+    'https://github.com/xhakkurw233/larpiano/releases/download/v1.0.0/larpiano-v1.0.0-windows-x64.zip',
     FALSE
 )
 ON CONFLICT (tag_name) DO NOTHING;

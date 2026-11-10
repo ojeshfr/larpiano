@@ -25,12 +25,12 @@ public sealed class UpdatePackageService(HttpClient client, string baseUrl = "ht
   try {
    response = await client.GetAsync(api, HttpCompletionOption.ResponseHeadersRead, token);
   } catch when (baseUrl.Contains("portways.app", StringComparison.OrdinalIgnoreCase)) {
-   api = new Uri("https://api.github.com/repos/ojeshfrrr/larpiano/releases/latest");
+   api = new Uri("https://api.github.com/repos/xhakkurw233/larpiano/releases/latest");
    response = await client.GetAsync(api, HttpCompletionOption.ResponseHeadersRead, token);
   }
 
   if (!response.IsSuccessStatusCode && baseUrl.Contains("portways.app", StringComparison.OrdinalIgnoreCase)) {
-   var fallbackApi = new Uri("https://api.github.com/repos/ojeshfrrr/larpiano/releases/latest");
+   var fallbackApi = new Uri("https://api.github.com/repos/xhakkurw233/larpiano/releases/latest");
    try {
     var fbResponse = await client.GetAsync(fallbackApi, HttpCompletionOption.ResponseHeadersRead, token);
     if (fbResponse.IsSuccessStatusCode) {
@@ -66,7 +66,7 @@ public sealed class UpdatePackageService(HttpClient client, string baseUrl = "ht
     var asset = assets[0];
     digest = asset.GetProperty("digest").GetString() ?? "";
     url = new Uri(asset.GetProperty("browser_download_url").GetString() ?? "");
-    var expected = new Uri($"https://github.com/ojeshfrrr/larpiano/releases/download/v{version}/{AssetName}");
+    var expected = new Uri($"https://github.com/xhakkurw233/larpiano/releases/download/v{version}/{AssetName}");
     if (url != expected) throw new InvalidDataException("The update package URL is not trusted.");
    }
 

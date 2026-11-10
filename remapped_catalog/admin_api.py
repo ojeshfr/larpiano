@@ -229,8 +229,8 @@ def _seed_releases_if_empty(conn):
                     60602878,
                     "98c66d95af60e3b0a93ea82248bd82236232641ce7d404bb1c0767167a5f8ecd",
                     "/api/releases/latest/download",
-                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0",
-                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip",
+                    "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0",
+                    "https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip",
                     1 if not _is_pg() else True
                 ),
                 (
@@ -247,8 +247,8 @@ def _seed_releases_if_empty(conn):
                     60600564,
                     "d94aa6be130a0bf05b6348ef533c39d73caeb31498ec5b8c9c615a6b0c268700",
                     None,
-                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.2",
-                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip",
+                    "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.2",
+                    "https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip",
                     0 if not _is_pg() else False
                 ),
                 (
@@ -265,8 +265,8 @@ def _seed_releases_if_empty(conn):
                     None,
                     None,
                     None,
-                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
-                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.1/larpiano-v1.1.0-beta.1-windows-x64.zip",
+                    "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.1",
+                    "https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0-beta.1/larpiano-v1.1.0-beta.1-windows-x64.zip",
                     0 if not _is_pg() else False
                 ),
                 (
@@ -283,8 +283,8 @@ def _seed_releases_if_empty(conn):
                     None,
                     None,
                     None,
-                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
-                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.0.35/larpiano-v1.0.35-windows-x64.zip",
+                    "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.35",
+                    "https://github.com/xhakkurw233/larpiano/releases/download/v1.0.35/larpiano-v1.0.35-windows-x64.zip",
                     0 if not _is_pg() else False
                 ),
                 (
@@ -301,8 +301,8 @@ def _seed_releases_if_empty(conn):
                     None,
                     None,
                     None,
-                    "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.0",
-                    "https://github.com/ojeshfrrr/larpiano/releases/download/v1.0.0/larpiano-v1.0.0-windows-x64.zip",
+                    "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.0",
+                    "https://github.com/xhakkurw233/larpiano/releases/download/v1.0.0/larpiano-v1.0.0-windows-x64.zip",
                     0 if not _is_pg() else False
                 )
             ]
@@ -1427,7 +1427,7 @@ def delete_announcement(ann_id: str, admin_id: str) -> dict:
 def _check_github_status() -> tuple[bool, str]:
     """Non-blocking probe of external GitHub Releases API.
     Explicitly handles 403, 404, 429, 500, network errors, and timeouts without throwing."""
-    url = "https://api.github.com/repos/ojeshfrrr/larpiano/releases"
+    url = "https://api.github.com/repos/xhakkurw233/larpiano/releases"
     req = urllib.request.Request(
         url,
         headers={"User-Agent": "Larpiano-Admin-Server/1.0", "Accept": "application/vnd.github.v3+json"}
@@ -1471,8 +1471,8 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
             "notes": "# Larpiano v1.1.0 — Official Production Release\n\n- Permanent Privacy & Telemetry platform defaults with non-interactive UI status rows\n- Shared Cloud MIDI Library with 218 curated arrangements and one-click play\n- Authoritative Portways deployment and Fleet Management integration",
             "body": "# Larpiano v1.1.0 — Official Production Release\n\n- Permanent Privacy & Telemetry platform defaults with non-interactive UI status rows\n- Shared Cloud MIDI Library with 218 curated arrangements and one-click play\n- Authoritative Portways deployment and Fleet Management integration",
             "prerelease": False,
-            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0",
-            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0",
+            "githubUrl": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0",
+            "html_url": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0",
             "download_url": "/api/releases/latest/download",
             "storage_key": "releases/v1.1.0/larpiano-windows-x64.zip",
             "file_name": "larpiano-windows-x64.zip",
@@ -1490,7 +1490,7 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
                     "sha256": "98c66d95af60e3b0a93ea82248bd82236232641ce7d404bb1c0767167a5f8ecd",
                     "download_url": "/api/releases/latest/download",
                     "storage_available": True,
-                    "external_download_url": "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip" if github_available else None,
+                    "external_download_url": "https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip" if github_available else None,
                     "external_host_available": github_available,
                     "external_host_status": github_status,
                 }
@@ -1509,8 +1509,8 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
             "notes": "Beta candidate with initial cloud catalog integration and fleet telemetry tests.",
             "body": "Beta candidate with initial cloud catalog integration and fleet telemetry tests.",
             "prerelease": True,
-            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.2",
-            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.2",
+            "githubUrl": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.2",
+            "html_url": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.2",
             "download_url": None,
             "storage_key": None,
             "file_name": "Larpiano-v1.1.0-beta.2-win-x64.zip",
@@ -1528,7 +1528,7 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
                     "sha256": "d94aa6be130a0bf05b6348ef533c39d73caeb31498ec5b8c9c615a6b0c268700",
                     "download_url": None,
                     "storage_available": False,
-                    "external_download_url": "https://github.com/ojeshfrrr/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip" if github_available else None,
+                    "external_download_url": "https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0-beta.2/Larpiano-v1.1.0-beta.2-win-x64.zip" if github_available else None,
                     "external_host_available": github_available,
                     "external_host_status": github_status,
                 }
@@ -1547,8 +1547,8 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
             "notes": "Initial v1.1.0 beta testing opt-in telemetry and presence architecture.",
             "body": "Initial v1.1.0 beta testing opt-in telemetry and presence architecture.",
             "prerelease": True,
-            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
-            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.1.0-beta.1",
+            "githubUrl": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.1",
+            "html_url": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.1",
             "download_url": None,
             "storage_key": None,
             "file_name": "larpiano-v1.1.0-beta.1-windows-x64.zip",
@@ -1574,8 +1574,8 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
             "notes": "Visual reconstruction of the desktop application and floating overlay menu polish.",
             "body": "Visual reconstruction of the desktop application and floating overlay menu polish.",
             "prerelease": False,
-            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
-            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35",
+            "githubUrl": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.35",
+            "html_url": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.35",
             "download_url": None,
             "storage_key": None,
             "file_name": "larpiano-v1.0.35-windows-x64.zip",
@@ -1601,8 +1601,8 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
             "notes": "Initial stable public release of Larpiano MIDI playback engine for Roblox.",
             "body": "Initial stable public release of Larpiano MIDI playback engine for Roblox.",
             "prerelease": False,
-            "githubUrl": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.0",
-            "html_url": "https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.0",
+            "githubUrl": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.0",
+            "html_url": "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.0",
             "download_url": None,
             "storage_key": None,
             "file_name": "larpiano-v1.0.0-windows-x64.zip",
@@ -1685,8 +1685,8 @@ def get_releases_cached() -> list[dict]:
                     "notes": row.get("release_notes") or "",
                     "body": row.get("release_notes") or "",
                     "prerelease": is_prerelease,
-                    "githubUrl": row.get("github_url") or f"https://github.com/ojeshfrrr/larpiano/releases/tag/{row['tag_name']}",
-                    "html_url": row.get("github_url") or f"https://github.com/ojeshfrrr/larpiano/releases/tag/{row['tag_name']}",
+                    "githubUrl": row.get("github_url") or f"https://github.com/xhakkurw233/larpiano/releases/tag/{row['tag_name']}",
+                    "html_url": row.get("github_url") or f"https://github.com/xhakkurw233/larpiano/releases/tag/{row['tag_name']}",
                     "download_url": verified_dl_url,
                     "storage_key": storage_key,
                     "file_name": row.get("file_name"),

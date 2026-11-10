@@ -18,7 +18,7 @@ export function renderReleases(container) {
     const latest = releaseList[0];
     const latestVer = latest.version || latest.tag_name || "Unknown version";
     const latestDate = latest.date || (latest.published_at ? new Date(latest.published_at).toLocaleDateString() : "Date unavailable");
-    const latestUrl = safeHttpsUrl(latest.githubUrl || latest.html_url) || "https://github.com/ojeshfrrr/larpiano/releases";
+    const latestUrl = safeHttpsUrl(latest.githubUrl || latest.html_url) || "https://github.com/xhakkurw233/larpiano/releases";
 
     container.innerHTML = `
       <!-- Header -->

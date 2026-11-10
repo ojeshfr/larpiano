@@ -45,7 +45,7 @@ public interface IPresenceReportingService : IAsyncDisposable
 /// Privacy & Safety Guarantees:
 /// - Strictly opt-in telemetry and presence reporting.
 /// - Guest mode is default: local MIDI playback never blocked or stalled.
-/// - Zero collection of: Roblox credentials, private files, keystrokes, or process lists.
+/// - Zero collection of: game credentials, private files, keystrokes, or process lists.
 /// - Reports coarse status only ('online', 'idle', 'playing') every 45s.
 /// - Cleanly closes the active session on application shutdown.
 /// </summary>

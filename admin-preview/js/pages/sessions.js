@@ -103,7 +103,7 @@ export function renderLiveSessions(container) {
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
       <div>
         <h1 class="page-title">Live Sessions</h1>
-        <p class="page-subtitle">Active desktop clients currently linked to Roblox.</p>
+        <p class="page-subtitle">Active desktop clients currently linked to game windows.</p>
       </div>
       <button id="btn-refresh-sessions" class="btn btn-secondary btn-sm">
         <span>↻</span> Refresh sessions

@@ -243,7 +243,7 @@
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" ClipToBounds="True">
                     <!-- Target Window Card -->
                     <Border Background="{StaticResource OverlaySurfaceElevatedBrush}" BorderBrush="{StaticResource OverlayBorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,0,6"
-                            Cursor="Hand" MouseLeftButtonUp="OnTargetCardClick" ToolTip="Click to detect or refresh Roblox window">
+                            Cursor="Hand" MouseLeftButtonUp="OnTargetCardClick" ToolTip="Click to detect or refresh game window">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Border Width="22" Height="22" CornerRadius="5" Background="#261E36" Margin="0,0,8,0">
                                 <Path Fill="{StaticResource OverlayTextPrimaryBrush}"
@@ -512,7 +512,7 @@
                 </DockPanel>
                 <TextBlock Text="{Binding MappingStatusText}" FontSize="11" Foreground="{StaticResource OverlayAccentSoftBrush}" Margin="0,0,0,8" TextWrapping="Wrap" />
                 <Button Style="{StaticResource OverlayButtonStyle}" Click="OnOpenMappingTabClick" Content="Open Mapping in Larpiano" Margin="0,4,0,8" />
-                <TextBlock Text="Keyboard shortcuts operate in foreground Roblox window." FontSize="10" Foreground="{StaticResource OverlayTextMutedBrush}" TextWrapping="Wrap" />
+                <TextBlock Text="Keyboard shortcuts operate in foreground game window." FontSize="10" Foreground="{StaticResource OverlayTextMutedBrush}" TextWrapping="Wrap" />
             </StackPanel>
         </Border>
 

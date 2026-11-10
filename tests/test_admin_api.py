@@ -119,7 +119,7 @@ class AdminApiTests(unittest.TestCase):
         # Create
         created = admin_api.create_announcement({
             "title": "Maintenance Tonight",
-            "message": "We will update Roblox hook offsets.",
+            "message": "We will update game hook offsets.",
             "audience": "all",
             "status": "published"
         }, admin_id="master-admin-000")

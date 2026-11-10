@@ -110,7 +110,7 @@ export function renderAnalytics(container) {
         <div class="info-banner-icon">🔒</div>
         <div style="font-size: 12px; color: var(--muted);">
           <strong style="color: var(--text);">Aggregated Analytics Architecture:</strong>
-          Larpiano metrics are strictly aggregated at hourly intervals. No individual keystrokes, Roblox chat logs, file paths, or private song data are ever collected or stored.
+          Larpiano metrics are strictly aggregated at hourly intervals. No individual keystrokes, game chat logs, file paths, or private song data are ever collected or stored.
         </div>
       </div>
     `;

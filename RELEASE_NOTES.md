@@ -2,7 +2,7 @@
 
 Welcome to **larpiano v1.0.35** — *from da people who LARP, for da people who LARP*.
 
-This milestone introduces a complete visual reconstruction of the desktop application, full authentic brand restoration, and a native non-activating floating overlay designed specifically for distraction-free piano playback in Roblox.
+This milestone introduces a complete visual reconstruction of the desktop application, full authentic brand restoration, and a native non-activating floating overlay designed specifically for distraction-free piano playback in-game.
 
 ---
 
@@ -22,7 +22,7 @@ This milestone introduces a complete visual reconstruction of the desktop applic
   - `"for da people who larp  ·  for da poeple who believe in larpocracy"`
 
 ### 3. Integrated Floating Overlay (Expanded & Compact Modes)
-- **Non-Activating Interaction (`WS_EX_NOACTIVATE`):** Click and drag controls without stealing foreground focus from the active Roblox piano window.
+- **Non-Activating Interaction (`WS_EX_NOACTIVATE`):** Click and drag controls without stealing foreground focus from the active virtual piano window.
 - **Always-on-Top:** Floats effortlessly above game windows with customizable glass opacity (~97%) and illuminated purple glow borders.
 - **Dual Visual Modes:**
   - **Expanded Mode:** Full note roll visualizer with pitch labels (C2–C6), timeline timestamps, song metadata, mapping status, and quick action cards.
@@ -54,11 +54,11 @@ This milestone introduces a complete visual reconstruction of the desktop applic
 1. Download `larpiano-windows-x64.zip` from GitHub Releases.
 2. Extract all files to a local folder of your choice (e.g. `C:\larpiano` or `D:\tools\larpiano`).
 3. Run `Keynote.App.exe`.
-4. Open Roblox and take a seat at your target piano.
-5. In larpiano, select your Roblox window from the dropdown.
+4. Open your game and take a seat at your target piano.
+5. In larpiano, select your game window from the dropdown.
 6. Choose a song from **My Library**, **Discover**, or **Browse MIDI**.
 7. Confirm or verify the mapping profile for your piano under the **Mapping** tab.
-8. Focus Roblox and press **Ctrl + Alt + F8** to start playback.
+8. Focus your game window and press **Ctrl + Alt + F8** to start playback.
 
 ---
 
@@ -66,7 +66,7 @@ This milestone introduces a complete visual reconstruction of the desktop applic
 
 | Shortcut | Function | Description |
 |---|---|---|
-| **Ctrl + Alt + F8** | Play / Pause / Resume | Starts playback when Roblox is focused, or toggles pause/resume |
+| **Ctrl + Alt + F8** | Play / Pause / Resume | Starts playback when the game window is focused, or toggles pause/resume |
 | **Ctrl + Alt + F9** | Emergency Stop | Immediately stops playback and releases all held piano keys |
 | **Overlay Toggle** | Show / Hide Overlay | Toggle floating overlay via the bottom bar icon or main screen button |
 
@@ -76,6 +76,6 @@ Shortcuts can be customized in the **Settings** tab.
 
 ## Known Limitations
 
-- **Piano Mapping Verification:** Because Roblox virtual piano games utilize differing key mappings (e.g. 61-key vs 88-key layouts), users must verify key assignments before playing complex arrangements.
+- **Piano Mapping Verification:** Because virtual piano games utilize differing key mappings (e.g. 61-key vs 88-key layouts), users must verify key assignments before playing complex arrangements.
 - **Audio Capture / Synthetic Input:** Native Windows scan codes are dispatched via `SendInput`. Anticheat systems or elevated game instances may require running larpiano as Administrator if input is not received.
 - **Opennan Extraction:** Audio-to-MIDI transcription requires an active internet connection and is subject to provider rate limits.

@@ -57,9 +57,9 @@ public class Win32Helper
 }
 "@
 
-# Create a mock target background window (e.g. representing Roblox Game Window)
+# Create a mock target background window (e.g. representing Game Game Window)
 $targetForm = New-Object System.Windows.Forms.Form
-$targetForm.Text = "Target Game Window (Roblox Mock)"
+$targetForm.Text = "Target Game Window (Game Mock)"
 $targetForm.Width = 800
 $targetForm.Height = 600
 $targetForm.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual

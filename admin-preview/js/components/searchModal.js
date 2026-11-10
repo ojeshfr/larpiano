@@ -63,7 +63,7 @@ function renderResults(query) {
   const pages = [
     { id: "overview", label: "Overview", desc: "Live metrics, active sessions & recent events", icon: "📊" },
     { id: "users", label: "Users", desc: "User accounts, roles & telemetry consent", icon: "👥" },
-    { id: "sessions", label: "Live Sessions", desc: "Active desktop clients linked to Roblox", icon: "💻" },
+    { id: "sessions", label: "Live Sessions", desc: "Active desktop clients linked to game windows", icon: "💻" },
     { id: "analytics", label: "Analytics", desc: "Daily active users & version distribution", icon: "📈" },
     { id: "announcements", label: "Announcements", desc: "Broadcast alerts & in-app notices", icon: "📢" },
     { id: "releases", label: "Releases", desc: "Windows builds & Portways release notes", icon: "🏷️" },

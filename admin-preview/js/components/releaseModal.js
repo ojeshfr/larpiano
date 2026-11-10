@@ -85,7 +85,7 @@ export function openDraftReleaseModal() {
       </div>
       <div class="form-group">
         <label class="form-label">Release Highlights & Changelog (Markdown)</label>
-        <textarea class="form-textarea" placeholder="## What's Changed&#10;- Improved overlay hotkey responsiveness&#10;- Multi-client Roblox cycling polish"></textarea>
+        <textarea class="form-textarea" placeholder="## What's Changed&#10;- Improved overlay hotkey responsiveness&#10;- Multi-window cycling polish"></textarea>
       </div>
       <div style="font-size: 11px; color: var(--subtle); margin-top: 4px;">
         Note: Creating release notes in this admin prototype is for preview only. Does not publish tags to GitHub.

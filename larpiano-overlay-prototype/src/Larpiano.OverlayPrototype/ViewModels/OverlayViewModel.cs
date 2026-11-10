@@ -196,7 +196,7 @@ namespace Larpiano.OverlayPrototype.ViewModels
             set => SetField(ref _songSubtitle, value);
         }
 
-        public string TargetWindowTitle => "Roblox: Demo Window (Mock)";
+        public string TargetWindowTitle => "Game: Demo Window (Mock)";
         public string TargetForegroundStatus => "• Demo foreground";
         public string MappingStatus => "Demo mapping • not connected";
 

@@ -441,8 +441,8 @@
                                             </Border>
                                             <!-- Labels -->
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,8,0">
-                                                <TextBlock Text="Roblox Window" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding SelectedItem.Title, RelativeSource={RelativeSource AncestorType=ComboBox}, FallbackValue='Select the Roblox game window', TargetNullValue='Select the Roblox game window'}"
+                                                <TextBlock Text="Game Window" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding SelectedItem.Title, RelativeSource={RelativeSource AncestorType=ComboBox}, FallbackValue='Select the piano game window', TargetNullValue='Select the piano game window'}"
                                                            FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                             </StackPanel>
                                             <!-- Chevron -->

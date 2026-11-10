@@ -31,11 +31,11 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
       <div class="overview-hero">
         <div class="overview-hero-text">
           <h1 class="page-title">Control Center</h1>
-          <p class="page-subtitle">Roblox virtual piano telemetry, active player sessions, and fleet status for the Larpiano beta.</p>
+          <p class="page-subtitle">Virtual piano telemetry, active player sessions, and fleet status for the Larpiano beta.</p>
         </div>
         <div class="hero-status-pill">
           <span class="live-pulse-dot"></span>
-          <span class="hero-status-text">${isLive ? "Roblox Telemetry Linked" : "Offline Sandbox"}</span>
+          <span class="hero-status-text">${isLive ? "Telemetry Linked" : "Offline Sandbox"}</span>
           <span class="hero-status-sub">${onlineCount} Players Live</span>
         </div>
       </div>
@@ -44,7 +44,7 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
       <div class="kpi-grid">
         ${renderKpiCard({
           id: "online",
-          label: "Roblox players online",
+          label: "Players online",
           value: onlineCount,
           delta: escapeText(metrics.onlineDelta || "14 playing · 10 idle"),
           isPositive: true,
@@ -88,7 +88,7 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
           <div class="chart-header">
             <div>
               <h2 class="card-title">Live activity &amp; concurrent sessions</h2>
-              <p class="card-subtitle">Real-time Roblox players over the last 24 hours</p>
+              <p class="card-subtitle">Real-time players over the last 24 hours</p>
             </div>
             <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-soft);">
               ${isLive ? "Live Portways Telemetry Hook" : "Peak: 38 players · 19:00 UTC"}
@@ -108,7 +108,7 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
           </div>
           <div class="events-list">
             ${events.length === 0 ? `<div style="padding: 28px; text-align: center; color: var(--subtle); font-size: 13px;">No recent audit events</div>` : events.map(evt => {
-              const tagClass = escapeText(evt.tagClass || 'tag-roblox');
+              const tagClass = escapeText(evt.tagClass || 'tag-game');
               const tag = escapeText(evt.tag || 'EVENT');
               const title = escapeText(evt.title || evt.action || '');
               const subject = escapeText(evt.subject || evt.target || '');
@@ -129,11 +129,11 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
 
       <!-- Lower Section (Active Users Table + Quick Operator Controls) -->
       <div class="overview-lower-row">
-        <!-- Active Roblox Players Table Card -->
+        <!-- Active Players Table Card -->
         <div class="card active-players-card">
           <div class="card-header">
             <div>
-              <h2 class="card-title">Active Roblox players</h2>
+              <h2 class="card-title">Active players</h2>
               <p class="card-subtitle">Connected Windows clients playing live · Click row for account drawer</p>
             </div>
             <button id="overview-view-all-users" class="btn btn-ghost btn-sm" style="font-size: 12px; color: var(--accent-soft);">All players (${players.length}) →</button>
@@ -143,7 +143,7 @@ export function renderOverview(container, { onNavigate, onOpenAnnouncement, onDr
               <thead>
                 <tr>
                   <th>PLAYER</th>
-                  <th>PLAYING IN ROBLOX</th>
+                  <th>PLAYING IN GAME</th>
                   <th>PIANO MAPPING</th>
                   <th>TEMPO</th>
                   <th>STATUS</th>

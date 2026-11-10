@@ -23,10 +23,10 @@ All notable changes to **larpiano** will be documented in this file.
 ## [1.0.34] — 2026-11-08
 
 ### Added
-- **Continuous Background Auto-Detection:** Periodic background scanning that automatically detects and binds to Roblox as soon as it launches or reconnects.
-- **Robust Multi-Channel Roblox Identification:** Support for process name matching, window class `WINDOWSCLIENT`, and window title checks without elevated permissions.
-- **Multi-Instance Window Cycling:** Interactive target window card in the overlay supporting 1-click re-scan and cycling between multiple Roblox instances.
-- **Compact View Target Focus Indicator:** Real-time status dot in the compact pill bar showing Roblox window foreground state.
+- **Continuous Background Auto-Detection:** Periodic background scanning that automatically detects and binds to your game as soon as it launches or reconnects.
+- **Robust Multi-Channel game Identification:** Support for process name matching, window class `WINDOWSCLIENT`, and window title checks without elevated permissions.
+- **Multi-Instance Window Cycling:** Interactive target window card in the overlay supporting 1-click re-scan and cycling between multiple game instances.
+- **Compact View Target Focus Indicator:** Real-time status dot in the compact pill bar showing game window foreground state.
 - **Enhanced Foreground Accuracy:** Win32 root window ancestor traversal preventing focus drops when interacting with inner game UI.
 
 ## [1.0.33] — 2026-11-07
@@ -62,7 +62,7 @@ All notable changes to **larpiano** will be documented in this file.
   - Windows Desktop Window Manager (DWM) integration via `DwmSetWindowAttribute` (`DWMWA_WINDOW_CORNER_PREFERENCE = 33`, `DWMWCP_ROUND = 2`).
   - Maximized window state handling to dynamically revert to 0px border radius when snapped/maximized.
 - **Integrated Floating Overlay:**
-  - Non-activating window style (`WS_EX_NOACTIVATE`) allowing clicks without stealing focus from Roblox.
+  - Non-activating window style (`WS_EX_NOACTIVATE`) allowing clicks without stealing focus from your game.
   - Always-on-top floating HUD with subtle glassmorphism (97% opacity) and illuminated purple border glow.
   - Dual-mode operation: Expanded dashboard view and Compact pill mode.
   - Interactive transport controls, speed selector, volume slider, and note roll visualizer.

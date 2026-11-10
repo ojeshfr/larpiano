@@ -45,7 +45,7 @@ jobs:
           LARPIANO FOR WINDOWS
 
           Extract the entire ZIP to a folder, then run Keynote.App.exe.
-          Choose your Roblox window, select or import a MIDI, and verify the
+          Choose your piano game window, select or import a MIDI, and verify the
           mapping for your piano before using Ctrl+Alt+F8 to play or pause.
           Ctrl+Alt+F9 stops playback. Your library and settings are stored in
           %LOCALAPPDATA%\KEYNOTE and are not included in this download.

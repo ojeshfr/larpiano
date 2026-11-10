@@ -23,7 +23,7 @@
     <div class="larp-demo-flow" aria-hidden="true"><span>Notes in a MIDI</span><span>Keys on a piano</span></div>
     <div class="larp-demo-stage" aria-label="Illustration of notes moving toward piano keys" role="img"><div class="larp-demo-hitline"></div></div>
     <div class="larp-demo-keys" aria-hidden="true"></div>
-    <p class="larp-demo-caption">An illustration only. The website does not control Roblox.</p>`;
+    <p class="larp-demo-caption">An illustration only. The website does not control external games.</p>`;
   const toggle = root.querySelector('[data-demo-toggle]');
   const sound = root.querySelector('[data-demo-sound]');
   const status = root.querySelector('[data-demo-status]');

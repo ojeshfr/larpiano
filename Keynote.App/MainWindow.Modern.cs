@@ -204,7 +204,7 @@ public partial class MainWindow
             (isLocal
                 ? "✓ This arrangement is downloaded and ready in your local library. Click 'Play from Library' to start."
                 : pick.CloudSong != null
-                    ? "☁ Ready for one-click cloud download and Roblox playback. Pre-calibrated; no pitch adjustment required."
+                    ? "☁ Ready for one-click cloud download and game playback. Pre-calibrated; no pitch adjustment required."
                     : direct != null
                         ? "A free original arrangement is available from its creator. Check your piano mapping and adjust any unmapped notes before playing."
                         : pick.Source != null

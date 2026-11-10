@@ -25,7 +25,7 @@ public sealed class WindowsKeyboardInput : IKeyboardInput {
     var title=new char[512];
     int length=GetWindowText(h,title,title.Length);
     if(GetWindowThreadProcessId(h,out var pid)!=0 && pid!=0) {
-     string windowTitle = length > 0 ? new string(title, 0, length) : "Roblox";
+     string windowTitle = length > 0 ? new string(title, 0, length) : "Game Window";
      result.Add(new(h, windowTitle, pid));
     }
    }
@@ -74,14 +74,14 @@ public sealed class WindowsKeyboardInput : IKeyboardInput {
  readonly Dictionary<ushort,string> bindings=new();
  static ushort Parse(string key,out bool shifted) { if(KeyboardMapping.TryParseKey(key,out var value,out shifted))return value; throw new ArgumentException("Use A–Z, 0–9, or Shift+key."); }
  public void Press(string key) { lock(gate) {
-  if(!IsTargetForeground)throw new InvalidOperationException("Roblox is not the foreground window.");
+  if(!IsTargetForeground)throw new InvalidOperationException("Game window is not the foreground window.");
   var k=Parse(key,out var shifted); var binding=key.Trim().ToUpperInvariant();
   if(bindings.TryGetValue(k,out var existing)) { if(existing==binding)return; throw new InvalidOperationException("A natural and shifted note share a held physical key. Shorten overlapping notes or choose another arrangement."); }
   if(held.Contains(LeftShift))throw new InvalidOperationException("A previous Shift release failed; stop and retry cleanup.");
   if(platform.IsKeyDown(k) || new ushort[]{0x10,0xA0,0xA1,0x11,0x12,0x5B,0x5C}.Any(platform.IsKeyDown))throw new KeyboardInputBusyException("Release mapped keys and keyboard modifiers before playback.");
   try {
    if(shifted) { platform.SendKey(LeftShift,false); held.Add(LeftShift); }
-   if(!IsTargetForeground)throw new InvalidOperationException("Roblox lost foreground focus.");
+   if(!IsTargetForeground)throw new InvalidOperationException("Game window lost foreground focus.");
    platform.SendKey(k,false); held.Add(k); bindings[k]=binding;
   } finally { if(shifted && held.Contains(LeftShift)) { platform.SendKey(LeftShift,true); held.Remove(LeftShift); } }
  } }

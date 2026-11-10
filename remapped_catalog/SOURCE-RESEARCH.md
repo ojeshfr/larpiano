@@ -14,6 +14,6 @@ Research date: 2026-11-04. The target is a catalogue of recognizable songs, with
 
 1. Record composition rights, arrangement rights, source URL, creator, license, and attribution requirements for the exact file.
 2. Validate and import the actual MIDI through the existing importer; reject malformed or empty files.
-3. Check the unverified Visual Pianos reference mapping with the playback event builder. Record octave changes and omitted notes; do not label an arrangement as tested in Roblox unless it was actually tested.
+3. Check the unverified Visual Pianos reference mapping with the playback event builder. Record octave changes and omitted notes; do not label an arrangement as tested in-game unless it was actually tested.
 4. Store the remapped file by SHA-256, record its original source and changes, run the catalogue and playback tests, and verify the hosted bytes against the published hash.
 5. For non-Mutopia sources, provide backward-compatible catalogue and client support before publishing; do not substitute an unrelated source URL.

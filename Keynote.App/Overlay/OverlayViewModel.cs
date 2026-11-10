@@ -24,7 +24,7 @@ namespace Keynote.App.Overlay
         private string? _playbackError;
 
         // Target window & mapping
-        private string _targetWindowTitle = "No Roblox window selected";
+        private string _targetWindowTitle = "No game window selected";
         private bool _isTargetForeground = false;
         private string _mappingName = "Visual Pianos";
         private bool _isMappingVerified = true;
@@ -407,13 +407,13 @@ namespace Keynote.App.Overlay
 
             if (targetWindow != null)
             {
-                string title = targetWindow.Title ?? "Roblox";
-                string displayTitle = title.StartsWith("Roblox", StringComparison.OrdinalIgnoreCase) ? title.Trim() : $"Roblox: {title}";
+                string title = targetWindow.Title ?? "Game Window";
+                string displayTitle = title.Trim();
                 SetField(ref _targetWindowTitle, displayTitle, nameof(TargetWindowTitle));
             }
             else
             {
-                SetField(ref _targetWindowTitle, "No Roblox window selected", nameof(TargetWindowTitle));
+                SetField(ref _targetWindowTitle, "No game window selected", nameof(TargetWindowTitle));
             }
 
             _mapping = profile;

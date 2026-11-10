@@ -1,6 +1,6 @@
 # Larpiano Floating Overlay Prototype (Demo)
 
-This is an **isolated visual and interaction prototype** for the Larpiano piano-player companion overlay. It is built strictly as an independent WPF application targeting `.NET 8.0-windows` and does not interact with or modify the existing Larpiano / Keynote application or Roblox game processes.
+This is an **isolated visual and interaction prototype** for the Larpiano piano-player companion overlay. It is built strictly as an independent WPF application targeting `.NET 8.0-windows` and does not interact with or modify the existing Larpiano / Keynote application or Game game processes.
 
 ---
 
@@ -8,7 +8,7 @@ This is an **isolated visual and interaction prototype** for the Larpiano piano-
 
 * **Zero modification to existing application:** All existing project files, solutions (`Keynote.sln`), source code (`Keynote.App`, `Keynote.Core`, etc.), assets, settings, and publish outputs remain 100% untouched.
 * **Completely mock data:** Songs, playback timings, notes, piano roll, target window, and keyboard mappings are purely local simulation state.
-* **No game interaction:** No input injection, no memory inspection, and no process hooks into Roblox.
+* **No game interaction:** No input injection, no memory inspection, and no process hooks into Game.
 * **Isolated persistence:** Prototype user settings are saved exclusively to `%LOCALAPPDATA%\LarpianoOverlayPrototype\settings.json`.
 
 ---
@@ -25,7 +25,7 @@ This is an **isolated visual and interaction prototype** for the Larpiano piano-
   * Song Title: *"Cornfield Chase"* (with Next Track toggle to *"Interstellar Main Theme"*).
   * Metadata: *4 tracks • 1,127 notes • 2:02*.
   * Status Pill: Glowing waveform icon + *Playing* / *Paused* / *Ready* / *Stopped*.
-  * Target Status Card: Roblox icon + *"Roblox: Demo Window (Mock)"* + *"• Demo foreground"*.
+  * Target Status Card: Game icon + *"Game: Demo Window (Mock)"* + *"• Demo foreground"*.
   * Mapping Status Card: Keyboard icon + *"Demo mapping • not connected"*.
 * **Piano-Roll Preview:**
   * Pitch lanes *C6, C5, C4, C3, C2* with subtle divider lines.
@@ -61,7 +61,7 @@ This is an **isolated visual and interaction prototype** for the Larpiano piano-
 
 ## 3. Non-Activating Window Behavior
 
-To ensure the underlying Roblox piano game maintains foreground keyboard focus while the player clicks overlay buttons or moves the overlay:
+To ensure the underlying Game piano game maintains foreground keyboard focus while the player clicks overlay buttons or moves the overlay:
 1. **Extended Win32 Styles:**
    * `WS_EX_NOACTIVATE (0x08000000)`: Prevents Windows from bringing the overlay to the foreground on window creation or clicks.
    * `WS_EX_TOOLWINDOW (0x00000080)`: Keeps it floating above standard applications without occupying a full taskbar slot.

@@ -21,7 +21,7 @@
     <OutputType>WinExe</OutputType>
     <ApplicationIcon>Assets\larpiano.ico</ApplicationIcon>
     <Product>larpiano</Product>
-    <Description>MIDI player for Roblox pianos</Description>
+    <Description>MIDI player for virtual pianos</Description>
     <Version>1.1.0</Version>
     <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <FileVersion>1.1.0.0</FileVersion>

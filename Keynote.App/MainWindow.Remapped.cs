@@ -25,7 +25,7 @@ public partial class MainWindow {
  void ApplyRemappedFilter() { if(RemappedList==null || RemappedQuery==null)return; var q=RemappedQuery.Text.Trim(); RemappedList.ItemsSource=remappedSongs.Where(x=>x.Title.Contains(q,StringComparison.OrdinalIgnoreCase)||x.Artist.Contains(q,StringComparison.OrdinalIgnoreCase)).ToArray(); }
  void RemappedSelected(object sender,SelectionChangedEventArgs e) {
   if(RemappedList.SelectedItem is not RemappedSong item) { RemappedDownload.IsEnabled=false; RemappedDetails.Text="Select a song to see its source and mapping details."; return; }
-  RemappedDownload.IsEnabled=true; RemappedDetails.Text=$"{item.Title}\n{item.Artist}\n\nPiano: {item.Profile}\nRecommended octave: {item.Octave:+0;-0;0}\nNotes: {item.KeptNotes}; omitted: {item.ExcludedNotes}\n{item.Modification}\n\n{item.Attribution}\nLicense: {item.License}\nSource: {item.Source}\n\nPrepared from the listed source; this individual arrangement has not been confirmed in Roblox. Test and verify your own mapping.";
+  RemappedDownload.IsEnabled=true; RemappedDetails.Text=$"{item.Title}\n{item.Artist}\n\nPiano: {item.Profile}\nRecommended octave: {item.Octave:+0;-0;0}\nNotes: {item.KeptNotes}; omitted: {item.ExcludedNotes}\n{item.Modification}\n\n{item.Attribution}\nLicense: {item.License}\nSource: {item.Source}\n\nPrepared from the listed source; this individual arrangement has not been confirmed in virtual piano games. Test and verify your own mapping.";
  }
  void LoadDefaultPianoLayout() {
   if(WorkflowMode)return;

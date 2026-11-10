@@ -73,10 +73,10 @@ export const RECENT_EVENTS = [
   {
     id: "evt_3",
     type: "session",
-    tag: "ROBLOX",
+    tag: "GAME",
     tagClass: "badge-channel-beta",
     title: "Auto-focus linked for client 7e4c...9d2f",
-    subject: "RobloxPlayerBeta.exe (PID 14208) · Win32 Hooked",
+    subject: "PianoGameWindow.exe (PID 14208) · Win32 Hooked",
     time: "16m ago"
   },
   {
@@ -116,7 +116,7 @@ export const MOCK_USERS = [
     consentTelemetry: true,
     consentEffects: true,
     activeSessions: [
-      { id: "a2b1f6e0-91c2", client: "Windows x64 (Roblox Focus)", duration: "21m", status: "Playing" }
+      { id: "a2b1f6e0-91c2", client: "Windows x64 (Game Focus)", duration: "21m", status: "Playing" }
     ]
   },
   {
@@ -140,7 +140,7 @@ export const MOCK_USERS = [
   },
   {
     id: "usr_3310fa8",
-    name: "robloxpianist",
+    name: "virtuosopianist",
     role: "User",
     status: "Idle",
     playingStatus: "Idle",
@@ -192,7 +192,7 @@ export const MOCK_USERS = [
     consentTelemetry: true,
     consentEffects: true,
     activeSessions: [
-      { id: "8b31d044-64fe", client: "Windows x64 (Roblox Focus)", duration: "74m", status: "Playing" }
+      { id: "8b31d044-64fe", client: "Windows x64 (Game Focus)", duration: "74m", status: "Playing" }
     ]
   },
   {
@@ -313,7 +313,7 @@ export const MOCK_SESSIONS = [
   },
   {
     id: "bc6e7c44-aa02",
-    user: "robloxpianist",
+    user: "virtuosopianist",
     version: "v1.0.9",
     started: "47m ago",
     lastHeartbeat: "14s ago",
@@ -400,7 +400,7 @@ export const MOCK_ANNOUNCEMENTS = [
   {
     id: "anc_1",
     title: "v1.1.0-beta.1 is now live",
-    message: "v1.1.0 released. Compact floating HUD, cleaner Aero2 context menus, and auto-focus for Roblox. Download the ZIP from Portways.",
+    message: "v1.1.0 released. Compact floating HUD, cleaner Aero2 context menus, and auto-focus for games. Download the ZIP from Portways.",
     audience: "Global",
     status: "Active",
     created: "Nov 8, 2026",
@@ -418,7 +418,7 @@ export const MOCK_ANNOUNCEMENTS = [
   {
     id: "anc_3",
     title: "Multi-client overlay testing",
-    message: "Multi-instance Roblox testing is open. Hit Ctrl+Alt+Tab in the floating overlay to cycle between active game windows.",
+    message: "Multi-instance game testing is open. Hit Ctrl+Alt+Tab in the floating overlay to cycle between active game windows.",
     audience: "Beta testers",
     status: "Active",
     created: "Nov 6, 2026",
@@ -427,7 +427,7 @@ export const MOCK_ANNOUNCEMENTS = [
   {
     id: "anc_4",
     title: "High BPM note-drop feedback",
-    message: "Testing key spam on 300+ BPM tracks. If Roblox drops inputs on your keyboard layout, post your diagnostic logs in Discord.",
+    message: "Testing key spam on 300+ BPM tracks. If the game drops inputs on your keyboard layout, post your diagnostic logs in Discord.",
     audience: "Beta testers",
     status: "Expired",
     created: "Nov 1, 2026",
@@ -443,7 +443,7 @@ export const MOCK_RELEASES = [
     status: "Latest Beta",
     platform: "Windows x64",
     githubUrl: "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0-beta.1",
-    notes: "Redesigned dark UI, compact floating HUD for Roblox, background window detection, and 223 passing unit tests."
+    notes: "Redesigned dark UI, compact floating HUD for virtual pianos, background window detection, and 223 passing unit tests."
   },
   {
     version: "v1.0.35",
@@ -452,7 +452,7 @@ export const MOCK_RELEASES = [
     status: "Published",
     platform: "Windows x64",
     githubUrl: "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.35",
-    notes: "Fixed white gutter stripe in overlay context menus, added multi-instance Roblox cycling, and fixed background focus polling."
+    notes: "Fixed white gutter stripe in overlay context menus, added multi-instance game cycling, and fixed background focus polling."
   },
   {
     version: "v1.0.34",
@@ -461,7 +461,7 @@ export const MOCK_RELEASES = [
     status: "Published",
     platform: "Windows x64",
     githubUrl: "https://github.com/xhakkurw233/larpiano/releases/tag/v1.0.34",
-    notes: "Hardened Roblox window focus checks and continuous background polling."
+    notes: "Hardened game window focus checks and continuous background polling."
   },
   {
     version: "v1.0.28",
@@ -479,7 +479,7 @@ export const PLAYGROUND_EFFECTS = [
     id: "toast",
     name: "Send toast",
     icon: "⚡",
-    desc: "Dispatches an in-game toast alert over the active Roblox window.",
+    desc: "Dispatches an in-game toast alert over the active game window.",
     duration: "5s",
     category: "Notification"
   },
@@ -592,7 +592,7 @@ export const MOCK_AUDIT_LOGS = [
 ];
 
 export const MOCK_NOTIFICATIONS = [
-  { id: "notif_1", title: "Player surge", desc: "+6 concurrent players linked to Roblox pianos in the last hour.", time: "12m ago", unread: true },
+  { id: "notif_1", title: "Player surge", desc: "+6 concurrent players linked to virtual pianos in the last hour.", time: "12m ago", unread: true },
   { id: "notif_2", title: "Build verified", desc: "SHA256 matches official release for v1.1.0-beta.1.", time: "45m ago", unread: true },
   { id: "notif_3", title: "Song catalog online", desc: "42ms API response time on Project 83.", time: "2h ago", unread: false }
 ];

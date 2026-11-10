@@ -203,12 +203,12 @@ def _ensure_pg_releases_schema(conn):
             CREATE INDEX IF NOT EXISTS idx_app_releases_tag_name ON app_releases(tag_name);
             CREATE INDEX IF NOT EXISTS idx_app_releases_latest ON app_releases(is_current_latest);
             UPDATE app_releases
-            SET file_size = 60602986,
-                sha256 = '0aa30ca516160687dbfbe7228cfdd9f8a611bf40da6154be58feea9ce121c348',
+            SET file_size = 60609012,
+                sha256 = 'c9618e1f27a366b953529d8accd24dc981998313301a7fba3e6051da68ccc954',
                 download_url = '/api/releases/latest/download',
                 storage_key = 'releases/v1.1.0/larpiano-windows-x64.zip'
             WHERE tag_name = 'v1.1.0'
-              AND (sha256 != '0aa30ca516160687dbfbe7228cfdd9f8a611bf40da6154be58feea9ce121c348' OR file_size != 60602986);
+              AND (sha256 != 'c9618e1f27a366b953529d8accd24dc981998313301a7fba3e6051da68ccc954' OR file_size != 60609012);
         """)
         conn.commit()
 
@@ -233,8 +233,8 @@ def _seed_releases_if_empty(conn):
                     "2026-11-09 10:14:45+00",
                     "releases/v1.1.0/larpiano-windows-x64.zip",
                     "larpiano-windows-x64.zip",
-                    60602986,
-                    "0aa30ca516160687dbfbe7228cfdd9f8a611bf40da6154be58feea9ce121c348",
+                    60609012,
+                    "c9618e1f27a366b953529d8accd24dc981998313301a7fba3e6051da68ccc954",
                     "/api/releases/latest/download",
                     "https://github.com/xhakkurw233/larpiano/releases/tag/v1.1.0",
                     "https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip",
@@ -1483,8 +1483,8 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
             "download_url": "/api/releases/latest/download",
             "storage_key": "releases/v1.1.0/larpiano-windows-x64.zip",
             "file_name": "larpiano-windows-x64.zip",
-            "file_size": 60602986,
-            "sha256": "0aa30ca516160687dbfbe7228cfdd9f8a611bf40da6154be58feea9ce121c348",
+            "file_size": 60609012,
+            "sha256": "c9618e1f27a366b953529d8accd24dc981998313301a7fba3e6051da68ccc954",
             "is_current_latest": True,
             "release_metadata_available": True,
             "external_download_host_available": github_available,
@@ -1493,8 +1493,8 @@ def _get_static_release_definitions(github_available: bool, github_status: str) 
             "assets": [
                 {
                     "name": "larpiano-windows-x64.zip",
-                    "size": 60602986,
-                    "sha256": "0aa30ca516160687dbfbe7228cfdd9f8a611bf40da6154be58feea9ce121c348",
+                    "size": 60609012,
+                    "sha256": "c9618e1f27a366b953529d8accd24dc981998313301a7fba3e6051da68ccc954",
                     "download_url": "/api/releases/latest/download",
                     "storage_available": True,
                     "external_download_url": "https://github.com/xhakkurw233/larpiano/releases/download/v1.1.0/larpiano-windows-x64.zip" if github_available else None,

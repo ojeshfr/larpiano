@@ -22,6 +22,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import admin_api
 import auth_service
+import playlist_service
 import storage
 
 ROOT = Path(__file__).resolve().parent
@@ -35,7 +36,8 @@ MAX_ENTRIES = 1000
 DIGEST = re.compile(r"^[0-9a-f]{64}$")
 FIELDS = ("sha256", "title", "artist", "source", "license", "profile", "octave",
           "keptNotes", "excludedNotes", "notesAdjusted", "attribution",
-          "durationSeconds", "modification")
+          "durationSeconds", "modification",
+          "category", "origin_country", "origin_region", "language", "musical_style", "culture_tags")
 REQUIRED = set(FIELDS[:9])
 DB_LOCK = threading.Lock()
 DB_SLOTS = threading.BoundedSemaphore(6)
@@ -75,7 +77,7 @@ def load_seeds(seed_root: Path = SEED_ROOT) -> list[tuple[str, dict, bytes]]:
             raise ValueError("Invalid seed note adjustment count")
         if "durationSeconds" in entry and (type(entry["durationSeconds"]) not in (int, float) or not math.isfinite(entry["durationSeconds"]) or not 0 <= entry["durationSeconds"] <= 86400):
             raise ValueError("Invalid seed duration")
-        for field in ("attribution", "modification"):
+        for field in ("attribution", "modification", "category", "origin_country", "origin_region", "language", "musical_style", "culture_tags"):
             if field in entry and (not isinstance(entry[field], str) or len(entry[field]) > 4096):
                 raise ValueError("Invalid seed text field: " + field)
         path = seed_root / (digest + ".mid")
@@ -115,6 +117,10 @@ def initialize():
                     metadata jsonb NOT NULL,
                     midi bytea NOT NULL CHECK (octet_length(midi) BETWEEN 14 AND 10485760)
                 )""")
+                cur.execute("""CREATE INDEX IF NOT EXISTS idx_remapped_metadata_country ON remapped_catalog_songs ((metadata->>'origin_country'))""")
+                cur.execute("""CREATE INDEX IF NOT EXISTS idx_remapped_metadata_region ON remapped_catalog_songs ((metadata->>'origin_region'))""")
+                cur.execute("""CREATE INDEX IF NOT EXISTS idx_remapped_metadata_language ON remapped_catalog_songs ((metadata->>'language'))""")
+                cur.execute("""CREATE INDEX IF NOT EXISTS idx_remapped_metadata_style ON remapped_catalog_songs ((metadata->>'musical_style'))""")
                 for digest, metadata, midi in seeds:
                     cur.execute("""INSERT INTO remapped_catalog_songs (sha256,metadata,midi)
                         VALUES (%s,%s,%s) ON CONFLICT (sha256) DO UPDATE
@@ -132,14 +138,29 @@ def static_catalog():
     return seed_cache
 
 
-def list_songs(category: str | None = None, search: str | None = None):
+def list_songs(category: str | None = None, search: str | None = None, country: str | None = None, language: str | None = None, style: str | None = None):
     if not os.environ.get("DATABASE_URL"):
         songs = [metadata for _, metadata, _ in static_catalog()]
         if category and category.lower() != "all":
             songs = [s for s in songs if s.get("category", "").lower() == category.lower()]
+        if country and country.lower() != "all":
+            c_low = country.lower()
+            songs = [s for s in songs if s.get("origin_country", "").lower() == c_low or s.get("origin_region", "").lower() == c_low]
+        if language and language.lower() != "all":
+            songs = [s for s in songs if s.get("language", "").lower() == language.lower()]
+        if style and style.lower() != "all":
+            songs = [s for s in songs if s.get("musical_style", "").lower() == style.lower()]
         if search:
             q = search.lower()
-            songs = [s for s in songs if q in s.get("title", "").lower() or q in s.get("artist", "").lower()]
+            songs = [s for s in songs if (
+                q in s.get("title", "").lower() or
+                q in s.get("artist", "").lower() or
+                q in s.get("origin_country", "").lower() or
+                q in s.get("origin_region", "").lower() or
+                q in s.get("language", "").lower() or
+                q in s.get("musical_style", "").lower() or
+                q in s.get("culture_tags", "").lower()
+            )]
         return songs
     initialize()
     with DB_SLOTS, connect() as conn:
@@ -149,9 +170,19 @@ def list_songs(category: str | None = None, search: str | None = None):
             if category and category.lower() != "all":
                 query += " AND LOWER(metadata->>'category') = LOWER(%s)"
                 params.append(category)
+            if country and country.lower() != "all":
+                query += " AND (LOWER(metadata->>'origin_country') = LOWER(%s) OR LOWER(metadata->>'origin_region') = LOWER(%s))"
+                params.extend([country, country])
+            if language and language.lower() != "all":
+                query += " AND LOWER(metadata->>'language') = LOWER(%s)"
+                params.append(language)
+            if style and style.lower() != "all":
+                query += " AND LOWER(metadata->>'musical_style') = LOWER(%s)"
+                params.append(style)
             if search:
-                query += " AND (metadata->>'title' ILIKE %s OR metadata->>'artist' ILIKE %s)"
-                params.extend([f"%{search}%", f"%{search}%"])
+                query += " AND (metadata->>'title' ILIKE %s OR metadata->>'artist' ILIKE %s OR metadata->>'origin_country' ILIKE %s OR metadata->>'origin_region' ILIKE %s OR metadata->>'language' ILIKE %s OR metadata->>'musical_style' ILIKE %s OR metadata->>'culture_tags' ILIKE %s)"
+                pattern = f"%{search}%"
+                params.extend([pattern, pattern, pattern, pattern, pattern, pattern, pattern])
             query += " ORDER BY metadata->>'title', sha256 LIMIT %s"
             params.append(MAX_ENTRIES)
             cur.execute(query, tuple(params))
@@ -325,8 +356,18 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/remapped/songs" and method == "GET":
             try:
                 category = qs.get("category", [None])[0]
+                country = qs.get("country", [None])[0]
+                region = qs.get("region", [None])[0]
+                language = qs.get("language", [None])[0]
+                style = qs.get("style", [None])[0]
                 search = qs.get("q", [None])[0]
-                self.send_json(200, list_songs(category=category, search=search), head)
+                self.send_json(200, list_songs(
+                    category=category,
+                    search=search,
+                    country=country or region,
+                    language=language,
+                    style=style
+                ), head)
             except Exception as exc:
                 log.error("Catalogue unavailable (%s: %s)", type(exc).__name__, exc)
                 self.send_json(503, {"error": "Catalogue temporarily unavailable"}, head)
@@ -702,6 +743,134 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(400, {"error": str(e)}, head)
             except Exception as e:
                 self.send_json(500, {"error": "Failed to record telemetry"}, head)
+            return True
+
+        # --- User Playlist Endpoints ---
+        if path == "/api/playlists" or path.startswith("/api/playlists/"):
+            user = self.get_auth_user()
+            if not user:
+                self.send_json(401, {"error": "Unauthorized"}, head)
+                return True
+
+            user_id = user["sub"]
+
+            if path == "/api/playlists":
+                if method == "GET":
+                    try:
+                        self.send_json(200, playlist_service.list_playlists(user_id), head)
+                    except Exception as e:
+                        self.send_json(500, {"error": str(e)}, head)
+                    return True
+                elif method == "POST":
+                    try:
+                        body = self.read_json_body()
+                        res = playlist_service.create_playlist(user_id, body.get("name", ""))
+                        self.send_json(201, res, head)
+                    except ValueError as e:
+                        self.send_json(400, {"error": str(e)}, head)
+                    except Exception as e:
+                        self.send_json(500, {"error": str(e)}, head)
+                    return True
+
+            match_p_item = re.fullmatch(r"/api/playlists/([^/]+)/items/([^/]+)", path)
+            if match_p_item and method == "DELETE":
+                try:
+                    deleted = playlist_service.remove_item(user_id, match_p_item.group(1), match_p_item.group(2))
+                    if not deleted:
+                        self.send_json(404, {"error": "Playlist or item not found"}, head)
+                    else:
+                        self.send_json(200, {"success": True}, head)
+                except Exception as e:
+                    self.send_json(500, {"error": str(e)}, head)
+                return True
+
+            match_p_items = re.fullmatch(r"/api/playlists/([^/]+)/items", path)
+            if match_p_items and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    item = playlist_service.add_item(
+                        user_id,
+                        match_p_items.group(1),
+                        song_sha256=body.get("sha256", ""),
+                        title=body.get("title", ""),
+                        artist=body.get("artist", ""),
+                        duration_seconds=float(body.get("duration_seconds", 0.0))
+                    )
+                    if not item:
+                        self.send_json(404, {"error": "Playlist not found"}, head)
+                    else:
+                        self.send_json(201, item, head)
+                except ValueError as e:
+                    self.send_json(400, {"error": str(e)}, head)
+                except Exception as e:
+                    self.send_json(500, {"error": str(e)}, head)
+                return True
+
+            match_p_reorder = re.fullmatch(r"/api/playlists/([^/]+)/reorder", path)
+            if match_p_reorder and method == "PUT":
+                try:
+                    body = self.read_json_body()
+                    item_ids = body.get("item_ids", [])
+                    ok = playlist_service.reorder_items(user_id, match_p_reorder.group(1), item_ids)
+                    if not ok:
+                        self.send_json(404, {"error": "Playlist not found"}, head)
+                    else:
+                        self.send_json(200, {"success": True}, head)
+                except Exception as e:
+                    self.send_json(500, {"error": str(e)}, head)
+                return True
+
+            match_p_dup = re.fullmatch(r"/api/playlists/([^/]+)/duplicate", path)
+            if match_p_dup and method == "POST":
+                try:
+                    body = self.read_json_body()
+                    dup = playlist_service.duplicate_playlist(user_id, match_p_dup.group(1), body.get("name"))
+                    if not dup:
+                        self.send_json(404, {"error": "Playlist not found"}, head)
+                    else:
+                        self.send_json(201, dup, head)
+                except Exception as e:
+                    self.send_json(500, {"error": str(e)}, head)
+                return True
+
+            match_p = re.fullmatch(r"/api/playlists/([^/]+)", path)
+            if match_p:
+                p_id = match_p.group(1)
+                if method == "GET":
+                    try:
+                        p = playlist_service.get_playlist(user_id, p_id)
+                        if not p:
+                            self.send_json(404, {"error": "Playlist not found"}, head)
+                        else:
+                            self.send_json(200, p, head)
+                    except Exception as e:
+                        self.send_json(500, {"error": str(e)}, head)
+                    return True
+                elif method == "PUT":
+                    try:
+                        body = self.read_json_body()
+                        updated = playlist_service.update_playlist(user_id, p_id, body.get("name", ""))
+                        if not updated:
+                            self.send_json(404, {"error": "Playlist not found"}, head)
+                        else:
+                            self.send_json(200, updated, head)
+                    except ValueError as e:
+                        self.send_json(400, {"error": str(e)}, head)
+                    except Exception as e:
+                        self.send_json(500, {"error": str(e)}, head)
+                    return True
+                elif method == "DELETE":
+                    try:
+                        deleted = playlist_service.delete_playlist(user_id, p_id)
+                        if not deleted:
+                            self.send_json(404, {"error": "Playlist not found"}, head)
+                        else:
+                            self.send_json(200, {"success": True}, head)
+                    except Exception as e:
+                        self.send_json(500, {"error": str(e)}, head)
+                    return True
+
+            self.send_json(404, {"error": "Playlist endpoint not found"}, head)
             return True
 
         # --- Admin Endpoints ---

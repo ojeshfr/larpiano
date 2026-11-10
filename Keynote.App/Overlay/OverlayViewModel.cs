@@ -79,6 +79,127 @@ namespace Keynote.App.Overlay
             } finally { _synchronizingLibrary = false; }
         }
 
+        // Playlist and Queue state
+        private IReadOnlyList<Playlist> _playlists = Array.Empty<Playlist>();
+        private Playlist? _currentPlaylist;
+        private IReadOnlyList<PlaylistItem> _queueItems = Array.Empty<PlaylistItem>();
+        private bool _isQueueDrawerOpen;
+        private bool _isShuffleEnabled;
+        private PlaylistRepeatMode _repeatMode = PlaylistRepeatMode.None;
+        private bool _isPlayingPlaylist;
+        private int _currentTrackNumber;
+        private int _totalTracks;
+        private bool _synchronizingPlaylists;
+
+        public Action<Playlist?>? RequestSelectPlaylist { get; set; }
+        public Action? RequestPlayNext { get; set; }
+        public Action? RequestPlayPrevious { get; set; }
+        public Action? RequestToggleShuffle { get; set; }
+        public Action? RequestCycleRepeat { get; set; }
+        public Action<PlaylistItem>? RequestPlayQueueItem { get; set; }
+        public Action<string>? RequestRemoveFromQueue { get; set; }
+        public Action? RequestClearQueue { get; set; }
+
+        public IReadOnlyList<Playlist> Playlists => _playlists;
+        public bool HasPlaylists => _playlists.Count > 0;
+        public Playlist? CurrentPlaylist
+        {
+            get => _currentPlaylist;
+            set
+            {
+                if (SetField(ref _currentPlaylist, value))
+                {
+                    OnPropertyChanged(nameof(CurrentPlaylistName));
+                    if (!_synchronizingPlaylists)
+                    {
+                        RequestSelectPlaylist?.Invoke(value);
+                    }
+                }
+            }
+        }
+        public string CurrentPlaylistName => _currentPlaylist?.Name ?? "(None / All songs)";
+        public IReadOnlyList<PlaylistItem> QueueItems => _queueItems;
+        public bool IsQueueDrawerOpen
+        {
+            get => _isQueueDrawerOpen;
+            set => SetField(ref _isQueueDrawerOpen, value);
+        }
+        public bool IsShuffleEnabled
+        {
+            get => _isShuffleEnabled;
+            set => SetField(ref _isShuffleEnabled, value);
+        }
+        public PlaylistRepeatMode RepeatMode
+        {
+            get => _repeatMode;
+            set
+            {
+                if (SetField(ref _repeatMode, value))
+                    OnPropertyChanged(nameof(RepeatModeText));
+            }
+        }
+        public string RepeatModeText => _repeatMode switch
+        {
+            PlaylistRepeatMode.One => "Repeat 1",
+            PlaylistRepeatMode.All => "Repeat All",
+            _ => "Repeat Off"
+        };
+        public bool IsPlayingPlaylist => _isPlayingPlaylist;
+        public int CurrentTrackNumber => _currentTrackNumber;
+        public int TotalTracks => _totalTracks;
+        public string QueueCountText
+        {
+            get
+            {
+                if (_totalTracks == 0) return "Queue empty";
+                if (_isPlayingPlaylist && _currentTrackNumber > 0)
+                    return $"Playing {_currentTrackNumber} / {_totalTracks}";
+                return $"{_totalTracks} songs";
+            }
+        }
+
+        public void SynchronizePlaylists(
+            IReadOnlyList<Playlist> playlists,
+            Playlist? current,
+            IReadOnlyList<PlaylistItem> queue,
+            int currentTrackNum,
+            int totalTracks,
+            bool isShuffle,
+            PlaylistRepeatMode repeat,
+            bool isPlaying)
+        {
+            _synchronizingPlaylists = true;
+            try
+            {
+                if (!ReferenceEquals(_playlists, playlists))
+                {
+                    _playlists = playlists;
+                    OnPropertyChanged(nameof(Playlists));
+                    OnPropertyChanged(nameof(HasPlaylists));
+                }
+                SetField(ref _currentPlaylist, current, nameof(CurrentPlaylist));
+                OnPropertyChanged(nameof(CurrentPlaylistName));
+                _queueItems = queue;
+                OnPropertyChanged(nameof(QueueItems));
+                _currentTrackNumber = currentTrackNum;
+                _totalTracks = totalTracks;
+                _isShuffleEnabled = isShuffle;
+                _repeatMode = repeat;
+                _isPlayingPlaylist = isPlaying;
+                OnPropertyChanged(nameof(CurrentTrackNumber));
+                OnPropertyChanged(nameof(TotalTracks));
+                OnPropertyChanged(nameof(IsShuffleEnabled));
+                OnPropertyChanged(nameof(RepeatMode));
+                OnPropertyChanged(nameof(RepeatModeText));
+                OnPropertyChanged(nameof(IsPlayingPlaylist));
+                OnPropertyChanged(nameof(QueueCountText));
+            }
+            finally
+            {
+                _synchronizingPlaylists = false;
+            }
+        }
+
         public OverlayViewModel(OverlaySettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -498,6 +619,60 @@ namespace Keynote.App.Overlay
                 _ => 0.75
             };
             SetSpeed(nextSpeed);
+        }
+
+        public void ToggleQueueDrawer()
+        {
+            RecordClick("Toggle Queue Drawer");
+            IsQueueDrawerOpen = !IsQueueDrawerOpen;
+        }
+
+        public void SelectPlaylist(Playlist? p)
+        {
+            RecordClick($"Select Playlist: {p?.Name ?? "None"}");
+            CurrentPlaylist = p;
+        }
+
+        public void PlayNextTrack()
+        {
+            RecordClick("Play Next Track");
+            RequestPlayNext?.Invoke();
+        }
+
+        public void PlayPreviousTrack()
+        {
+            RecordClick("Play Previous Track");
+            RequestPlayPrevious?.Invoke();
+        }
+
+        public void ToggleShuffle()
+        {
+            RecordClick("Toggle Shuffle");
+            RequestToggleShuffle?.Invoke();
+        }
+
+        public void CycleRepeat()
+        {
+            RecordClick("Cycle Repeat");
+            RequestCycleRepeat?.Invoke();
+        }
+
+        public void PlayQueueItem(PlaylistItem item)
+        {
+            RecordClick($"Play Queue Item: {item.Title}");
+            RequestPlayQueueItem?.Invoke(item);
+        }
+
+        public void RemoveFromQueue(string itemId)
+        {
+            RecordClick("Remove From Queue");
+            RequestRemoveFromQueue?.Invoke(itemId);
+        }
+
+        public void ClearQueue()
+        {
+            RecordClick("Clear Queue");
+            RequestClearQueue?.Invoke();
         }
 
         public void ToggleCompact()

@@ -216,6 +216,45 @@
                                    TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding SongSubtitle}"
                                    Margin="0,0,0,8" />
+                        <!-- Playlist Selector and Queue Indicator -->
+                        <Grid Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="OverlayPlaylistSelector"
+                                      ItemsSource="{Binding Playlists}"
+                                      SelectedItem="{Binding CurrentPlaylist, Mode=TwoWay}"
+                                      DisplayMemberPath="Name"
+                                      ToolTip="Select active playlist"
+                                      AutomationProperties.Name="Select active playlist"
+                                      MinWidth="0"
+                                      SelectionChanged="OnPlaylistSelectionChanged" />
+                            <TextBlock Text="Playlist: (None / Library)" IsHitTestVisible="False" VerticalAlignment="Center" Margin="9,0,25,0" TextTrimming="CharacterEllipsis" Foreground="{StaticResource OverlayTextSecondaryBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CurrentPlaylist}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <Border Grid.Column="1" Background="#261E36" CornerRadius="6" Padding="6,2" VerticalAlignment="Center" Margin="6,0,0,0">
+                                <TextBlock Text="{Binding QueueCountText}" FontSize="11" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                            </Border>
+                            <ToggleButton Grid.Column="2" Style="{StaticResource OverlayHeaderToggleButtonStyle}"
+                                          IsChecked="{Binding IsQueueDrawerOpen}" ToolTip="Toggle Playlist Queue Drawer"
+                                          Padding="6,3" Margin="6,0,0,0" Width="28" Height="28">
+                                <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
+                                      Data="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"
+                                      Stretch="Uniform" Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ToggleButton>
+                        </Grid>
+
                         <Grid Margin="0,0,0,5">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <ComboBox x:Name="OverlaySongSelector" ItemsSource="{Binding LibrarySongs}" SelectedItem="{Binding SelectedLibrarySong, Mode=TwoWay}"
@@ -340,8 +379,27 @@
                     </Button>
 
                     <!-- Emergency Stop Button -->
-                    <Button Style="{StaticResource OverlayButtonStyle}" Click="OnStopClick" ToolTip="Emergency Stop" Width="36" Height="36">
+                    <Button Style="{StaticResource OverlayButtonStyle}" Click="OnStopClick" ToolTip="Emergency Stop" Width="36" Height="36" Margin="0,0,6,0">
                         <Path Fill="{StaticResource OverlayDangerBrush}" Data="M18,18H6V6H18V18Z" Stretch="Uniform" Width="12" Height="12" />
+                    </Button>
+
+                    <!-- Shuffle Toggle Button -->
+                    <ToggleButton Style="{StaticResource OverlayHeaderToggleButtonStyle}"
+                                  IsChecked="{Binding IsShuffleEnabled}"
+                                  Click="OnToggleShuffleClick"
+                                  ToolTip="Toggle Shuffle"
+                                  Width="32" Height="36" Margin="0,0,4,0">
+                        <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
+                              Data="M14.83,13.41L13.42,14.82L16.59,18H5V20H16.59L13.42,23.18L14.83,24.59L20.41,19L14.83,13.41M14.83,4.41L13.42,5.82L16.59,9H5V11H16.59L13.42,14.18L14.83,15.59L20.41,10L14.83,4.41Z"
+                              Stretch="Uniform" Width="13" Height="13" />
+                    </ToggleButton>
+
+                    <!-- Repeat Mode Button -->
+                    <Button Style="{StaticResource OverlayButtonStyle}"
+                            Click="OnCycleRepeatClick"
+                            ToolTip="Cycle Repeat (Off / All / One)"
+                            Padding="6,4" Height="36">
+                        <TextBlock Text="{Binding RepeatModeText}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
                     </Button>
                 </StackPanel>
 
@@ -466,6 +524,67 @@
                 </Button>
             </Grid>
         </Grid>
+
+        <!-- Playlist Queue Drawer Popover Card (Opaque backing) -->
+        <Border Background="#FD181326"
+                BorderBrush="{StaticResource OverlayBorderGlowingBrush}"
+                BorderThickness="1"
+                CornerRadius="10"
+                Width="360"
+                MaxHeight="320"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="18,110,0,0"
+                Padding="12"
+                Visibility="{Binding IsQueueDrawerOpen, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="6" Opacity="0.85" />
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock Text="Playlist Queue" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource OverlayTextPrimaryBrush}" />
+                    <Button Style="{StaticResource OverlayHeaderCloseButtonStyle}" Click="OnCloseQueueDrawerClick" HorizontalAlignment="Right" Width="22" Height="22">
+                        <Path Fill="{StaticResource OverlayTextSecondaryBrush}" Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" Stretch="Uniform" Width="9" Height="9" />
+                    </Button>
+                </DockPanel>
+
+                <ScrollViewer Grid.Row="1" MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding QueueItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#1A132B" BorderBrush="{StaticResource OverlayBorderSubtleBrush}" BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,2">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource OverlayTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Artist}" FontSize="10" Foreground="{StaticResource OverlayTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Style="{StaticResource OverlayButtonStyle}" Click="OnPlayQueueItemClick" Tag="{Binding}" Content="Play" Padding="6,2" FontSize="10" Margin="4,0" />
+                                        <Button Grid.Column="2" Style="{StaticResource OverlayHeaderCloseButtonStyle}" Click="OnRemoveQueueItemClick" Tag="{Binding}" ToolTip="Remove from queue" Width="20" Height="20">
+                                            <Path Fill="{StaticResource OverlayDangerBrush}" Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" Stretch="Uniform" Width="8" Height="8" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <DockPanel Grid.Row="2" Margin="0,8,0,0">
+                    <Button Style="{StaticResource OverlayButtonStyle}" Click="OnClearQueueClick" Content="Clear Queue" Padding="8,4" FontSize="11" HorizontalAlignment="Right" />
+                </DockPanel>
+            </Grid>
+        </Border>
 
         <!-- Speed Dropdown Popover Card (Opaque backing) -->
         <Border Background="#FD1B152A"

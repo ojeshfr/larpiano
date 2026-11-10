@@ -74,8 +74,55 @@ namespace Keynote.App.Overlay.Views
         private void OnAppMenuClick(object sender, RoutedEventArgs e) { if (sender is Button button && button.ContextMenu is { } menu) { menu.PlacementTarget = button; menu.IsOpen = true; } }
         private void OnOpenSectionClick(object sender, RoutedEventArgs e) { if (sender is MenuItem item && int.TryParse(item.Tag?.ToString(), out int index)) VM?.OpenSection(index); }
         private void OnStopClick(object sender, RoutedEventArgs e) => VM?.EmergencyStop();
-        private void OnPreviousClick(object sender, RoutedEventArgs e) => VM?.Seek(TimeSpan.Zero);
-        private void OnNextClick(object sender, RoutedEventArgs e) => VM?.SeekForward(TimeSpan.FromSeconds(10));
+        private void OnPreviousClick(object sender, RoutedEventArgs e)
+        {
+            if (VM?.IsPlayingPlaylist == true)
+                VM.PlayPreviousTrack();
+            else
+                VM?.Seek(TimeSpan.Zero);
+        }
+
+        private void OnNextClick(object sender, RoutedEventArgs e)
+        {
+            if (VM?.IsPlayingPlaylist == true)
+                VM.PlayNextTrack();
+            else
+                VM?.SeekForward(TimeSpan.FromSeconds(10));
+        }
+
+        private void OnPlaylistSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (OverlayPlaylistSelector.SelectedItem is Keynote.Core.Playlist p)
+            {
+                VM?.SelectPlaylist(p);
+            }
+            else if (OverlayPlaylistSelector.SelectedItem == null)
+            {
+                VM?.SelectPlaylist(null);
+            }
+        }
+
+        private void OnToggleShuffleClick(object sender, RoutedEventArgs e) => VM?.ToggleShuffle();
+        private void OnCycleRepeatClick(object sender, RoutedEventArgs e) => VM?.CycleRepeat();
+        private void OnCloseQueueDrawerClick(object sender, RoutedEventArgs e) => VM?.ToggleQueueDrawer();
+
+        private void OnPlayQueueItemClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is Keynote.Core.PlaylistItem item)
+            {
+                VM?.PlayQueueItem(item);
+            }
+        }
+
+        private void OnRemoveQueueItemClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is Keynote.Core.PlaylistItem item)
+            {
+                VM?.RemoveFromQueue(item.Id);
+            }
+        }
+
+        private void OnClearQueueClick(object sender, RoutedEventArgs e) => VM?.ClearQueue();
         private void OnSpeedDropdownClick(object sender, RoutedEventArgs e) => VM?.ToggleSpeedDropdown();
 
         private void OnSelectSpeed(object sender, RoutedEventArgs e)

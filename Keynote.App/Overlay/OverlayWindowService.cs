@@ -39,7 +39,15 @@ namespace Keynote.App.Overlay
                     finally { Show(); }
                 }),
                 RequestOpenSection = index => _mainWindow.Dispatcher.Invoke(() => { Hide(); _mainWindow.OpenSectionFromOverlay(index); }),
-                RequestRefreshWindows = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.RefreshWindowsFromOverlay())
+                RequestRefreshWindows = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.RefreshWindowsFromOverlay()),
+                RequestSelectPlaylist = p => _mainWindow.Dispatcher.Invoke(() => _mainWindow.SelectPlaylistFromOverlay(p)),
+                RequestPlayNext = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.PlayNextFromOverlay()),
+                RequestPlayPrevious = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.PlayPreviousFromOverlay()),
+                RequestToggleShuffle = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.ToggleShuffleFromOverlay()),
+                RequestCycleRepeat = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.CycleRepeatFromOverlay()),
+                RequestPlayQueueItem = item => _mainWindow.Dispatcher.Invoke(() => _mainWindow.PlayQueueItemFromOverlay(item)),
+                RequestRemoveFromQueue = id => _mainWindow.Dispatcher.Invoke(() => _mainWindow.RemoveFromQueueFromOverlay(id)),
+                RequestClearQueue = () => _mainWindow.Dispatcher.Invoke(() => _mainWindow.ClearQueueFromOverlay())
             };
         }
 

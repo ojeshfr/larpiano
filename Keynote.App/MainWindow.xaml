@@ -706,6 +706,17 @@
                             <!-- Category Filter & Search Bar -->
                             <Border Background="{StaticResource PanelElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,12">
                                 <StackPanel>
+                                    <WrapPanel Margin="0,0,0,8">
+                                        <TextBlock Text="Region:" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                        <RadioButton x:Name="RegAll" Content="All Regions" IsChecked="True" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="RegChina" Content="China" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="RegIndia" Content="India" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="RegUS" Content="United States / West" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="RegJapan" Content="Japan" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="RegKorea" Content="South Korea" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="RegEurope" Content="UK &amp; Europe" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <RadioButton x:Name="RegOther" Content="Other" Checked="OnRegionFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                    </WrapPanel>
                                     <WrapPanel Margin="0,0,0,10">
                                         <TextBlock Text="Category:" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
                                         <RadioButton x:Name="CatAll" Content="All" IsChecked="True" Checked="OnCategoryFilterChanged" Margin="0,0,12,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
@@ -760,6 +771,7 @@
                                         <TextBlock x:Name="ModernDetails" Text="Select a song to see your options." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,0" TextWrapping="Wrap" />
                                         <WrapPanel Margin="0,16,0,0">
                                             <Button x:Name="ModernDownloadButton" Content="Download and select" Click="DownloadModern" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" IsEnabled="False" />
+                                            <Button x:Name="ModernAddToPlaylistButton" Content="Add to playlist…" Click="OnModernAddToPlaylistClick" Margin="0,0,8,8" IsEnabled="False" />
                                             <Button x:Name="ModernSearchButton" Content="Search MIDI sources" Click="SearchModern" Margin="0,0,8,8" IsEnabled="False" />
                                             <Button x:Name="ModernLibraryButton" Content="Find in my library" Click="FindModernInLibrary" Margin="0,0,8,8" IsEnabled="False" />
                                         </WrapPanel>

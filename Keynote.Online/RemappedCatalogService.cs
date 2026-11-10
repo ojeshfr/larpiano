@@ -25,9 +25,14 @@ public sealed record RemappedSong(
     string Attribution = "",
     string Modification = "",
     string Category = "Classical",
-    double DurationSeconds = 0)
+    double DurationSeconds = 0,
+    string OriginCountry = "",
+    string OriginRegion = "",
+    string Language = "",
+    string MusicalStyle = "",
+    string CultureTags = "")
 {
-    public override string ToString() => $"{Title}  •  {Artist}" + (!string.IsNullOrEmpty(Category) ? $"  •  {Category}" : "");
+    public override string ToString() => $"{Title}  •  {Artist}" + (!string.IsNullOrEmpty(Category) ? $"  •  {Category}" : "") + (!string.IsNullOrEmpty(OriginCountry) ? $"  •  {OriginCountry}" : "");
 }
 
 public sealed class RemappedCatalogService(HttpClient http, IMidiDownloadService downloads)
@@ -66,12 +71,24 @@ public sealed class RemappedCatalogService(HttpClient http, IMidiDownloadService
         }
     }
 
-    public async Task<IReadOnlyList<RemappedSong>> ListAsync(string? category = null, string? search = null, CancellationToken token = default)
+    public async Task<IReadOnlyList<RemappedSong>> ListAsync(
+        string? category = null,
+        string? search = null,
+        string? country = null,
+        string? language = null,
+        string? style = null,
+        CancellationToken token = default)
     {
         var url = $"{BaseUrl}/api/remapped/songs";
         var query = new List<string>();
         if (!string.IsNullOrWhiteSpace(category) && !category.Equals("all", StringComparison.OrdinalIgnoreCase))
             query.Add($"category={Uri.EscapeDataString(category)}");
+        if (!string.IsNullOrWhiteSpace(country) && !country.Equals("all", StringComparison.OrdinalIgnoreCase))
+            query.Add($"country={Uri.EscapeDataString(country)}");
+        if (!string.IsNullOrWhiteSpace(language) && !language.Equals("all", StringComparison.OrdinalIgnoreCase))
+            query.Add($"language={Uri.EscapeDataString(language)}");
+        if (!string.IsNullOrWhiteSpace(style) && !style.Equals("all", StringComparison.OrdinalIgnoreCase))
+            query.Add($"style={Uri.EscapeDataString(style)}");
         if (!string.IsNullOrWhiteSpace(search))
             query.Add($"q={Uri.EscapeDataString(search)}");
         if (query.Count > 0)
@@ -111,7 +128,8 @@ public sealed class RemappedCatalogService(HttpClient http, IMidiDownloadService
         return items;
     }
 
-    public Task<IReadOnlyList<RemappedSong>> ListAsync(CancellationToken token) => ListAsync(null, null, token);
+    public Task<IReadOnlyList<RemappedSong>> ListAsync(CancellationToken token) => ListAsync(null, null, null, null, null, token);
+    public Task<IReadOnlyList<RemappedSong>> ListAsync(string? category, string? search, CancellationToken token) => ListAsync(category, search, null, null, null, token);
 
     public async Task<(LibraryEntry Entry, bool Duplicate)> DownloadAsync(RemappedSong item, IMidiLibraryService library, IProgress<double>? progress, CancellationToken token)
     {

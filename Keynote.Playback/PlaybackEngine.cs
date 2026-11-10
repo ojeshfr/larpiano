@@ -8,6 +8,7 @@ public sealed class PlaybackEngine : IDisposable {
  double introSeconds;
  CancellationTokenSource? cancellation; Task? worker; PlaybackState state=PlaybackState.Idle; string? error; double speed=1,positionSeconds; long anchor; bool disposed,inputPausePending;
  int scheduled,dispatched,failed,late,cleanupFailures,focusLosses; double lateSum,maxLate; readonly int[] latenessHistogram=new int[2001];
+ public event EventHandler? PlaybackCompleted;
  public PlaybackEngine(IKeyboardInput input)=>this.input=input ?? throw new ArgumentNullException(nameof(input));
  public PlaybackState State { get { lock(gate)return state; } } public string? Error { get { lock(gate)return error; } }
  public TimeSpan Position { get { lock(gate) { Advance(); return TimeSpan.FromSeconds(Math.Max(0,positionSeconds-introSeconds)); } } }
@@ -89,7 +90,23 @@ public sealed class PlaybackEngine : IDisposable {
    } else delay=10;
   } await Task.Delay(TimeSpan.FromMilliseconds(delay),token).ConfigureAwait(false); }
   } catch(OperationCanceledException) when(token.IsCancellationRequested) { } catch(Exception ex) { failure=ex; }
-  finally { lock(gate) { inputPausePending=false; if(failure!=null) { error=failure.Message; state=PlaybackState.Faulted; } try { Cleanup(); } catch { } active.Clear(); if(state!=PlaybackState.Faulted) { state=PlaybackState.Stopped; error=null; } } }
+  finally {
+   bool completedNormally = false;
+   lock(gate) {
+    inputPausePending=false;
+    if(failure!=null) { error=failure.Message; state=PlaybackState.Faulted; }
+    try { Cleanup(); } catch { }
+    active.Clear();
+    if(state!=PlaybackState.Faulted) {
+     if(!token.IsCancellationRequested && failure==null && eventIndex>=timelineEvents.Length) completedNormally = true;
+     state=PlaybackState.Stopped;
+     error=null;
+    }
+   }
+   if(completedNormally) {
+    try { PlaybackCompleted?.Invoke(this, EventArgs.Empty); } catch { }
+   }
+  }
  }
  public void Pause() { lock(gate) { if(state!=PlaybackState.Playing)return; Advance(); state=PlaybackState.Paused; error=null; try { Cleanup(); } catch { cancellation?.Cancel(); } } }
  public void Resume() { lock(gate) { if(state!=PlaybackState.Paused || cancellation?.IsCancellationRequested==true)return; if(!input.IsTargetForeground) { error="Focus the selected game window before resuming."; return; } try { foreach(var key in active.Keys) { if(!input.IsTargetForeground) { Cleanup(); error="Focus the selected game window before resuming."; return; } input.Press(key); } anchor=Stopwatch.GetTimestamp(); inputPausePending=false; error=null; state=PlaybackState.Playing; } catch(KeyboardInputBusyException ex) { try { PauseForInput(ex.Message); } catch { cancellation?.Cancel(); } } catch(Exception ex) { if(!input.IsTargetForeground) { try { Cleanup(); error="Focus the selected game window before resuming."; } catch { cancellation?.Cancel(); } return; } failed++; error=ex.Message; state=PlaybackState.Faulted; cancellation?.Cancel(); } } }

@@ -33,7 +33,7 @@ public partial class MainWindow : Window, IDisposable {
  bool loadingPreferences=true; bool timelineUpdating,timelineDragging; TimeSpan? selectedPosition=TimeSpan.Zero;
  int Shift=>Octave?.SelectedItem is ComboBoxItem item && int.TryParse(item.Content.ToString(),out int n)?n:0;
  public MainWindow() {
-  InitializeComponent(); InitializeModernPicks(); Progress.AddHandler(Thumb.DragStartedEvent,new DragStartedEventHandler((_,_)=>timelineDragging=true)); Progress.AddHandler(Thumb.DragCompletedEvent,new DragCompletedEventHandler((_,_)=>{ timelineDragging=false; ApplyTimeline(); })); InstalledUpdate.Text="Installed version: "+InstalledVersion; engine=new(input); InitializeOnline(); InitializeAuth(); hotkeyController=new(()=>engine.State,()=>input.IsTargetForeground,StartImmediate,engine.Pause,engine.Resume,EmergencyStop,engine.AcknowledgeInputPause);
+  InitializeComponent(); InitializeModernPicks(); Progress.AddHandler(Thumb.DragStartedEvent,new DragStartedEventHandler((_,_)=>timelineDragging=true)); Progress.AddHandler(Thumb.DragCompletedEvent,new DragCompletedEventHandler((_,_)=>{ timelineDragging=false; ApplyTimeline(); })); InstalledUpdate.Text="Installed version: "+InstalledVersion; engine=new(input); InitializeOnline(); InitializeAuth(); InitializePlaylists(); hotkeyController=new(()=>engine.State,()=>input.IsTargetForeground,StartImmediate,engine.Pause,engine.Resume,EmergencyStop,engine.AcknowledgeInputPause);
   overlayService=new Overlay.OverlayWindowService(this);
   for(int i=0;i<128;i++)rows.Add(new(){Pitch=i}); MappingGrid.ItemsSource=rows;
   ToggleKey.ItemsSource=Enumerable.Range(1,12).Select(i=>$"F{i}").ToArray(); StopKey.ItemsSource=Enumerable.Range(1,12).Select(i=>$"F{i}").ToArray();
@@ -134,6 +134,7 @@ public partial class MainWindow : Window, IDisposable {
   }
   overlayService?.UpdateState(song,songDuration,engine,input,profile,Shift,currentHotkeys,Windows.SelectedItem as RobloxWindow);
   overlayService?.ViewModel.SynchronizeLibrary(libraryEntries,currentSongEntry==null?null:libraryEntries.FirstOrDefault(e=>e.Sha256==currentSongEntry.Sha256));
+   overlayService?.ViewModel.SynchronizePlaylists(cachedPlaylists,playlistManager.CurrentPlaylist,playlistManager.Queue,playlistManager.CurrentTrackNumber,playlistManager.TotalTracks,playlistManager.IsShuffleEnabled,playlistManager.RepeatMode,playlistManager.IsPlayingPlaylist);
  }
  async void SaveProfile(object s,RoutedEventArgs e) { try { SyncProfile(); var d=new SaveFileDialog{Filter="JSON profile|*.json",FileName="mapping.json"}; if(d.ShowDialog()==true)await store.SaveAsync(d.FileName,profile); } catch(Exception ex) { CalibrationStatus.Text=ex.Message; } }
  async void LoadProfile(object s,RoutedEventArgs e) { try { var d=new OpenFileDialog{Filter="JSON profile|*.json"}; if(d.ShowDialog()!=true)return; InvalidateMappingSession(); profile=await store.LoadAsync(d.FileName); foreach(var r in rows)r.Key=profile.Keys.GetValueOrDefault(r.Pitch,""); MappingGrid.Items.Refresh(); UpdateMapping(); SavePlayerPreferences(); } catch(Exception ex) { MessageBox.Show(ex.Message,"Profile error"); } }

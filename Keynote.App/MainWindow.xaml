@@ -146,8 +146,8 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Roblox Window Selector Card (auto-refreshes on dropdown open) -->
-                                        <ComboBox x:Name="Windows" Style="{StaticResource RobloxSelectorComboBoxStyle}"
+                                        <!-- Game Window Selector Card (auto-refreshes on dropdown open) -->
+                                        <ComboBox x:Name="Windows" Style="{StaticResource GameSelectorComboBoxStyle}"
                                                   SelectionChanged="WindowSelected" DropDownOpened="RefreshWindows"
                                                   ToolTip="Select your game window" />
 

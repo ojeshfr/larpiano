@@ -410,8 +410,8 @@
         </Setter>
     </Style>
 
-    <!-- Roblox Selector Card ComboBox Style -->
-    <Style x:Key="RobloxSelectorComboBoxStyle" TargetType="ComboBox">
+    <!-- Game Selector Card ComboBox Style -->
+    <Style x:Key="GameSelectorComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         <Setter Property="Background" Value="{StaticResource PanelElevatedBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
@@ -435,7 +435,7 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <!-- Roblox Icon Tile -->
+                                            <!-- Game Icon Tile -->
                                             <Border Width="34" Height="34" CornerRadius="8" Background="#241E33" VerticalAlignment="Center">
                                                 <Path Data="M 7,5 L 19,8 L 17,20 L 5,17 Z M 10,11 L 14,12 L 13,16 L 9,15 Z" Fill="{StaticResource AccentLavenderBrush}" Stretch="Uniform" Width="16" Height="16" />
                                             </Border>
